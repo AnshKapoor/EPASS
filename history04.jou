@@ -1,0 +1,3 @@
+#!python
+cubit.cmd('set node constraint on')
+cubit.cmd('set hdf5_cub_file on')
