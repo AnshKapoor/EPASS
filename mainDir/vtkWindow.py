@@ -81,12 +81,14 @@ class vtkWindow(QVTKRenderWindowInteractor):
         for n, load in enumerate(loads):
             state = load.drawCheck.isChecked()
             if state==0:
+                self.ren.RemoveActor(load.loadActorSymbol)
+                self.ren.RemoveActor(load.arrowActorSymbol)
                 self.ren.RemoveActor(load.arrowActorLoad)
-                self.ren.RemoveActor(load.sphereActorLoad)
                 #self.ren.AddActor(load.arrowActorLoad2)
             elif state==1:
+                self.ren.AddActor(load.loadActorSymbol)
+                self.ren.AddActor(load.arrowActorSymbol)
                 self.ren.AddActor(load.arrowActorLoad)
-                self.ren.AddActor(load.sphereActorLoad)
                 #self.ren.AddActor(load.arrowActorLoad2)
                 for p, blockCheck in enumerate(load.blockChecker):
                     blockState = blockCheck.isChecked()
