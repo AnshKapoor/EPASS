@@ -26,6 +26,7 @@ from graphWindow import graphWindow
 from loads import loadInfoBox
 from planeWave import planeWave
 from diffuseField import diffuseField
+from timeVarDat import timeVarDat
 #
 # Main class called first
 class loadGUI(QMainWindow):
@@ -73,7 +74,9 @@ class loadGUI(QMainWindow):
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
         if self.loadSelector.currentText() == 'Distributed time domain load':
-            messageboxOK('Distributed time domain load', 'Load type not yet implemented')
+            self.myModel.loads.append(timeVarDat(self.ak3path, self.myModel, self.vtkWindow))
+            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
+            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
         if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
             messageboxOK('Turbulent Boundary Layer', 'Load type not yet implemented')
         # Reset new ids for button in order to identify button on next click correctly and reconnect buttons

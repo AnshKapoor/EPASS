@@ -31,17 +31,19 @@ class diffuseField(load):
         self.c = QLineEdit('340.')
 
         ###ab hier neues###
-        self.samples = QLineEdit('1.')
+        self.samples = QLineEdit('1000')
+        self.radius = QLineEdit('10.')
         ###bis hier neues#
         #
         self.label = QLabel('Diffuse Field')
         self.ampLabel = QLabel(self.amp.text() + ' Pa')
-        self.dirLabel = QLabel('x ' + self.dirX.text() + ' y ' + self.dirY.text() + ' z ' + self.dirZ.text())
+        self.radLabel = QLabel('Radius: ' + self.radius.text())
+        self.sampLabel = QLabel('Sources: ' + self.samples.text())
         self.drawCheck = QCheckBox('Draw')
         self.drawCheck.setStatusTip('Show load in 2D Graph and 3D Window')
         self.drawCheck.clicked.connect(self.switch)
         #
-        [self.addWidget(wid) for wid in [self.removeButton, self.label, self.ampLabel, self.dirLabel, self.drawCheck, self.editButton]]
+        [self.addWidget(wid) for wid in [self.removeButton, self.label, self.ampLabel, self.radLabel, self.sampLabel, self.drawCheck, self.editButton]]
         #
         self.generatePointCloud()
         self.initSetupWindow()
@@ -59,9 +61,9 @@ class diffuseField(load):
     #generates a half sphere point cloud with variable parameters
     def generatePointCloud(self):
         ####fibonacci
-        samples = 50
+        samples = 2*int(self.samples.text())
         normal = [0.,0.,1.]
-        R = 2. # Radius
+        R = float(self.radius.text()) # Radius
         center = [2., 0., 0.] # Center of Semisphere
 
         normLength = (float(normal[0])**2+float(normal[1])**2+float(normal[2])**2)**0.5
@@ -120,28 +122,29 @@ class diffuseField(load):
 
     # Calculates pressure excitation on the selected blocks due to the created diffuse field
     def generatePressure(self):
-        c = float(self.c.text())
+        c = float(self.c.text()) #get Speed of Sound as number
         frequencies = self.myModel.calculationObjects[0].frequencies
-        self.findRelevantPoints()
+        self.findRelevantPoints() #get values for the middle of every element
+
+        #calculate sound pressure and phase on every element
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             self.surfacePressure = np.zeros((len(frequencies),len(self.surfacePoints)),dtype=complex)
-            r_vector = []
-            r_matrix = np.zeros((len(self.sourcePoints), len(self.surfacePoints),))
+            r_matrix = np.zeros((len(self.sourcePoints), len(self.surfacePoints),)) #matrix will contain distances from each point source to each element
+            progWin = progressWindow(len(self.surfacePoints)-1, "Calculating distances")
             for nsp,surfacePoint in enumerate(self.surfacePoints):
                 r_matrix[:,nsp] = ((self.sourcePoints[:,0]-surfacePoint[0])**2 + (self.sourcePoints[:,1]-surfacePoint[1])**2 + (self.sourcePoints[:,2]-surfacePoint[2])**2)**0.5
-
+            progWin = progressWindow(len(frequencies)-1, "Calculating phases")
             for nf,f in enumerate(frequencies):
                 k = 2.*pi*f/c # Wave number
-        # with random phase
+                # with random phase
                 randPhase = 2*math.pi*np.random.rand(len(self.sourcePoints)) # random phase per source
                 self.surfacePressure[nf,:] = np.sum(np.multiply(1/r_matrix, (np.exp(1j*k*r_matrix).T*np.exp(1j*randPhase)).T), axis=0)
-        # without random phase
-        #       self.surfacePressure[nf,:] = np.sum(np.multiply(1/r_matrix, np.exp(1j*k*r_matrix)), axis=0)
-            for nf in range(len(frequencies)-1):
-                for ne in range(len(self.sourcePoints)-1):
-                    self.surfacePhases[nf,ne] = cmath.phase(self.surfacePressure[nf,ne])
-            print(r_matrix,self.surfacePressure,len(self.surfacePressure),self.surfacePhases,len(self.surfacePhases))
+                # without random phase
+                #self.surfacePressure[nf,:] = np.sum(np.multiply(1/r_matrix, np.exp(1j*k*r_matrix)), axis=0)
+                for ne in range(len(self.surfacePoints)):
+                    self.surfacePhases[nf,ne] = cmath.phase(self.surfacePressure[nf,ne]) #transition from complex pressure to phase
+            #print(r_matrix,r_matrix.shape,self.surfacePressure,len(self.surfacePressure),self.surfacePhases,len(self.surfacePhases),frequencies,len(frequencies))
 
     # Return x, y data for plotting; for plane wave: constant amplitude
     def getXYdata(self):
@@ -197,15 +200,16 @@ class diffuseField(load):
         self.sphereActorLoad.GetProperty().SetColor(1., 0.3, 0.) ##Rot
         self.sphereActorLoad.SetMapper(self.sphereMapperLoad)
 
+        #List of Actors for iteration in vtkWindow
+        self.actorsList = [self.arrowActorLoad, self.sphereActorLoad]
+
 
     def initSetupWindow(self):
         self.setupWindow = setupWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
-        self.setupWindow.layout.addRow(QLabel('Direction X'), self.dirX)
-        self.setupWindow.layout.addRow(QLabel('Direction Y'), self.dirY)
-        self.setupWindow.layout.addRow(QLabel('Direction Z'), self.dirZ)
         self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
+        self.setupWindow.layout.addRow(QLabel('Radius of Half Sphere'), self.radius)
         self.setupWindow.layout.addRow(QLabel('No. of Point Sources'), self.samples)
         #
         self.blockChecker = []
@@ -225,18 +229,20 @@ class diffuseField(load):
         if var == 0: # reset values
             self.resetValues()
         elif var == 1: # set new values
-            #try:
-            if float(self.dirX.text()) == 0. and float(self.dirY.text()) == 0. and float(self.dirZ.text()) == 0.:
-                raise Exception
-            self.ampLabel.setText(str(float(self.amp.text())) + ' Pa')
-            self.dirLabel.setText('x ' + str(float(self.dirX.text())) + ' y ' + str(float(self.dirY.text())) + ' z ' + str(float(self.dirZ.text())))
-            c = float(self.c.text()) # It's just a check, variable is not used here
-            self.generatePressure()
-            self.update3DActor()
-            self.switch()
-            # except: # if input is wrong, show message and reset values
-            #     messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
-            #     self.resetValues()
+            try:
+                if float(self.radius.text()) == 0. and float(self.samples.text()) == 0.:
+                    raise Exception
+                self.ampLabel.setText(str(float(self.amp.text())) + ' Pa')
+                self.radLabel.setText('Radius: ' + self.radius.text())
+                self.sampLabel.setText('Sources: ' + self.samples.text())
+                c = float(self.c.text()) # It's just a check, variable is not used here
+                self.generatePressure()
+                self.generatePointCloud()
+                self.update3DActor()
+                self.switch()
+            except: # if input is wrong, show message and reset values
+                messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
+                self.resetValues()
         else:
             self.resetValues()
         return var

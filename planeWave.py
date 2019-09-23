@@ -58,6 +58,7 @@ class planeWave(load):
         c = float(self.c.text())
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
+        print(self.surfacePoints)
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             r_vector = []
@@ -158,6 +159,10 @@ class planeWave(load):
         self.arrowActorLoad = vtk.vtkActor()
         self.arrowActorLoad.GetProperty().SetColor(1., 0.6, 0.)
         self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
+
+        #List of Actors for iteration in vtkWindow
+        self.actorsList = [self.arrowActorLoad, self.arrowActorSymbol, self.loadActorSymbol]
+
 
 
 

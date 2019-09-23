@@ -79,19 +79,16 @@ class vtkWindow(QVTKRenderWindowInteractor):
     def updateLoads(self, loads):
         blocksToDraw = []
         for n, load in enumerate(loads):
-            state = load.drawCheck.isChecked()
-            if state==0:
-                self.ren.RemoveActor(load.arrowActorLoad)
-                self.ren.RemoveActor(load.sphereActorLoad)
-                #self.ren.AddActor(load.arrowActorLoad2)
-            elif state==1:
-                self.ren.AddActor(load.arrowActorLoad)
-                self.ren.AddActor(load.sphereActorLoad)
-                #self.ren.AddActor(load.arrowActorLoad2)
-                for p, blockCheck in enumerate(load.blockChecker):
-                    blockState = blockCheck.isChecked()
-                    if blockState==1:
-                        blocksToDraw.append(p)
+            for act in load.actorsList:
+                state = load.drawCheck.isChecked()
+                if state==0:
+                    self.ren.RemoveActor(act)
+                elif state==1:
+                    self.ren.AddActor(act)
+                    for p, blockCheck in enumerate(load.blockChecker):
+                        blockState = blockCheck.isChecked()
+                        if blockState==1:
+                            blocksToDraw.append(p)
             # Color blocks
             blockCounter = 0
             for block in range(len(load.blockChecker)):
@@ -99,7 +96,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
                     noOfCells = self.grids[block].GetNumberOfCells()
                     for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
                         self.grids[block].GetCellData().RemoveArray(arNo)
-                    print(self.currentFrequencyStep, blockCounter, blockCounter+noOfCells)
+                    #print(self.currentFrequencyStep, blockCounter, blockCounter+noOfCells)
                     phaseArray = numpy_to_vtk(load.surfacePhases[self.currentFrequencyStep, blockCounter:(blockCounter+noOfCells)])
                     phaseArray.SetName('Phase')
                     self.grids[block].GetCellData().AddArray(phaseArray)
