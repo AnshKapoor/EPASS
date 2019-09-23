@@ -75,6 +75,8 @@ class timeVarDat(load):
         #return self.xf, len(self.xf)*[float(self.amp.text())]
 
 
+
+
     ##loads file. must be .json and must be a dict like: {'[x0,y0,z0]': [1,2,3,4,5...], ...'}
     def loadData(self, filename):
         #self.getFilename()
@@ -305,6 +307,7 @@ class timeVarDat(load):
             frequencies = self.myModel.calculationObjects[0].frequencies
             f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
             f.write(str(len(frequencies)) + '\n')
+            print(self.surfacePhases)
             [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
             f.close()
             # Apply load to element

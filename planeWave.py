@@ -17,6 +17,7 @@ class planeWave(load):
         self.removeButton = removeButton(self.ak3path)
         self.editButton = editButton()
         self.type = 'plane wave'
+
         #
         self.amp = QLineEdit('1.')
         self.dirX = QLineEdit('1.')
@@ -45,20 +46,26 @@ class planeWave(load):
             self.generatePressure()
             self.update3DActor()
 
-    # Clear all content in planeWave layout
+    #
     def clearLayout(self):
+        """
+        Clear all content in planeWave layout
+        """
         for i in reversed(range(self.count())):
             if isinstance(self.itemAt(i), QWidgetItem):
                 self.takeAt(i).widget().setParent(None)
             else:
                 self.removeItem(self.contLayout.takeAt(i))
 
-    # Calculates pressure excitation on the selected blocks due to the created plane wave
+    #
     def generatePressure(self):
+        """
+        Calculates pressure excitation on the selected blocks due to the created plane wave
+        """
         c = float(self.c.text())
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
-        print(self.surfacePoints)
+        #print(self.surfacePoints)
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             r_vector = []
@@ -81,12 +88,18 @@ class planeWave(load):
                 progWin.setValue(nf)
                 QApplication.processEvents()
 
-    # Return x, y data for plotting; for plane wave: constant amplitude
+    #
     def getXYdata(self):
+        """
+        Return x, y data for plotting; for plane wave: constant amplitude
+        """
         return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
 
-    # initialize vtk objects
+    #
     def init3DActor(self, vtkWindow):
+        """
+        initialize vtk objects
+        """
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
@@ -168,6 +181,9 @@ class planeWave(load):
 
 
     def initSetupWindow(self):
+        """
+        basic objects for the individual setup window
+        """
         self.setupWindow = setupWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
