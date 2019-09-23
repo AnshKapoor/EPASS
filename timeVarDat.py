@@ -26,6 +26,7 @@ class timeVarDat(load):
         self.dirY = QLineEdit('1.')
         self.dirZ = QLineEdit('1.')
         self.c = QLineEdit('340.')
+        self.ffttime = QLineEdit('1.')
 
         self.loadButton = ak3LoadButton(self.ak3path)
         self.loadButton.clicked.connect(self.getFilename)
@@ -204,6 +205,7 @@ class timeVarDat(load):
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
         self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
+        self.setupWindow.layout.addRow(QLabel('Time difference between samples'), self.ffttime)
         self.setupWindow.layout.addWidget(self.loadButton)
 
 
