@@ -26,7 +26,7 @@ class timeVarDat(load):
         self.dirY = QLineEdit('1.')
         self.dirZ = QLineEdit('1.')
         self.c = QLineEdit('340.')
-        self.ffttime = QLineEdit('1.')
+        self.ffttime = QLineEdit('1024')
 
         self.loadButton = ak3LoadButton(self.ak3path)
         self.loadButton.clicked.connect(self.getFilename)
@@ -141,18 +141,19 @@ class timeVarDat(load):
         self.freqLenVec = []
         for nd, data in enumerate(self.timeValues):
             N=len(data)
-            T=1/N
+            T=1/N#int(self.ffttime.text())
             Y = np.fft.fft(np.array(data))
-            yf = 2.0/N * (Y[:N//2])
+            yf = (Y[:N//2])
             self.FreqValues.append(yf.tolist())
             self.xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
             self.freqLenVec.append(len(self.xf))
             self.myModel.calculationObjects[0].frequencies = np.linspace(0.0, 1.0/(2.0*T), N/2)
         #print(self.xf)
         #print(self.freqLenVec)
-            #fig, ax = plt.subplots()
-            #ax.plot(xf, 2.0/N * np.abs(yf[:N//2]))
-            #plt.show()
+            print(N, 1/T)
+            fig, ax = plt.subplots()
+            ax.plot(self.xf, 2.0/N * np.abs(yf[:N//2]))
+            plt.show()
 
     # calculates phases out of complex frequency domain data
     def getPhases(self):
@@ -205,7 +206,7 @@ class timeVarDat(load):
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
         self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
-        self.setupWindow.layout.addRow(QLabel('Time difference between samples'), self.ffttime)
+        self.setupWindow.layout.addRow(QLabel('Sample Rate'), self.ffttime)
         self.setupWindow.layout.addWidget(self.loadButton)
 
 
