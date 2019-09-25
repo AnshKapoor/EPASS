@@ -134,6 +134,8 @@ class diffuseField(load):
             progWin = progressWindow(len(self.surfacePoints)-1, "Calculating distances")
             for nsp,surfacePoint in enumerate(self.surfacePoints):
                 r_matrix[:,nsp] = ((self.sourcePoints[:,0]-surfacePoint[0])**2 + (self.sourcePoints[:,1]-surfacePoint[1])**2 + (self.sourcePoints[:,2]-surfacePoint[2])**2)**0.5
+                progWin.setValue(nsp)
+                QApplication.processEvents()
             progWin = progressWindow(len(frequencies)-1, "Calculating phases")
             for nf,f in enumerate(frequencies):
                 k = 2.*pi*f/c # Wave number
@@ -143,7 +145,9 @@ class diffuseField(load):
                 # without random phase
                 #self.surfacePressure[nf,:] = np.sum(np.multiply(1/r_matrix, np.exp(1j*k*r_matrix)), axis=0)
                 for ne in range(len(self.surfacePoints)):
-                    self.surfacePhases[nf,ne] = cmath.phase(self.surfacePressure[nf,ne]) #transition from complex pressure to phase
+                    self.surfacePhases[nf,ne] = cmath.phase(self.surfacePressure[nf,ne])
+                    progWin.setValue(nf)
+                    QApplication.processEvents()#transition from complex pressure to phase
             #print(r_matrix,r_matrix.shape,self.surfacePressure,len(self.surfacePressure),self.surfacePhases,len(self.surfacePhases),frequencies,len(frequencies))
 
     # Return x, y data for plotting; for plane wave: constant amplitude
