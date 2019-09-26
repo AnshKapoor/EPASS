@@ -6,7 +6,7 @@ import math, cmath, random, time
 import os
 from lxml import etree
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupWindow, messageboxOK, progressWindow
-from loads import load
+from loads import load, loadInfoBox
 
 import matplotlib.pyplot as plt
 
@@ -62,24 +62,29 @@ class timeVarDat(load):
         self.getPhases()
 
 
-    # Clear all content in planeWave layout
     def clearLayout(self):
+        """
+        Clear all content in layout
+        """
         for i in reversed(range(self.count())):
             if isinstance(self.itemAt(i), QWidgetItem):
                 self.takeAt(i).widget().setParent(None)
             else:
                 self.removeItem(self.contLayout.takeAt(i))
 
-    # Return x, y data for plotting; for plane wave: constant amplitude
+
     def getXYdata(self):
+        """
+        Return x, y data for plotting; for plane wave: constant amplitude
+        """
         return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
         #return self.xf, len(self.xf)*[float(self.amp.text())]
 
 
-
-
-    ##loads file. must be .json and must be a dict like: {'[x0,y0,z0]': [1,2,3,4,5...], ...'}
     def loadData(self, filename):
+        """
+        loads file with x,y,z data. must be .json and must be a dict like: {'[x0,y0,z0]': [1,2,3,4,5...], ...'}
+        """
         #self.getFilename()
         with open(filename) as f:
             ld = json.load(f)
@@ -99,8 +104,10 @@ class timeVarDat(load):
         ## Die werden ja eh ständig in Listen und strings konvertiert.
 
 
-    # finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
     def nearestNeighbor(self):
+        """
+        finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
+        """
         self.findRelevantPoints()
         self.sp = self.surfacePoints
         #print(self.sp)
@@ -123,8 +130,11 @@ class timeVarDat(load):
         #print(self.euclNearest, len(self.euclNearest))
         #print('xyz: ', len(self.ldkeys), 'surf: ', len(self.sp))
 
-    ## combines nearest points and data: writes into a list of length of the element list
+
     def matchDataPoints(self):
+        """
+        combines nearest points and data: writes into a list of length of the element list
+        """
         self.FreqData = [0 for x in self.sp]#np.zeros(shape=(len(self.sp)))
         i=0
         for x in self.euclNearest:
@@ -135,8 +145,10 @@ class timeVarDat(load):
         #print(surfaceTimeData.keys(), len(surfaceTimeData.keys()))
 
 
-    # uses time data out of the laoded file to calculate a fft.
     def timeToFreq(self):
+        """
+        uses time data out of the loaded file to calculate a fft.
+        """
         self.FreqValues = []
         self.freqLenVec = []
         for nd, data in enumerate(self.timeValues):
@@ -150,13 +162,16 @@ class timeVarDat(load):
             self.myModel.calculationObjects[0].frequencies = np.linspace(0.0, 1.0/(2.0*T), N/2)
         #print(self.xf)
         #print(self.freqLenVec)
-            print(N, 1/T)
-            fig, ax = plt.subplots()
-            ax.plot(self.xf, 2.0/N * np.abs(yf[:N//2]))
-            plt.show()
+            # print(N, 1/T)
+            # fig, ax = plt.subplots()
+            # ax.plot(self.xf, 2.0/N * np.abs(yf[:N//2]))
+            # plt.show()
 
-    # calculates phases out of complex frequency domain data
+
     def getPhases(self):
+        """
+        calculates phases out of complex frequency domain data
+        """
         self.surfacePhases = np.zeros((max(self.freqLenVec),len(self.sp)))
         for nf in range(max(self.freqLenVec)):
             for ne in range(len(self.sp)):
@@ -165,6 +180,7 @@ class timeVarDat(load):
                 else:
                     self.surfacePhases[nf,ne] = cmath.phase(self.FreqData[ne][nf])
         #print(self.surfacePhases)
+
 
     # initialize vtk objects
     def init3DActor(self, vtkWindow):
@@ -271,9 +287,12 @@ class timeVarDat(load):
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
 
-    #Open menu to choose file which contains point/time data
-    def getFilename(self):
 
+
+    def getFilename(self):
+        """
+        Open menu to choose file which contains point/time data
+        """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(None,"QFileDialog.getOpenFileName()", "","All Files (*);;json Files (*.json)", options=options)
