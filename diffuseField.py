@@ -30,10 +30,8 @@ class diffuseField(load):
         self.dirZ = QLineEdit('1.')
         self.c = QLineEdit('340.')
 
-        ###ab hier neues###
         self.samples = QLineEdit('1000')
         self.radius = QLineEdit('10.')
-        ###bis hier neues#
         #
         self.label = QLabel('Diffuse Field')
         self.ampLabel = QLabel(self.amp.text() + ' Pa')
@@ -58,10 +56,13 @@ class diffuseField(load):
             self.generatePressure()
             self.update3DActor()
 
-    #generates a half sphere point cloud with variable parameters
+
     def generatePointCloud(self):
+        """
+        generates a half sphere point cloud with variable parameters
+        """
         ####fibonacci
-        samples = 2*int(self.samples.text())
+        samples = 2*int(self.samples.text()) ## *2 because initially a sphere is constructed, which is then separated.
         normal = [0.,0.,1.]
         R = float(self.radius.text()) # Radius
         center = [2., 0., 0.] # Center of Semisphere
@@ -120,8 +121,10 @@ class diffuseField(load):
                 self.removeItem(self.contLayout.takeAt(i))
 
 
-    # Calculates pressure excitation on the selected blocks due to the created diffuse field
     def generatePressure(self):
+        """
+        Calculates pressure excitation on the selected blocks due to the created diffuse field
+        """
         c = float(self.c.text()) #get Speed of Sound as number
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints() #get values for the middle of every element
@@ -150,12 +153,17 @@ class diffuseField(load):
                     QApplication.processEvents()#transition from complex pressure to phase
             #print(r_matrix,r_matrix.shape,self.surfacePressure,len(self.surfacePressure),self.surfacePhases,len(self.surfacePhases),frequencies,len(frequencies))
 
-    # Return x, y data for plotting; for plane wave: constant amplitude
     def getXYdata(self):
+        """
+        Return x, y data for plotting; for plane wave: constant amplitude
+        """
         return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
 
-    # initialize vtk objects
+
     def init3DActor(self, vtkWindow):
+        """
+        initialize vtk objects
+        """
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
@@ -209,6 +217,9 @@ class diffuseField(load):
 
 
     def initSetupWindow(self):
+        """
+        basic objects for the individual setup window
+        """
         self.setupWindow = setupWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
