@@ -115,19 +115,21 @@ class timeVarDat(load):
         #xyzdata = np.array([list(x) for x in list(self.ld.keys())])
         xyzdata = np.array(self.ldkeys)
         #np.random.shuffle(xyzdata)
-        dist = np.empty(shape=(len(xyzdata), len(surfdata), 3))
-        for k in range(len(xyzdata)):
-            for i in range(len(surfdata)):
-                diff = (xyzdata[k] - surfdata[i])
+        dist = np.empty(shape=(len(surfdata), len(xyzdata), 3))
+        for k in range(len(surfdata)):
+            for i in range(len(xyzdata)):
+                diff = (xyzdata[i] - surfdata[k])
                 dist[k,i,0] = diff[0]
                 dist[k,i,1] = diff[1]
                 dist[k,i,2] = diff[2]
 
         eucl = np.sqrt(np.square(dist[:,:,0]) + np.square(dist[:,:,1]) + np.square(dist[:,:,2]))
+        print(eucl)
         self.euclNearest = []
         for p in range(len(eucl)):
             self.euclNearest.append(eucl[p].argsort()[0])
-        #print(self.euclNearest, len(self.euclNearest))
+
+        print(self.euclNearest, len(self.euclNearest))
         #print('xyz: ', len(self.ldkeys), 'surf: ', len(self.sp))
 
 
@@ -138,7 +140,7 @@ class timeVarDat(load):
         self.FreqData = [0 for x in self.sp]#np.zeros(shape=(len(self.sp)))
         i=0
         for x in self.euclNearest:
-            self.FreqData[x] = self.FreqValues[i]
+            self.FreqData[i] = self.FreqValues[x]
             i+=1
         #print(self.euclNearest, self.FreqData[0][123])
         #surfaceTimeData = dict(zip([(str(list(self.sp[x]))) for x in self.euclNearest], self.ld.values()))
@@ -160,12 +162,12 @@ class timeVarDat(load):
             self.xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
             self.freqLenVec.append(len(self.xf))
             self.myModel.calculationObjects[0].frequencies = np.linspace(0.0, 1.0/(2.0*T), N/2)
-        #print(self.xf)
-        #print(self.freqLenVec)
-            # print(N, 1/T)
-            # fig, ax = plt.subplots()
-            # ax.plot(self.xf, 2.0/N * np.abs(yf[:N//2]))
-            # plt.show()
+            #print(self.xf)
+            #print(self.freqLenVec)
+        #    print(N, 1/T)
+            #fig, ax = plt.subplots()
+            #ax.plot(self.xf, 2.0/N * np.abs(yf[:N//2]))
+            #plt.show()
 
 
     def getPhases(self):
@@ -220,8 +222,8 @@ class timeVarDat(load):
     def initSetupWindow(self):
         self.setupWindow = setupWindow(self.label.text())
         # ADD TO LAYOUT
-        self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
-        self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
+        #self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
+        #self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
         self.setupWindow.layout.addRow(QLabel('Sample Rate'), self.ffttime)
         self.setupWindow.layout.addWidget(self.loadButton)
 
