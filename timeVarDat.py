@@ -75,9 +75,15 @@ class timeVarDat(load):
 
     def getXYdata(self):
         """
-        Return x, y data for plotting; for plane wave: constant amplitude
+        Return x, y data for plotting
         """
-        return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
+        FreqArr = np.array(self.yfDataSq)
+        yfMean = np.mean(FreqArr, axis=0)
+        self.yfRootMean = np.sqrt(yfMean)
+
+
+        #print(len(yfRootMean))
+        return self.myModel.calculationObjects[0].frequencies, self.yfRootMean
         #return self.xf, len(self.xf)*[float(self.amp.text())]
 
 
@@ -124,12 +130,12 @@ class timeVarDat(load):
                 dist[k,i,2] = diff[2]
 
         eucl = np.sqrt(np.square(dist[:,:,0]) + np.square(dist[:,:,1]) + np.square(dist[:,:,2]))
-        print(eucl)
+        #print(eucl)
         self.euclNearest = []
         for p in range(len(eucl)):
             self.euclNearest.append(eucl[p].argsort()[0])
 
-        print(self.euclNearest, len(self.euclNearest))
+        #print(self.euclNearest, len(self.euclNearest))
         #print('xyz: ', len(self.ldkeys), 'surf: ', len(self.sp))
 
 
@@ -138,10 +144,13 @@ class timeVarDat(load):
         combines nearest points and data: writes into a list of length of the element list
         """
         self.FreqData = [0 for x in self.sp]#np.zeros(shape=(len(self.sp)))
+        self.yfDataSq = [0 for x in self.sp]
         i=0
         for x in self.euclNearest:
             self.FreqData[i] = self.FreqValues[x]
+            self.yfDataSq[i] = self.AbsFreqValuesSq[x]
             i+=1
+        print(len(self.FreqData), len(self.yfDataSq))
         #print(self.euclNearest, self.FreqData[0][123])
         #surfaceTimeData = dict(zip([(str(list(self.sp[x]))) for x in self.euclNearest], self.ld.values()))
         #print(surfaceTimeData.keys(), len(surfaceTimeData.keys()))
@@ -153,21 +162,26 @@ class timeVarDat(load):
         """
         self.FreqValues = []
         self.freqLenVec = []
+
+        self.AbsFreqValuesSq = []
+        #self.yfprint = []
         for nd, data in enumerate(self.timeValues):
             N=len(data)
             T=1/N#int(self.ffttime.text())
             Y = np.fft.fft(np.array(data))
-            yf = (Y[:N//2])
+            yf = 2.0/N * (Y[:N//2])
             self.FreqValues.append(yf.tolist())
             self.xf = np.linspace(0.0, 1.0/(2.0*T), N/2)
             self.freqLenVec.append(len(self.xf))
-            self.myModel.calculationObjects[0].frequencies = np.linspace(0.0, 1.0/(2.0*T), N/2)
+            self.myModel.calculationObjects[0].frequencies = np.linspace(0.0, 1.0/(2.0*T), N/2, dtype=int)
+            yfabsSq = np.square(np.abs((yf[:N//2])))
+            self.AbsFreqValuesSq.append(yfabsSq.tolist())
             #print(self.xf)
             #print(self.freqLenVec)
         #    print(N, 1/T)
-            #fig, ax = plt.subplots()
-            #ax.plot(self.xf, 2.0/N * np.abs(yf[:N//2]))
-            #plt.show()
+            # fig, ax = plt.subplots()
+            # ax.plot(self.xf, np.abs(yf[:N//2]))
+            # plt.show()
 
 
     def getPhases(self):
@@ -181,6 +195,12 @@ class timeVarDat(load):
                     self.surfacePhases[nf,ne] = 0
                 else:
                     self.surfacePhases[nf,ne] = cmath.phase(self.FreqData[ne][nf])
+
+        # self.meanPhase = np.mean(self.surfacePhases, axis=1)
+        # print(len(self.meanPhase))
+        # fig, ax = plt.subplots()
+        # ax.plot(self.xf, self.meanPhase)
+        # plt.show()
         #print(self.surfacePhases)
 
 
