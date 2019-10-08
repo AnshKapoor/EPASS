@@ -54,7 +54,7 @@ class removeButton(QPushButton):
         self.setMaximumWidth(23)
         self.setMaximumHeight(23)
         self.id = 0
-        
+
 # Button to remove something
 class editButton(QPushButton):
     def __init__(self):
@@ -66,14 +66,14 @@ class editButton(QPushButton):
         self.setMaximumWidth(23)
         self.setMaximumHeight(23)
         self.id = 0
-        
+
 # Button to export model
 class exportButton(QPushButton):
     def __init__(self):
         super(exportButton, self).__init__('Export')
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Export model including created loads.')
-        
+
 # Dropdown menu to select a load
 class loadSelector(QComboBox):
     def __init__(self):
