@@ -44,9 +44,9 @@ class load(QHBoxLayout):
         for p, blockCheck in enumerate(self.blockChecker):
             blockState = blockCheck.isChecked()
             if blockState==1:
-                relevantBlocks.append(p+1)
+                relevantBlocks.append(self.myModel.calculationObjects[0].elems[p][1])
         for elems in self.myModel.calculationObjects[0].elems:
-            if int(elems[1]) in relevantBlocks:
+            if elems[1] in relevantBlocks:
                 for elem in elems[2]:
                     elemID = elem[0]
                     node1 = nodes[nodes[:,0]==elem[1]][0]
