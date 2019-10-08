@@ -7,7 +7,7 @@ import os
 from lxml import etree
 from standardWidgets import removeButton, editButton, setupWindow, messageboxOK, progressWindow
 from loads import load
-    
+
 # Plane wave load
 class planeWave(load):
     def __init__(self, ak3path, myModel, vtkWindow):
@@ -17,6 +17,7 @@ class planeWave(load):
         self.removeButton = removeButton(self.ak3path)
         self.editButton = editButton()
         self.type = 'plane wave'
+
         #
         self.amp = QLineEdit('1.')
         self.dirX = QLineEdit('1.')
@@ -32,7 +33,7 @@ class planeWave(load):
         self.drawCheck.clicked.connect(self.switch)
         #
         [self.addWidget(wid) for wid in [self.removeButton, self.label, self.ampLabel, self.dirLabel, self.drawCheck, self.editButton]]
-        # 
+        #
         self.initSetupWindow()
         self.init3DActor(vtkWindow)
         # A switch indicating a new setup within this load
@@ -44,20 +45,27 @@ class planeWave(load):
         if var == 0: # is the case if the initial setup window is canceled by the user
             self.generatePressure()
             self.update3DActor()
-    
-    # Clear all content in planeWave layout
+
+    #
     def clearLayout(self):
-        for i in reversed(range(self.count())): 
+        """
+        Clear all content in planeWave layout
+        """
+        for i in reversed(range(self.count())):
             if isinstance(self.itemAt(i), QWidgetItem):
                 self.takeAt(i).widget().setParent(None)
             else:
                 self.removeItem(self.contLayout.takeAt(i))
-    
-    # Calculates pressure excitation on the selected blocks due to the created plane wave
+
+    #
     def generatePressure(self):
+        """
+        Calculates pressure excitation on the selected blocks due to the created plane wave
+        """
         c = float(self.c.text())
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
+        #print(self.surfacePoints)
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             r_vector = []
@@ -68,24 +76,30 @@ class planeWave(load):
             loadNormal = loadNormal/np.linalg.norm(loadNormal)
             # calculate distances in direction of the plane wave
             progWin = progressWindow(len(self.surfacePoints)-1, "Calculating distances")
-            for nsp, surfacePoint in enumerate(self.surfacePoints): 
+            for nsp, surfacePoint in enumerate(self.surfacePoints):
                 r_vector.append(abs(loadNormal[0]*(surfacePoint[0] - center[0]) + loadNormal[1]*(surfacePoint[1] - center[1]) + loadNormal[2]*(surfacePoint[2] - center[2])))
                 progWin.setValue(nsp)
                 QApplication.processEvents()
             # calculate the correct phases for the distances and apply the amp requested by the user in loadNormal direction to each element
             progWin = progressWindow(len(frequencies)-1, "Calculating phases")
-            for nf, f in enumerate(frequencies): 
+            for nf, f in enumerate(frequencies):
                 lam = c/f # wave length
                 self.surfacePhases[nf,:] = [2*math.pi*(r % lam)/lam for r in r_vector]
                 progWin.setValue(nf)
                 QApplication.processEvents()
-  
-    # Return x, y data for plotting; for plane wave: constant amplitude
+
+    #
     def getXYdata(self):
+        """
+        Return x, y data for plotting; for plane wave: constant amplitude
+        """
         return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
-    
-    # initialize vtk objects
+
+    #
     def init3DActor(self, vtkWindow):
+        """
+        initialize vtk objects
+        """
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
@@ -158,8 +172,18 @@ class planeWave(load):
         self.arrowActorLoad = vtk.vtkActor()
         self.arrowActorLoad.GetProperty().SetColor(1., 0.6, 0.)
         self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
-    
+
+        #List of Actors for iteration in vtkWindow
+        self.actorsList = [self.arrowActorLoad, self.arrowActorSymbol, self.loadActorSymbol]
+
+
+
+
+
     def initSetupWindow(self):
+        """
+        basic objects for the individual setup window
+        """
         self.setupWindow = setupWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
@@ -169,16 +193,16 @@ class planeWave(load):
         self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
         #
         self.blockChecker = []
-        for block in self.myModel.calculationObjects[0].elems: 
+        for block in self.myModel.calculationObjects[0].elems:
             self.blockChecker.append(QCheckBox())
             self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block[1]) + ' (' + str(block[0]) + ')'))
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
-    
-    def resetValues(self): 
-        for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c]): 
+
+    def resetValues(self):
+        for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c]):
             item.setText(self.varSave[n])
-    
+
     def showEdit(self):
         self.varSave = [self.amp.text(), self.dirX.text(), self.dirY.text(), self.dirZ.text(), self.c.text()]
         var = self.setupWindow.exec_()
@@ -186,7 +210,7 @@ class planeWave(load):
             self.resetValues()
         elif var == 1: # set new values
             try:
-                if float(self.dirX.text()) == 0. and float(self.dirY.text()) == 0. and float(self.dirZ.text()) == 0.: 
+                if float(self.dirX.text()) == 0. and float(self.dirY.text()) == 0. and float(self.dirZ.text()) == 0.:
                     raise Exception
                 self.ampLabel.setText(str(float(self.amp.text())) + ' Pa')
                 self.dirLabel.setText('x ' + str(float(self.dirX.text())) + ' y ' + str(float(self.dirY.text())) + ' z ' + str(float(self.dirZ.text())))
@@ -200,14 +224,14 @@ class planeWave(load):
         else:
             self.resetValues()
         return var
-    
+
     # Method changing the objects changedSwitch in order to indicate 2D and 3D update
     def switch(self):
         if self.changeSwitch.isChecked():
             self.changeSwitch.setChecked(0)
-        else: 
+        else:
             self.changeSwitch.setChecked(1)
-    
+
     def update3DActor(self):
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
@@ -239,8 +263,8 @@ class planeWave(load):
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
         #
-    
-    def writeXML(self, exportAK3, name): 
+
+    def writeXML(self, exportAK3, name):
         elemLoads = exportAK3.find('ElemLoads')
         oldNoOfLoads = elemLoads.get('N')
         elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
@@ -254,7 +278,7 @@ class planeWave(load):
                 os.remove(loadDir + '/' + filename)
         # Save loads for each element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        for nE, surfaceElem in enumerate(self.surfaceElements): 
+        for nE, surfaceElem in enumerate(self.surfaceElements):
             # One load per element
             newLoad = etree.Element('ElemLoad', Type='structurefrq')
             newLoad.tail = '\n'
@@ -284,4 +308,3 @@ class planeWave(load):
             # Update progress window
             progWin.setValue(nE)
             QApplication.processEvents()
-            
