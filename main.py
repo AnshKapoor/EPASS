@@ -16,8 +16,8 @@ from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLa
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon
 #
-sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
-sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
+sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
+sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
 from standardFunctionsGeneral import readNodes, readElems, readFreqs
 from standardWidgets import sepLine, ak3LoadButton, addButton, loadSelector, messageboxOK, exportButton
 from model import model, calculationObject
