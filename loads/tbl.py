@@ -1,6 +1,6 @@
 #
 import json
-from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog
 import vtk
 import numpy as np
 import math
@@ -27,6 +27,7 @@ class tbl(load):
         self.flowDirZ = QLineEdit('0.')
         self.loadButton = ak3LoadButton(self.ak3path)
         self.loadButton.clicked.connect(self.getFilename)
+        self.dataPoints = []
         #
         self.label = QLabel('Turbulent Boundary Layer')
         self.dirLabel = QLabel('x ' + self.flowDirX.text() + ' y ' + self.flowDirY.text() + ' z ' + self.flowDirZ.text())
@@ -66,25 +67,29 @@ class tbl(load):
         self.findRelevantPoints()
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
-            r_vector = []
-            # Get model infos
-            nodes = self.myModel.calculationObjects[0].nodes
-            center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
-            flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
-            flowDir = flowDir/np.linalg.norm(flowDir)
-            # Calculate distances in direction of the flow
-            progWin = progressWindow(len(self.surfacePoints)-1, "Calculating distances")
-            for nsp, surfacePoint in enumerate(self.surfacePoints):
-                r_vector.append(abs(flowDir[0]*(surfacePoint[0] - center[0]) + flowDir[1]*(surfacePoint[1] - center[1]) + flowDir[2]*(surfacePoint[2] - center[2])))
-                progWin.setValue(nsp)
-                QApplication.processEvents()
-            # Calculate phases for the distances using Efimtsov model 
-            progWin = progressWindow(len(frequencies)-1, "Calculating phases")
-            for nf, f in enumerate(frequencies):
-                lam = 1./f # wave length
-                self.surfacePhases[nf,:] = [2*math.pi*(r % lam)/lam for r in r_vector]
-                progWin.setValue(nf)
-                QApplication.processEvents()
+            if self.dataPoints==[]: 
+                msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
+            else:
+                self.nearestNeighbor()
+                r_vector = []
+                # Get model infos
+                nodes = self.myModel.calculationObjects[0].nodes
+                center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+                flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
+                flowDir = flowDir/np.linalg.norm(flowDir)
+                # Calculate distances in direction of the flow
+                progWin = progressWindow(len(self.surfacePoints)-1, "Calculating distances")
+                for nsp, surfacePoint in enumerate(self.surfacePoints):
+                    r_vector.append(abs(flowDir[0]*(surfacePoint[0] - center[0]) + flowDir[1]*(surfacePoint[1] - center[1]) + flowDir[2]*(surfacePoint[2] - center[2])))
+                    progWin.setValue(nsp)
+                    QApplication.processEvents()
+                # Calculate phases for the distances using Efimtsov model 
+                progWin = progressWindow(len(frequencies)-1, "Calculating phases")
+                for nf, f in enumerate(frequencies):
+                    lam = 1./f # wave length
+                    self.surfacePhases[nf,:] = [2*math.pi*(r % lam)/lam for r in r_vector]
+                    progWin.setValue(nf)
+                    QApplication.processEvents()
     #
     def getFilename(self):
         """
@@ -207,6 +212,30 @@ class tbl(load):
             self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block[1]) + ' (' + str(block[0]) + ')'))
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
+    #
+    def loadData(self, filename):
+        """
+        Loads file with x,y,z flow data for Klabes and Efimstov parameter.
+        Must be .json and must be a dict like: {'x0,y0,z0':'a,b,c,d,e,f,g,h,delta,uInf,uE,uTau,tauW,nu,rho','x1,y1,z1':'a,b,c,...', ...}
+        """
+        with open(filename) as f:
+            ld = json.load(f)
+        keys = list(ld.keys())
+        values = list(ld.values())
+        self.dataPoints = []
+        self.parameters = []
+        for npt in range(len(keys)):
+            self.dataPoints.append([float(x) for x in keys[npt].split(',')])
+            self.parameters.append([float(x) for x in values[npt].split(',')])
+    #
+    def nearestNeighbor(self):
+        """
+        finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
+        """
+        self.euclNearest = []
+        for m, surfPoint in enumerate(np.array(self.surfacePoints)):
+            # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
+            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
     #
     def resetValues(self):
         for n, item in enumerate([self.dirX, self.dirY, self.dirZ, self.flowDirX, self.flowDirY, self.flowDirZ]):

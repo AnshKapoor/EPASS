@@ -33,7 +33,7 @@ class loadInfoBox(QScrollArea):
 class load(QHBoxLayout):
     def __init__(self):
         super(load, self).__init__()
-
+        
     # Find one point per element at which pressure shall be generated
     def findRelevantPoints(self):
         self.surfacePoints = []

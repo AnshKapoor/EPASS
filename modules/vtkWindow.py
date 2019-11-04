@@ -96,7 +96,6 @@ class vtkWindow(QVTKRenderWindowInteractor):
                     noOfCells = self.grids[block].GetNumberOfCells()
                     for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
                         self.grids[block].GetCellData().RemoveArray(arNo)
-                    #print(self.currentFrequencyStep, blockCounter, blockCounter+noOfCells)
                     phaseArray = numpy_to_vtk(load.surfacePhases[self.currentFrequencyStep, blockCounter:(blockCounter+noOfCells)])
                     phaseArray.SetName('Phase')
                     self.grids[block].GetCellData().AddArray(phaseArray)
