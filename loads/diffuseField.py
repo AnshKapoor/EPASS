@@ -32,6 +32,8 @@ class diffuseField(load):
 
         self.samples = QLineEdit('1000')
         self.radius = QLineEdit('10.')
+        self.normal = QLineEdit('0,0,1')
+        self.position = QLineEdit('0,0,0')
         #
         self.label = QLabel('Diffuse Field')
         self.ampLabel = QLabel(self.amp.text() + ' Pa')
@@ -62,10 +64,11 @@ class diffuseField(load):
         generates a half sphere point cloud with variable parameters
         """
         ####fibonacci
+        
         samples = 2*int(self.samples.text()) ## *2 because initially a sphere is constructed, which is then separated.
-        normal = [0.,0.,1.]
+        normal = [float(x) for x in list(self.normal.text().split(','))]#[1.,0.,1.]
         R = float(self.radius.text()) # Radius
-        center = [2., 0., 0.] # Center of Semisphere
+        center = [int(x) for x in list(self.position.text().split(','))]# Center of Semisphere
 
         normLength = (float(normal[0])**2+float(normal[1])**2+float(normal[2])**2)**0.5
         normal = [p/normLength for p in normal]
@@ -107,7 +110,7 @@ class diffuseField(load):
                   y_rot = y
                   z_rot = z
                 # Addition to final points vector
-                points.append([R*x_rot, R*y_rot, R*z_rot])
+                points.append([R*x_rot + center[0], R*y_rot + center[1], R*z_rot + center[2]])
 
         self.sourcePoints = np.array(points)
 
@@ -226,6 +229,8 @@ class diffuseField(load):
         self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
         self.setupWindow.layout.addRow(QLabel('Radius of Half Sphere'), self.radius)
         self.setupWindow.layout.addRow(QLabel('No. of Point Sources'), self.samples)
+        self.setupWindow.layout.addRow(QLabel('Origin of Point Cloud x,y,z'), self.position)
+        self.setupWindow.layout.addRow(QLabel('Normal dir. of Point Cloud x,y,z'), self.normal)
         #
         self.blockChecker = []
         for block in self.myModel.calculationObjects[0].elems:
