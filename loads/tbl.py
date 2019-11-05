@@ -49,6 +49,13 @@ class tbl(load):
             self.generatePressure()
             self.update3DActor()
     #
+    def calcCorcosIntensity(self, kX, kY, omega, uC, alphaX = 0.1, alphaY = 0.77):
+        P1 = 4.*alphaX*alphaY
+        P2 = alphaY**2. + (kY*uC/omega)**2.
+        P3 = alphaX**2. + (kX*uC/omega - 1.)**2.
+        spectrumFactor = (uC/omega)**2. / (2.*math.pi)**2.
+        return spectrumFactor*P1/(P2*P3)
+    #
     def clearLayout(self):
         """
         Clear all content in planeWave layout
@@ -93,12 +100,14 @@ class tbl(load):
                     g = self.par_g[idx]
                     h = self.par_h[idx]
                     delta = self.par_delta[idx]
+                    uC = self.par_uC[idx]
                     uE = self.par_uE[idx]
                     uTau = self.par_uTau[idx]
                     tauW = self.par_tauW[idx]
                     nu = self.par_nu[idx]
                     #
                     for nf, freq in enumerate(frequencies):
+                        omega = 2.*math.pi*freq
                         # Goody 2004 / Klabes 2017
                         Rt = (delta/uE)/(nu/uTau**2.)
                         scalingFactor = ((tauW**2.)*delta)/uE
@@ -108,7 +117,16 @@ class tbl(load):
                         P3 = (f*(Rt**g)*P0)**h
                         phi = scalingFactor*P1/(P2 + P3)
                         self.surfaceAmps[nf,nsp] = phi**0.5
-                        #
+                        # Corcos
+                        kC = omega/uC
+                        steps = 10
+                        dK = 20*kC/(steps-1)
+                        kRange = np.linspace(-10*kC,10*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
+                        dens = []
+                        for kX in kRange:
+                            for kY in kRange:
+                                dens.append(self.calcCorcosIntensity(kX, kY, omega, uC))
+                        #print(np.sum(dens)*dK**2.)
                         self.surfacePhases[nf,nsp] = 1.
                         #
                         progWin.setValue(nsp)
@@ -241,8 +259,8 @@ class tbl(load):
         Loads file with x,y,z flow data for Klabes and Efimstov parameter.
         Must be .json and must be a dict like: 
         {"pointdata":[
-            {"coord":[0.0,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5},
-            {"coord":[0.2,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5}
+            {"coord":[0.0,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uC":164.4,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5},
+            {"coord":[0.2,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uC":164.4,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5}
         ]}
         """
         with open(filename) as f:
@@ -259,6 +277,7 @@ class tbl(load):
         self.par_g = []
         self.par_h = []
         self.par_delta = []
+        self.par_uC = []
         self.par_uE = []
         self.par_uTau = []
         self.par_tauW = []
@@ -275,6 +294,7 @@ class tbl(load):
             self.par_g.append(float(point.get('g')))
             self.par_h.append(float(point.get('h')))
             self.par_delta.append(float(point.get('delta')))
+            self.par_uC.append(float(point.get('uC')))
             self.par_uE.append(float(point.get('uE')))
             self.par_uTau.append(float(point.get('uTau')))
             self.par_tauW.append(float(point.get('tauW')))
