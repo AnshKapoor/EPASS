@@ -17,7 +17,7 @@ class tbl(load):
         self.myModel = myModel
         self.removeButton = removeButton(self.ak3path)
         self.editButton = editButton()
-        self.type = 'Turbulent Boundary Layer'
+        self.type = 'Turbulent_Boundary_Layer'
         #
         self.dirX = QLineEdit('0.')
         self.dirY = QLineEdit('0.')
@@ -83,16 +83,31 @@ class tbl(load):
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
                     r_vector.append(abs(flowDir[0]*(surfacePoint[0] - center[0]) + flowDir[1]*(surfacePoint[1] - center[1]) + flowDir[2]*(surfacePoint[2] - center[2])))
                     # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model 
-                    for nf, f in enumerate(frequencies):
+                    idx = self.euclNearest[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
+                    a = self.par_a[idx]
+                    b = self.par_b[idx]
+                    c = self.par_c[idx]
+                    d = self.par_d[idx]
+                    e = self.par_e[idx]
+                    f = self.par_f[idx]
+                    g = self.par_g[idx]
+                    h = self.par_h[idx]
+                    delta = self.par_delta[idx]
+                    uE = self.par_uE[idx]
+                    uTau = self.par_uTau[idx]
+                    tauW = self.par_tauW[idx]
+                    nu = self.par_nu[idx]
+                    #
+                    for nf, freq in enumerate(frequencies):
                         # Goody 2004 / Klabes 2017
-                        #Rt = (self.delta/self.uE)/(self.nu/self.uTau**2.)
-                        #scalingFactor = ((self.tauW**2.)*self.delta)/self.uE
-                        #P0 = 2.*math.pi*f*self.delta/self.uE
-                        #P1 = self.a*P0**self.b
-                        #P2 = (P0**self.c + self.d)**self.e
-                        #P3 = (self.f*(Rt**self.g)*P0)**self.h
-                        #self.PhiGoody.append(scalingFactor*P1/(P2 + P3))
-                        self.surfaceAmps[nf,nsp] = 77.
+                        Rt = (delta/uE)/(nu/uTau**2.)
+                        scalingFactor = ((tauW**2.)*delta)/uE
+                        P0 = 2.*math.pi*freq*delta/uE
+                        P1 = a*P0**b
+                        P2 = (P0**c + d)**e
+                        P3 = (f*(Rt**g)*P0)**h
+                        phi = scalingFactor*P1/(P2 + P3)
+                        self.surfaceAmps[nf,nsp] = phi**0.5
                         #
                         self.surfacePhases[nf,nsp] = 1.
                         #
@@ -114,7 +129,7 @@ class tbl(load):
         """
         Return x, y data for plotting; for tbl load: mean amplitude per frequency
         """
-        return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[1.]
+        return self.myModel.calculationObjects[0].frequencies, np.mean(self.surfaceAmps, axis=1)
     #
     def init3DActor(self, vtkWindow):
         """
@@ -226,8 +241,8 @@ class tbl(load):
         Loads file with x,y,z flow data for Klabes and Efimstov parameter.
         Must be .json and must be a dict like: 
         {"pointdata":[
-            {"coord":[0.0,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uInf":234.0,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5,"rho":0.44},
-            {"coord":[0.2,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uInf":234.0,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5,"rho":0.44}
+            {"coord":[0.0,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5},
+            {"coord":[0.2,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5}
         ]}
         """
         with open(filename) as f:
@@ -244,30 +259,26 @@ class tbl(load):
         self.par_g = []
         self.par_h = []
         self.par_delta = []
-        self.par_uInf = []
         self.par_uE = []
         self.par_uTau = []
         self.par_tauW = []
         self.par_nu = []
-        self.par_rho = []
         #
         for point in ld.get('pointdata'): 
             self.dataPoints.append(point.get('coord'))
-            self.par_a.append(point.get('a'))
-            self.par_b.append(point.get('b'))
-            self.par_c.append(point.get('c'))
-            self.par_d.append(point.get('d'))
-            self.par_e.append(point.get('e'))
-            self.par_f.append(point.get('f'))
-            self.par_g.append(point.get('g'))
-            self.par_h.append(point.get('h'))
-            self.par_delta.append(point.get('delta'))
-            self.par_uInf.append(point.get('uInf'))
-            self.par_uE.append(point.get('uE'))
-            self.par_uTau.append(point.get('uTau'))
-            self.par_tauW.append(point.get('tauW'))
-            self.par_nu.append(point.get('nu'))
-            self.par_rho.append(point.get('rho'))
+            self.par_a.append(float(point.get('a')))
+            self.par_b.append(float(point.get('b')))
+            self.par_c.append(float(point.get('c')))
+            self.par_d.append(float(point.get('d')))
+            self.par_e.append(float(point.get('e')))
+            self.par_f.append(float(point.get('f')))
+            self.par_g.append(float(point.get('g')))
+            self.par_h.append(float(point.get('h')))
+            self.par_delta.append(float(point.get('delta')))
+            self.par_uE.append(float(point.get('uE')))
+            self.par_uTau.append(float(point.get('uTau')))
+            self.par_tauW.append(float(point.get('tauW')))
+            self.par_nu.append(float(point.get('nu')))
     #
     def nearestNeighbor(self):
         """
