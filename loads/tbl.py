@@ -216,17 +216,50 @@ class tbl(load):
     def loadData(self, filename):
         """
         Loads file with x,y,z flow data for Klabes and Efimstov parameter.
-        Must be .json and must be a dict like: {'x0,y0,z0':'a,b,c,d,e,f,g,h,delta,uInf,uE,uTau,tauW,nu,rho','x1,y1,z1':'a,b,c,...', ...}
+        Must be .json and must be a dict like: 
+        {"pointdata":[
+            {"coord":[0.0,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uInf":234.0,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5,"rho":0.44},
+            {"coord":[0.2,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uInf":234.0,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5,"rho":0.44}
+        ]}
         """
         with open(filename) as f:
             ld = json.load(f)
-        keys = list(ld.keys())
-        values = list(ld.values())
+        #
         self.dataPoints = []
-        self.parameters = []
-        for npt in range(len(keys)):
-            self.dataPoints.append([float(x) for x in keys[npt].split(',')])
-            self.parameters.append([float(x) for x in values[npt].split(',')])
+        #
+        self.par_a = []
+        self.par_b = []
+        self.par_c = []
+        self.par_d = []
+        self.par_e = []
+        self.par_f = []
+        self.par_g = []
+        self.par_h = []
+        self.par_delta = []
+        self.par_uInf = []
+        self.par_uE = []
+        self.par_uTau = []
+        self.par_tauW = []
+        self.par_nu = []
+        self.par_rho = []
+        #
+        for point in ld.get('pointdata'): 
+            self.dataPoints.append(point.get('coord'))
+            self.par_a.append(point.get('a'))
+            self.par_b.append(point.get('b'))
+            self.par_c.append(point.get('c'))
+            self.par_d.append(point.get('d'))
+            self.par_e.append(point.get('e'))
+            self.par_f.append(point.get('f'))
+            self.par_g.append(point.get('g'))
+            self.par_h.append(point.get('h'))
+            self.par_delta.append(point.get('delta'))
+            self.par_uInf.append(point.get('uInf'))
+            self.par_uE.append(point.get('uE'))
+            self.par_uTau.append(point.get('uTau'))
+            self.par_tauW.append(point.get('tauW'))
+            self.par_nu.append(point.get('nu'))
+            self.par_rho.append(point.get('rho'))
     #
     def nearestNeighbor(self):
         """
