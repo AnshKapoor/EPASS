@@ -67,6 +67,7 @@ class tbl(load):
         self.findRelevantPoints()
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
+            self.surfaceAmps = np.zeros((len(frequencies),len(self.surfacePoints)))
             if self.dataPoints==[]: 
                 msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
             else:
@@ -78,18 +79,25 @@ class tbl(load):
                 flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
                 flowDir = flowDir/np.linalg.norm(flowDir)
                 # Calculate distances in direction of the flow
-                progWin = progressWindow(len(self.surfacePoints)-1, "Calculating distances")
+                progWin = progressWindow(len(self.surfacePoints)-1, "Calculating TBL load")
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
                     r_vector.append(abs(flowDir[0]*(surfacePoint[0] - center[0]) + flowDir[1]*(surfacePoint[1] - center[1]) + flowDir[2]*(surfacePoint[2] - center[2])))
-                    progWin.setValue(nsp)
-                    QApplication.processEvents()
-                # Calculate phases for the distances using Efimtsov model 
-                progWin = progressWindow(len(frequencies)-1, "Calculating phases")
-                for nf, f in enumerate(frequencies):
-                    lam = 1./f # wave length
-                    self.surfacePhases[nf,:] = [2*math.pi*(r % lam)/lam for r in r_vector]
-                    progWin.setValue(nf)
-                    QApplication.processEvents()
+                    # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model 
+                    for nf, f in enumerate(frequencies):
+                        # Goody 2004 / Klabes 2017
+                        #Rt = (self.delta/self.uE)/(self.nu/self.uTau**2.)
+                        #scalingFactor = ((self.tauW**2.)*self.delta)/self.uE
+                        #P0 = 2.*math.pi*f*self.delta/self.uE
+                        #P1 = self.a*P0**self.b
+                        #P2 = (P0**self.c + self.d)**self.e
+                        #P3 = (self.f*(Rt**self.g)*P0)**self.h
+                        #self.PhiGoody.append(scalingFactor*P1/(P2 + P3))
+                        self.surfaceAmps[nf,nsp] = 77.
+                        #
+                        self.surfacePhases[nf,nsp] = 1.
+                        #
+                        progWin.setValue(nsp)
+                        QApplication.processEvents()
     #
     def getFilename(self):
         """
@@ -104,7 +112,7 @@ class tbl(load):
     #
     def getXYdata(self):
         """
-        Return x, y data for plotting; for plane wave: constant amplitude
+        Return x, y data for plotting; for tbl load: mean amplitude per frequency
         """
         return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[1.]
     #
@@ -367,7 +375,7 @@ class tbl(load):
             frequencies = self.myModel.calculationObjects[0].frequencies
             f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
             f.write(str(len(frequencies)) + '\n')
-            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
+            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
             f.close()
             # Apply load to element
             newLoadedElem = etree.Element('LoadedElem')
