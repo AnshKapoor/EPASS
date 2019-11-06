@@ -1,6 +1,6 @@
 #
 import json
-from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog
+from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog, QComboBox
 import vtk
 import numpy as np
 import math
@@ -8,6 +8,8 @@ import os
 from lxml import etree
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupWindow, messageboxOK, progressWindow
 from loads import load
+import time
+np.random.seed(int(time.time()))
 
 # tbl load
 class tbl(load):
@@ -25,6 +27,8 @@ class tbl(load):
         self.flowDirX = QLineEdit('1.')
         self.flowDirY = QLineEdit('0.')
         self.flowDirZ = QLineEdit('0.')
+        self.randomSelector = QComboBox()
+        [self.randomSelector.addItem(x) for x in ['no', 'per data point', 'per element']]
         self.loadButton = ak3LoadButton(self.ak3path)
         self.loadButton.clicked.connect(self.getFilename)
         self.dataPoints = []
@@ -49,12 +53,19 @@ class tbl(load):
             self.generatePressure()
             self.update3DActor()
     #
-    def calcCorcosIntensity(self, kX, kY, omega, uC, alphaX = 0.1, alphaY = 0.77):
+    def calcCorcosIntensity_OLD(self, kX, kY, omega, uC, alphaX = 0.1, alphaY = 0.77):
         P1 = 4.*alphaX*alphaY
         P2 = alphaY**2. + (kY*uC/omega)**2.
         P3 = alphaX**2. + (kX*uC/omega - 1.)**2.
         spectrumFactor = (uC/omega)**2. / (2.*math.pi)**2.
         return spectrumFactor*P1/(P2*P3)
+    #
+    def calcCorcosIntensity(self, kX, kY, omega, uC, alphaX = 0.1, alphaY = 0.77):
+        P1 = 4.*alphaX*alphaY
+        P2 = alphaY**2. + np.power(np.array(kY)*uC/omega, 2.)
+        P3 = alphaX**2. + np.power(np.array(kX)*uC/omega - 1., 2.)
+        spectrumFactor = (uC/omega)**2. / (2.*math.pi)**2.
+        return spectrumFactor*P1/(P2[:,None]*P3)
     #
     def clearLayout(self):
         """
@@ -79,7 +90,6 @@ class tbl(load):
                 msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
             else:
                 self.nearestNeighbor()
-                r_vector = []
                 # Get model infos
                 nodes = self.myModel.calculationObjects[0].nodes
                 center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
@@ -87,8 +97,9 @@ class tbl(load):
                 flowDir = flowDir/np.linalg.norm(flowDir)
                 # Calculate distances in direction of the flow
                 progWin = progressWindow(len(self.surfacePoints)-1, "Calculating TBL load")
+                x0 = 0.
+                y0 = 0.
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
-                    r_vector.append(abs(flowDir[0]*(surfacePoint[0] - center[0]) + flowDir[1]*(surfacePoint[1] - center[1]) + flowDir[2]*(surfacePoint[2] - center[2])))
                     # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model 
                     idx = self.euclNearest[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
                     a = self.par_a[idx]
@@ -106,6 +117,12 @@ class tbl(load):
                     tauW = self.par_tauW[idx]
                     nu = self.par_nu[idx]
                     #
+                    if self.randomSelector.currentText()=='per element': 
+                        x0 = np.random.rand()*1000.
+                        y0 = np.random.rand()*1000.
+                    if self.randomSelector.currentText()=='per data point': 
+                        x0 = self.rand_x0[idx]
+                        y0 = self.rand_y0[idx]
                     for nf, freq in enumerate(frequencies):
                         omega = 2.*math.pi*freq
                         # Goody 2004 / Klabes 2017
@@ -119,15 +136,23 @@ class tbl(load):
                         self.surfaceAmps[nf,nsp] = phi**0.5
                         # Corcos
                         kC = omega/uC
-                        steps = 10
+                        steps = 100
                         dK = 20*kC/(steps-1)
                         kRange = np.linspace(-10*kC,10*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
-                        dens = []
-                        for kX in kRange:
-                            for kY in kRange:
-                                dens.append(self.calcCorcosIntensity(kX, kY, omega, uC))
-                        #print(np.sum(dens)*dK**2.)
-                        self.surfacePhases[nf,nsp] = 1.
+                        #
+                        eX = np.tile(np.exp(1j*kRange*(surfacePoint[0]-x0)), (len(kRange), 1)) 
+                        eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange))) 
+                        phaseMatrix = eX+eY
+                        #
+                        densMatrix = self.calcCorcosIntensity(kRange, kRange, omega, uC)
+                        superimpWave = densMatrix * phaseMatrix
+                        #
+                        phase = np.angle(np.sum(np.sum(superimpWave)))
+                        # Set range from 0 to 2pi
+                        if phase<0.:
+                            self.surfacePhases[nf,nsp] = 2*math.pi + phase
+                        else:
+                            self.surfacePhases[nf,nsp] = phase
                         #
                         progWin.setValue(nsp)
                         QApplication.processEvents()
@@ -245,6 +270,7 @@ class tbl(load):
         self.setupWindow.layout.addRow(QLabel('Flow-direction X'), self.flowDirX)
         self.setupWindow.layout.addRow(QLabel('Flow-direction Y'), self.flowDirY)
         self.setupWindow.layout.addRow(QLabel('Flow-direction Z'), self.flowDirZ)
+        self.setupWindow.layout.addRow(QLabel('Use Random'),       self.randomSelector)
         self.setupWindow.layout.addRow(QLabel('Load xyz input file'), self.loadButton)
         #
         self.blockChecker = []
@@ -283,6 +309,10 @@ class tbl(load):
         self.par_tauW = []
         self.par_nu = []
         #
+        self.rand_x0 = []
+        self.rand_y0 = []
+        self.rand_z0 = []
+        #
         for point in ld.get('pointdata'): 
             self.dataPoints.append(point.get('coord'))
             self.par_a.append(float(point.get('a')))
@@ -299,6 +329,10 @@ class tbl(load):
             self.par_uTau.append(float(point.get('uTau')))
             self.par_tauW.append(float(point.get('tauW')))
             self.par_nu.append(float(point.get('nu')))
+            # Each point gets a random origin (later used if user selects a random origin per data point)
+            self.rand_x0.append(np.random.rand()*1000.)
+            self.rand_y0.append(np.random.rand()*1000.)
+            self.rand_z0.append(np.random.rand()*1000.)
     #
     def nearestNeighbor(self):
         """
