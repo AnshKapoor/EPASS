@@ -77,6 +77,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.iren.Start()
 
     def updateLoads(self, loads):
+
         blocksToDraw = []
         for n, load in enumerate(loads):
             for act in load.actorsList:
@@ -90,6 +91,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
                         if blockState==1:
                             blocksToDraw.append(p)
             # Color blocks
+            print(load.surfacePhases)
             blockCounter = 0
             for block in range(len(load.blockChecker)):
                 if block in blocksToDraw:

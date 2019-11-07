@@ -56,10 +56,11 @@ class timeVarDat(load):
             #self.generatePressure()
             self.update3DActor()
 
-        self.nearestNeighbor()
-        self.timeToFreq()
-        self.matchDataPoints()
-        self.getPhases()
+        #self.nearestNeighbor()
+        #self.timeToFreq()
+        
+        self.generatePressure()
+       # self.getPhases()
 
 
     def clearLayout(self):
@@ -77,10 +78,12 @@ class timeVarDat(load):
         """
         Return x, y data for plotting
         """
+       
         FreqArr = np.array(self.yfDataSq)
         yfMean = np.mean(FreqArr, axis=0)
         self.yfRootMean = np.sqrt(yfMean)
-
+        
+           
 
         #print(len(yfRootMean))
         return self.myModel.calculationObjects[0].frequencies, self.yfRootMean
@@ -92,6 +95,8 @@ class timeVarDat(load):
         loads file with x,y,z data. must be .json and must be a dict like: {'[x0,y0,z0]': [1,2,3,4,5...], ...'}
         """
         #self.getFilename()
+
+
         with open(filename) as f:
             ld = json.load(f)
         keys = list(ld.keys())
@@ -114,12 +119,21 @@ class timeVarDat(load):
         """
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
+
         self.findRelevantPoints()
         self.sp = self.surfacePoints
         #print(self.sp)
         surfdata = np.array(self.sp)
         #xyzdata = np.array([list(x) for x in list(self.ld.keys())])
-        xyzdata = np.array(self.ldkeys)
+        try:
+            xyzdata = np.array(self.ldkeys)
+            print(self.ldkeys)
+        except:
+            print('Hier!')
+            self.ldkeys = [[0,0,0], [0,0,1]]
+            self.timeValues = [[0 for x in range(300)],[0 for x in range(300)]]
+            #
+            xyzdata = np.array(self.ldkeys)
         #np.random.shuffle(xyzdata)
         dist = np.empty(shape=(len(surfdata), len(xyzdata), 3))
         for k in range(len(surfdata)):
@@ -134,15 +148,22 @@ class timeVarDat(load):
         self.euclNearest = []
         for p in range(len(eucl)):
             self.euclNearest.append(eucl[p].argsort()[0])
-
+      
         #print(self.euclNearest, len(self.euclNearest))
         #print('xyz: ', len(self.ldkeys), 'surf: ', len(self.sp))
 
 
-    def matchDataPoints(self):
+    def generatePressure(self):
         """
         combines nearest points and data: writes into a list of length of the element list
         """
+        #self.surfacePhases = np.zeros((len(self.myModel.calculationObjects[0].frequencies),len(self.sp)))
+        #try:
+
+
+        self.nearestNeighbor()
+        self.timeToFreq()
+    
         self.FreqData = [0 for x in self.sp]#np.zeros(shape=(len(self.sp)))
         self.yfDataSq = [0 for x in self.sp]
         i=0
@@ -154,6 +175,9 @@ class timeVarDat(load):
         #print(self.euclNearest, self.FreqData[0][123])
         #surfaceTimeData = dict(zip([(str(list(self.sp[x]))) for x in self.euclNearest], self.ld.values()))
         #print(surfaceTimeData.keys(), len(surfaceTimeData.keys()))
+        self.getPhases()
+        #except:
+           # print('Upsi, keine Datei')
 
 
     def timeToFreq(self):
@@ -195,6 +219,8 @@ class timeVarDat(load):
                     self.surfacePhases[nf,ne] = 0
                 else:
                     self.surfacePhases[nf,ne] = cmath.phase(self.FreqData[ne][nf])
+
+        print(self.surfacePhases)
 
         # self.meanPhase = np.mean(self.surfacePhases, axis=1)
         # print(len(self.meanPhase))

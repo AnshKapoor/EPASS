@@ -22,7 +22,7 @@ class diffuseField(load):
         self.myModel = myModel
         self.removeButton = removeButton(self.ak3path)
         self.editButton = editButton()
-        self.type = 'diffuse field'
+        self.type = 'diffuse_field'
         #
         self.amp = QLineEdit('1.')
         self.dirX = QLineEdit('1.')
