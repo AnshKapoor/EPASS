@@ -54,13 +54,8 @@ class timeVarDat(load):
         var = self.showEdit()
         if var == 0: # is the case if the initial setup window is canceled by the user
             #self.generatePressure()
+            self.generatePressure()
             self.update3DActor()
-
-        #self.nearestNeighbor()
-        #self.timeToFreq()
-        
-        self.generatePressure()
-       # self.getPhases()
 
 
     def clearLayout(self):
@@ -96,7 +91,7 @@ class timeVarDat(load):
         """
         #self.getFilename()
 
-
+        self.timeValues = []
         with open(filename) as f:
             ld = json.load(f)
         keys = list(ld.keys())
@@ -109,49 +104,40 @@ class timeVarDat(load):
         self.ldkeys = keys
         self.timeValues = list(values)
 
-    #    print(self.timeValues[0])
-        ## aus Tupeln dringend Listen machen. Die als String in der dict speichern.
-        ## Problem ist nämlich: Werte in Tupeln werden ungeordnet gespeichert. Das wirft evtl. die Koordinaten durcheinander.
-        ## Die werden ja eh ständig in Listen und strings konvertiert.
-
 
     def nearestNeighbor(self):
         """
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
-
-        self.findRelevantPoints()
         self.sp = self.surfacePoints
+        self.euclNearest = []
         #print(self.sp)
         surfdata = np.array(self.sp)
         #xyzdata = np.array([list(x) for x in list(self.ld.keys())])
         try:
             xyzdata = np.array(self.ldkeys)
-            print(self.ldkeys)
         except:
-            print('Hier!')
-            self.ldkeys = [[0,0,0], [0,0,1]]
-            self.timeValues = [[0 for x in range(300)],[0 for x in range(300)]]
+            msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')  
+            frequencies = self.myModel.calculationObjects[0].frequencies
+            print(frequencies)
+            self.ldkeys = [[0,0,1]]
+            self.timeValues = [[0 for x in range(300)]]
             #
-            xyzdata = np.array(self.ldkeys)
-        #np.random.shuffle(xyzdata)
-        dist = np.empty(shape=(len(surfdata), len(xyzdata), 3))
-        for k in range(len(surfdata)):
-            for i in range(len(xyzdata)):
-                diff = (xyzdata[i] - surfdata[k])
-                dist[k,i,0] = diff[0]
-                dist[k,i,1] = diff[1]
-                dist[k,i,2] = diff[2]
+            #xyzdata = np.array(self.ldkeys)
+        # dist = np.empty(shape=(len(surfdata), len(xyzdata), 3))
+        # for k in range(len(surfdata)):
+        #     for i in range(len(xyzdata)):
+        #         diff = (xyzdata[i] - surfdata[k])
+        #         dist[k,i,0] = diff[0]
+        #         dist[k,i,1] = diff[1]
+        #         dist[k,i,2] = diff[2]
 
-        eucl = np.sqrt(np.square(dist[:,:,0]) + np.square(dist[:,:,1]) + np.square(dist[:,:,2]))
-        #print(eucl)
-        self.euclNearest = []
-        for p in range(len(eucl)):
-            self.euclNearest.append(eucl[p].argsort()[0])
-      
-        #print(self.euclNearest, len(self.euclNearest))
-        #print('xyz: ', len(self.ldkeys), 'surf: ', len(self.sp))
-
+        # eucl = np.sqrt(np.square(dist[:,:,0]) + np.square(dist[:,:,1]) + np.square(dist[:,:,2]))
+        
+        #for p in range(len(eucl)):
+        #    self.euclNearest.append(eucl[p].argsort()[0])
+        for m, surfPoint in enumerate(np.array(self.surfacePoints)):
+            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint-surfPoint)) for n, dataPoint in enumerate(np.array(self.ldkeys))]))
 
     def generatePressure(self):
         """
@@ -160,6 +146,7 @@ class timeVarDat(load):
         #self.surfacePhases = np.zeros((len(self.myModel.calculationObjects[0].frequencies),len(self.sp)))
         #try:
 
+        self.findRelevantPoints()
 
         self.nearestNeighbor()
         self.timeToFreq()
@@ -171,7 +158,7 @@ class timeVarDat(load):
             self.FreqData[i] = self.FreqValues[x]
             self.yfDataSq[i] = self.AbsFreqValuesSq[x]
             i+=1
-        print(len(self.FreqData), len(self.yfDataSq))
+        #print(len(self.FreqData), len(self.yfDataSq))
         #print(self.euclNearest, self.FreqData[0][123])
         #surfaceTimeData = dict(zip([(str(list(self.sp[x]))) for x in self.euclNearest], self.ld.values()))
         #print(surfaceTimeData.keys(), len(surfaceTimeData.keys()))
@@ -221,13 +208,6 @@ class timeVarDat(load):
                     self.surfacePhases[nf,ne] = cmath.phase(self.FreqData[ne][nf])
 
         print(self.surfacePhases)
-
-        # self.meanPhase = np.mean(self.surfacePhases, axis=1)
-        # print(len(self.meanPhase))
-        # fig, ax = plt.subplots()
-        # ax.plot(self.xf, self.meanPhase)
-        # plt.show()
-        #print(self.surfacePhases)
 
 
     # initialize vtk objects
@@ -296,11 +276,8 @@ class timeVarDat(load):
             #if float(self.radius.text()) == 0. and float(self.samples.text()) == 0.:
                 #raise Exception
             self.ampLabel.setText(str(float(self.amp.text())) + ' Pa')
-            #self.radLabel.setText('Radius: ' + self.radius.text())
-            #self.sampLabel.setText('Sources: ' + self.samples.text())
             c = float(self.c.text()) # It's just a check, variable is not used here
-            #self.generatePressure()
-            #self.generatePointCloud()
+            self.generatePressure()
             self.update3DActor()
             self.switch()
             #except: # if input is wrong, show message and reset values
