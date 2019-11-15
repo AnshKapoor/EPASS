@@ -43,6 +43,7 @@ class loadGUI(QMainWindow):
         p = self.palette() # color
         p.setColor(self.backgroundRole(), Qt.white) # color
         self.setPalette(p) # color
+
         #
         self.ak3path = os.path.dirname(os.path.abspath(__file__)) # where we are
         self.myFont = QFont("Verdana", 12)

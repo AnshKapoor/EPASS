@@ -73,12 +73,12 @@ class timeVarDat(load):
         """
         Return x, y data for plotting
         """
-       
+
         FreqArr = np.array(self.yfDataSq)
         yfMean = np.mean(FreqArr, axis=0)
         self.yfRootMean = np.sqrt(yfMean)
-        
-           
+
+
 
         #print(len(yfRootMean))
         return self.myModel.calculationObjects[0].frequencies, self.yfRootMean
@@ -91,18 +91,27 @@ class timeVarDat(load):
         """
         #self.getFilename()
 
-        self.timeValues = []
         with open(filename) as f:
             ld = json.load(f)
-        keys = list(ld.keys())
-        values = ld.values()
-        for npt, pt in enumerate(keys):
-            ptlist = pt[1:-1].split(',')
-            keys[npt] = [float(x.strip()) for x in ptlist]
-        keystup = [tuple(point) for point in keys]
-        self.ld = dict(zip(keystup, values))
-        self.ldkeys = keys
-        self.timeValues = list(values)
+        self.dataPoints = []
+        self.timeValues = []
+        #
+
+        #
+        for point in ld.get('pointdata'):
+            self.dataPoints.append(point.get('coord'))
+            self.timeValues.append(point.get('timedata'))
+
+        # keys = list(ld.keys())
+        # values = ld.values()
+        # #values = np.
+        # for npt, pt in enumerate(keys):
+        #     ptlist = pt[1:-1].split(',')
+        #     keys[npt] = [float(x.strip()) for x in ptlist]
+        # keystup = [tuple(point) for point in keys]
+        # self.ld = dict(zip(keystup, values))
+        # self.ldkeys = keys
+        # self.timeValues = list(values)
 
 
     def nearestNeighbor(self):
@@ -115,12 +124,12 @@ class timeVarDat(load):
         surfdata = np.array(self.sp)
         #xyzdata = np.array([list(x) for x in list(self.ld.keys())])
         try:
-            xyzdata = np.array(self.ldkeys)
+            xyzdata = np.array(self.dataPoints)
         except:
-            msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')  
+            msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
             frequencies = self.myModel.calculationObjects[0].frequencies
-            print(frequencies)
-            self.ldkeys = [[0,0,1]]
+            #print(frequencies)
+            self.dataPoints = [[0,0,1]]
             self.timeValues = [[0 for x in range(300)]]
             #
             #xyzdata = np.array(self.ldkeys)
@@ -133,11 +142,11 @@ class timeVarDat(load):
         #         dist[k,i,2] = diff[2]
 
         # eucl = np.sqrt(np.square(dist[:,:,0]) + np.square(dist[:,:,1]) + np.square(dist[:,:,2]))
-        
+
         #for p in range(len(eucl)):
         #    self.euclNearest.append(eucl[p].argsort()[0])
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
-            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint-surfPoint)) for n, dataPoint in enumerate(np.array(self.ldkeys))]))
+            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint-surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
 
     def generatePressure(self):
         """
@@ -150,7 +159,7 @@ class timeVarDat(load):
 
         self.nearestNeighbor()
         self.timeToFreq()
-    
+
         self.FreqData = [0 for x in self.sp]#np.zeros(shape=(len(self.sp)))
         self.yfDataSq = [0 for x in self.sp]
         i=0
@@ -207,7 +216,7 @@ class timeVarDat(load):
                 else:
                     self.surfacePhases[nf,ne] = cmath.phase(self.FreqData[ne][nf])
 
-        print(self.surfacePhases)
+        #print(self.surfacePhases)
 
 
     # initialize vtk objects
@@ -354,7 +363,7 @@ class timeVarDat(load):
             frequencies = self.myModel.calculationObjects[0].frequencies
             f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
             f.write(str(len(frequencies)) + '\n')
-            print(self.surfacePhases)
+            #print(self.surfacePhases)
             [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
             f.close()
             # Apply load to element
