@@ -91,7 +91,6 @@ class vtkWindow(QVTKRenderWindowInteractor):
                         if blockState==1:
                             blocksToDraw.append(p)
             # Color blocks
-            print(load.surfacePhases)
             blockCounter = 0
             for block in range(len(load.blockChecker)):
                 if block in blocksToDraw:

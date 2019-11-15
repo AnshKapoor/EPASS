@@ -30,6 +30,7 @@ class timeVarDat(load):
 
         self.loadButton = ak3LoadButton(self.ak3path)
         self.loadButton.clicked.connect(self.getFilename)
+        self.dataPoints = []
 
         self.label = QLabel('Distr. Time Domain')
         self.ampLabel = QLabel(self.amp.text() + ' Pa')
@@ -40,8 +41,6 @@ class timeVarDat(load):
         [self.addWidget(wid) for wid in [self.removeButton, self.label, self.ampLabel, self.drawCheck, self.editButton]]
         #
         self.initSetupWindow()
-        self.findRelevantPoints()
-        self.sp = self.surfacePoints
 
         self.init3DActor(vtkWindow)
 
@@ -71,80 +70,59 @@ class timeVarDat(load):
 
     def getXYdata(self):
         """
-        Return x, y data for plotting
+        Returns x, y data for plotting
         """
 
         FreqArr = np.array(self.yfDataSq)
+
         yfMean = np.mean(FreqArr, axis=0)
         self.yfRootMean = np.sqrt(yfMean)
 
 
+        if (len(self.myModel.calculationObjects[0].frequencies) == self.yfRootMean.size):
+            return1 = self.myModel.calculationObjects[0].frequencies
+            return2 = self.yfRootMean
+        else:
+            return1 = 0
+            return2 = 0
+            msg = messageboxOK('Error', 'Could not find data to print.\nNo visualisation possible!\n')
+        return return1, return2
+        #return self.myModel.calculationObjects[0].frequencies, self.yfRootMean
 
-        #print(len(yfRootMean))
-        return self.myModel.calculationObjects[0].frequencies, self.yfRootMean
-        #return self.xf, len(self.xf)*[float(self.amp.text())]
 
 
     def loadData(self, filename):
         """
-        loads file with x,y,z data. must be .json and must be a dict like: {'[x0,y0,z0]': [1,2,3,4,5...], ...'}
+        loads file with x,y,z data. must be .json and must be a dict like:
+        {"pointdata":[
+            {"coord":[0.0,1.7,0.0],"timedata":[0.0, 0.5407014555870047, -0.9596090131296847, 1.164619243635656]},
+            {"coord":[0.2,1.7,0.0],"timedata":[-1.0813793556840758, 1.154942901919569, -0.9819364679621521]}
         """
-        #self.getFilename()
-
         with open(filename) as f:
             ld = json.load(f)
         self.dataPoints = []
         self.timeValues = []
-        #
 
-        #
         for point in ld.get('pointdata'):
             self.dataPoints.append(point.get('coord'))
             self.timeValues.append(point.get('timedata'))
-
-        # keys = list(ld.keys())
-        # values = ld.values()
-        # #values = np.
-        # for npt, pt in enumerate(keys):
-        #     ptlist = pt[1:-1].split(',')
-        #     keys[npt] = [float(x.strip()) for x in ptlist]
-        # keystup = [tuple(point) for point in keys]
-        # self.ld = dict(zip(keystup, values))
-        # self.ldkeys = keys
-        # self.timeValues = list(values)
 
 
     def nearestNeighbor(self):
         """
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
-        self.sp = self.surfacePoints
+        #self.sp = self.surfacePoints
         self.euclNearest = []
-        #print(self.sp)
-        surfdata = np.array(self.sp)
-        #xyzdata = np.array([list(x) for x in list(self.ld.keys())])
-        try:
-            xyzdata = np.array(self.dataPoints)
-        except:
-            msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
-            frequencies = self.myModel.calculationObjects[0].frequencies
-            #print(frequencies)
-            self.dataPoints = [[0,0,1]]
-            self.timeValues = [[0 for x in range(300)]]
-            #
-            #xyzdata = np.array(self.ldkeys)
-        # dist = np.empty(shape=(len(surfdata), len(xyzdata), 3))
-        # for k in range(len(surfdata)):
-        #     for i in range(len(xyzdata)):
-        #         diff = (xyzdata[i] - surfdata[k])
-        #         dist[k,i,0] = diff[0]
-        #         dist[k,i,1] = diff[1]
-        #         dist[k,i,2] = diff[2]
-
-        # eucl = np.sqrt(np.square(dist[:,:,0]) + np.square(dist[:,:,1]) + np.square(dist[:,:,2]))
-
-        #for p in range(len(eucl)):
-        #    self.euclNearest.append(eucl[p].argsort()[0])
+        surfdata = np.array(self.surfacePoints)
+#         try:
+#             xyzdata = np.array(self.dataPoints)
+#         except:
+#             msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
+#             frequencies = self.myModel.calculationObjects[0].frequencies
+#             self.dataPoints = [[0,0,1]]
+#             self.timeValues = [[0 for x in range(300)]]
+# '
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
             self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint-surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
 
@@ -152,29 +130,28 @@ class timeVarDat(load):
         """
         combines nearest points and data: writes into a list of length of the element list
         """
-        #self.surfacePhases = np.zeros((len(self.myModel.calculationObjects[0].frequencies),len(self.sp)))
-        #try:
-
+        frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
+        self.FreqData = [0 for x in self.surfacePoints]
+        self.yfDataSq = [0 for x in self.surfacePoints]
+        if self.surfacePoints is not []:
+            self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
+            if self.dataPoints==[]:
+                msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
+            else:
+                self.nearestNeighbor()
+                self.timeToFreq()
 
-        self.nearestNeighbor()
-        self.timeToFreq()
 
-        self.FreqData = [0 for x in self.sp]#np.zeros(shape=(len(self.sp)))
-        self.yfDataSq = [0 for x in self.sp]
-        i=0
-        for x in self.euclNearest:
-            self.FreqData[i] = self.FreqValues[x]
-            self.yfDataSq[i] = self.AbsFreqValuesSq[x]
-            i+=1
-        #print(len(self.FreqData), len(self.yfDataSq))
-        #print(self.euclNearest, self.FreqData[0][123])
-        #surfaceTimeData = dict(zip([(str(list(self.sp[x]))) for x in self.euclNearest], self.ld.values()))
-        #print(surfaceTimeData.keys(), len(surfaceTimeData.keys()))
-        self.getPhases()
-        #except:
-           # print('Upsi, keine Datei')
+                i=0
 
+                for x in self.euclNearest:
+                    self.FreqData[i] = self.FreqValues[x]
+                    self.yfDataSq[i] = self.AbsFreqValuesSq[x]
+                    #self.surfaceAmps
+                    i+=1
+
+                self.getPhases()
 
     def timeToFreq(self):
         """
@@ -182,12 +159,11 @@ class timeVarDat(load):
         """
         self.FreqValues = []
         self.freqLenVec = []
-
         self.AbsFreqValuesSq = []
-        #self.yfprint = []
+
         for nd, data in enumerate(self.timeValues):
             N=len(data)
-            T=1/N#int(self.ffttime.text())
+            T=1/N
             Y = np.fft.fft(np.array(data))
             yf = 2.0/N * (Y[:N//2])
             self.FreqValues.append(yf.tolist())
@@ -196,27 +172,19 @@ class timeVarDat(load):
             self.myModel.calculationObjects[0].frequencies = np.linspace(0.0, 1.0/(2.0*T), N/2, dtype=int)
             yfabsSq = np.square(np.abs((yf[:N//2])))
             self.AbsFreqValuesSq.append(yfabsSq.tolist())
-            #print(self.xf)
-            #print(self.freqLenVec)
-        #    print(N, 1/T)
-            # fig, ax = plt.subplots()
-            # ax.plot(self.xf, np.abs(yf[:N//2]))
-            # plt.show()
 
 
     def getPhases(self):
         """
         calculates phases out of complex frequency domain data
         """
-        self.surfacePhases = np.zeros((max(self.freqLenVec),len(self.sp)))
+        self.surfacePhases = np.zeros((max(self.freqLenVec),len(self.surfacePoints)))
         for nf in range(max(self.freqLenVec)):
-            for ne in range(len(self.sp)):
+            for ne in range(len(self.surfacePoints)):
                 if self.FreqData[ne] == 0:
                     self.surfacePhases[nf,ne] = 0
                 else:
                     self.surfacePhases[nf,ne] = cmath.phase(self.FreqData[ne][nf])
-
-        #print(self.surfacePhases)
 
 
     # initialize vtk objects
