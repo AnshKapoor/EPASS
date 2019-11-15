@@ -33,7 +33,7 @@ class loadInfoBox(QScrollArea):
 class load(QHBoxLayout):
     def __init__(self):
         super(load, self).__init__()
-        
+
     # Find one point per element at which pressure shall be generated
     def findRelevantPoints(self):
         self.surfacePoints = []
@@ -71,3 +71,12 @@ class load(QHBoxLayout):
                         self.surfaceElementNormals.append(-1*elemNormal)
                     else:
                         self.surfaceElementNormals.append(elemNormal)
+
+    def nearestNeighbor(self):
+        """
+        finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
+        """
+        self.euclNearest = []
+        for m, surfPoint in enumerate(np.array(self.surfacePoints)):
+            # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
+            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))

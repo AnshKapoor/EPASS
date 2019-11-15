@@ -108,24 +108,6 @@ class timeVarDat(load):
             self.timeValues.append(point.get('timedata'))
 
 
-    def nearestNeighbor(self):
-        """
-        finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
-        """
-        #self.sp = self.surfacePoints
-        self.euclNearest = []
-        surfdata = np.array(self.surfacePoints)
-#         try:
-#             xyzdata = np.array(self.dataPoints)
-#         except:
-#             msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
-#             frequencies = self.myModel.calculationObjects[0].frequencies
-#             self.dataPoints = [[0,0,1]]
-#             self.timeValues = [[0 for x in range(300)]]
-# '
-        for m, surfPoint in enumerate(np.array(self.surfacePoints)):
-            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint-surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
-
     def generatePressure(self):
         """
         combines nearest points and data: writes into a list of length of the element list
