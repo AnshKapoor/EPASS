@@ -102,20 +102,20 @@ class tbl(load):
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
                     # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model 
                     idx = self.euclNearest[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
-                    a = self.par_a[idx]
-                    b = self.par_b[idx]
-                    c = self.par_c[idx]
-                    d = self.par_d[idx]
-                    e = self.par_e[idx]
-                    f = self.par_f[idx]
-                    g = self.par_g[idx]
-                    h = self.par_h[idx]
                     delta = self.par_delta[idx]
-                    uC = self.par_uC[idx]
                     uE = self.par_uE[idx]
-                    uTau = self.par_uTau[idx]
+                    MA = self.par_MA[idx]
+                    c0 = self.par_c0[idx]
                     tauW = self.par_tauW[idx]
-                    nu = self.par_nu[idx]
+                    eta = self.par_eta[idx]
+                    rho = self.par_rho[idx]
+                    TKE = self.par_TKE[idx]
+                    FL = self.par_FL[idx]
+                    dcpdx = self.par_dcpdx[idx]
+                    uTau = (tauW/rho)**0.5
+                    uInf = c0 * MA
+                    nu = eta / rho # kin. viscosity
+                    cf = 2*(uTau/uInf)**2
                     #
                     if self.randomSelector.currentText()=='per element': 
                         x0 = np.random.rand()*1000.
@@ -125,7 +125,21 @@ class tbl(load):
                         y0 = self.rand_y0[idx]
                     for nf, freq in enumerate(frequencies):
                         omega = 2.*math.pi*freq
-                        # Goody 2004 / Klabes 2017
+                        # Klabes 2017
+                        gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
+                        gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
+                        gammaDG = gammaM*cf + gammaC
+                        a = (TKE / 10.)**gammaDG
+                        b = 0.5
+                        betaDeltaL = delta * dcpdx
+                        ReDeltaL = delta*uE/nu
+                        c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
+                        d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
+                        betaDDeltaL = delta * dcpdx * (2./cf)**0.5
+                        e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
+                        f = 1.1
+                        g = -0.57
+                        h = 5.5
                         Rt = (delta/uE)/(nu/uTau**2.)
                         scalingFactor = ((tauW**2.)*delta)/uE
                         P0 = 2.*math.pi*freq*delta/uE
@@ -135,6 +149,12 @@ class tbl(load):
                         phi = scalingFactor*P1/(P2 + P3)
                         self.surfaceAmps[nf,nsp] = phi**0.5
                         # Corcos
+                        if freq<475.:
+                            uC = 0.9*uInf # Haxter und Spehr 2012
+                        elif freq>5000.: 
+                            uC = 0.75*uInf
+                        else: 
+                            uC = (0.9 - 0.15*(freq-475.)/4525.) * uInf
                         kC = omega/uC
                         steps = 100
                         dK = 20*kC/(steps-1)
@@ -282,11 +302,12 @@ class tbl(load):
     #
     def loadData(self, filename):
         """
-        Loads file with x,y,z flow data for Klabes and Efimstov parameter.
+        Loads file with x,y,z flow data for Klabes and Efimtsov parameter.
         Must be .json and must be a dict like: 
         {"pointdata":[
-            {"coord":[0.0,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uC":164.4,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5},
-            {"coord":[0.2,1.7,0.0],"a":3.0,"b":2.0,"c":0.75,"d":0.5,"e":3.7,"f":1.1,"g":-0.57,"h":7.0,"delta":0.3,"uC":164.4,"uE":274.0,"uTau":7.0,"tauW":102.2,"nu":3.3e-5}
+          {"coord":[4.00,1.75,0.00], "delta":0.028, "uE":259.25, "MA":0.78, "c0":295.042, "tauW":21.057, "eta":14.3226e-6, "rho":0.274, "TKE":260.2, "FL":370.0, "dcpdx":0.04016},
+          {"coord":[6.00,1.75,0.00], "delta":0.058, "uE":241.41, "MA":0.78, "c0":295.042, "tauW":15.737, "eta":14.3226e-6, "rho":0.296, "TKE":218.1, "FL":370.0, "dcpdx":0.06914},
+          ...
         ]}
         """
         with open(filename) as f:
@@ -294,20 +315,16 @@ class tbl(load):
         #
         self.dataPoints = []
         #
-        self.par_a = []
-        self.par_b = []
-        self.par_c = []
-        self.par_d = []
-        self.par_e = []
-        self.par_f = []
-        self.par_g = []
-        self.par_h = []
         self.par_delta = []
-        self.par_uC = []
         self.par_uE = []
-        self.par_uTau = []
+        self.par_MA = []
+        self.par_c0 = []
         self.par_tauW = []
-        self.par_nu = []
+        self.par_eta = []
+        self.par_rho = []
+        self.par_TKE = []
+        self.par_FL = []
+        self.par_dcpdx = []
         #
         self.rand_x0 = []
         self.rand_y0 = []
@@ -315,20 +332,16 @@ class tbl(load):
         #
         for point in ld.get('pointdata'): 
             self.dataPoints.append(point.get('coord'))
-            self.par_a.append(float(point.get('a')))
-            self.par_b.append(float(point.get('b')))
-            self.par_c.append(float(point.get('c')))
-            self.par_d.append(float(point.get('d')))
-            self.par_e.append(float(point.get('e')))
-            self.par_f.append(float(point.get('f')))
-            self.par_g.append(float(point.get('g')))
-            self.par_h.append(float(point.get('h')))
             self.par_delta.append(float(point.get('delta')))
-            self.par_uC.append(float(point.get('uC')))
             self.par_uE.append(float(point.get('uE')))
-            self.par_uTau.append(float(point.get('uTau')))
+            self.par_MA.append(float(point.get('MA')))
+            self.par_c0.append(float(point.get('c0')))
             self.par_tauW.append(float(point.get('tauW')))
-            self.par_nu.append(float(point.get('nu')))
+            self.par_eta.append(float(point.get('eta')))
+            self.par_rho.append(float(point.get('rho')))
+            self.par_TKE.append(float(point.get('TKE')))
+            self.par_FL.append(float(point.get('FL')))
+            self.par_dcpdx.append(float(point.get('dcpdx')))
             # Each point gets a random origin (later used if user selects a random origin per data point)
             self.rand_x0.append(np.random.rand()*1000.)
             self.rand_y0.append(np.random.rand()*1000.)
