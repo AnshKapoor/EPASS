@@ -15,12 +15,13 @@ class model: # Saves a model
     def __init__(self):
         self.name = ' - '
         self.path = ''
+        self.cluster = 0
         self.loads = []
         self.initModelInfo()
         self.initLayout()
         self.initLayout()
         self.calculationObjects = [] # For each model several calculations are possible (e.g. parameter variations)
-    
+
     def export(self):
         exportAK3 = copy.deepcopy(self.ak3tree)
         elemLoads = exportAK3.find('ElemLoads')
@@ -32,8 +33,8 @@ class model: # Saves a model
         for loadedElem in loadedElems.findall('LoadedElem'):
             loadedElems.remove(loadedElem)
         # Create new entries for requested loads
-        for load in self.loads: 
-            load.writeXML(exportAK3, self.name)
+        for load in self.loads:
+            load.writeXML(exportAK3, self.name, self.cluster)
         # Write new ak3 file to disc
         progWin = progressWindow(2, 'Writing input file')
         with open(self.path + '/' + self.name + '_old.ak3', 'wb') as f:
@@ -44,8 +45,8 @@ class model: # Saves a model
             f.write(etree.tostring(exportAK3))
         progWin.setValue(2)
         QApplication.processEvents()
-    
-    def initModelInfo(self): 
+
+    def initModelInfo(self):
         # CREATE WIDGETS
         self.title = QLabel('Name: ' + self.name)
         self.title.setFixedWidth(200)
@@ -59,7 +60,7 @@ class model: # Saves a model
         self.blockInfo.setColumnWidth(0, 20)
         self.blockInfo.setFixedWidth(322)
         self.blockInfo.setFixedHeight(200)
-    
+
     def initLayout(self):
         # ADD TO LAYOUT
         self.sublayout1 = QVBoxLayout()
@@ -71,8 +72,8 @@ class model: # Saves a model
         self.layout = QHBoxLayout()
         self.layout.addLayout(self.sublayout1)
         self.layout.addWidget(self.blockInfo)
-    
-    def updateModelInfo(self, vtkWindow): 
+
+    def updateModelInfo(self, vtkWindow):
         # UPDATE WIDGETS
         self.title.setText('Name: ' + self.name)
         if len(self.calculationObjects) > 0:
@@ -83,7 +84,7 @@ class model: # Saves a model
             self.nodeInfo.setText('Nodes: ' + str(len(self.calculationObjects[0].nodes)))
             self.elementInfo.setText('Blocks: ' + str(len(self.calculationObjects[0].elems)))
             addInfo = '\n                      (df=' + str(self.calculationObjects[-1].frequencies[1]-self.calculationObjects[-1].frequencies[0]) + ' Hz)'
-            if self.calculationObjects[-1].frequencyFile == 1: 
+            if self.calculationObjects[-1].frequencyFile == 1:
                 addInfo = '\n                      (from frq file)'
             self.frequencyInfo.setText('Frequencies: ' + str(min(self.calculationObjects[-1].frequencies)) + ' - ' + str(max(self.calculationObjects[-1].frequencies)) + ' Hz' + addInfo)
             self.blockInfo.setRowCount(len(self.calculationObjects[0].elems))
@@ -103,7 +104,7 @@ class model: # Saves a model
                     quad_ = vtk.vtkQuad()
                     for p in range(4): # Set four nodes
                         correctNodePosition = int(np.where(self.calculationObjects[0].nodes[:,0] == elem[p+1])[0]) # Get correct node position (nodes can have any id in elpaso)
-                        quad_.GetPointIds().SetId(p, int(correctNodePosition)) 
+                        quad_.GetPointIds().SetId(p, int(correctNodePosition))
                     newGrid.InsertNextCell(quad_.GetCellType(), quad_.GetPointIds())
                 # Infotable
                 items = [QTableWidgetItem(), QTableWidgetItem(str(block[1])), QTableWidgetItem(str(block[0])), QTableWidgetItem(str(len(block[2])))]
@@ -130,12 +131,19 @@ class model: # Saves a model
                 vtkWindow.edgeActors.append(vtk.vtkActor())
                 vtkWindow.edgeActors[-1].SetMapper(vtkWindow.edgeMappers[-1])
                 vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
-                vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2) 
+                vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2)
                 vtkWindow.edgeActors[-1].GetProperty().SetColor(0.1,0.1,0.1)
                 progWin.setValue(m+1)
                 QApplication.processEvents()
-    
-# Saves one calculation 
+
+    def toggleCluster(self):
+        if self.cluster == 0:
+            self.cluster = 1
+        else:
+            self.cluster = 0
+        print(self.cluster)
+
+# Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain
     def __init__(self, name):
         self.name = name
@@ -150,4 +158,3 @@ class calculationObject: # Saves one calculation in frequency domain
         self.physicalValues = [] # stores information on supported physical values
         self.analysisType = 'undefined' # stores the analysis type used to determine proper postprocessing and visualising
         self.doPreCalculationRayleigh = 0
-    

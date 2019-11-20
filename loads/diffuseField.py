@@ -64,7 +64,7 @@ class diffuseField(load):
         generates a half sphere point cloud with variable parameters
         """
         ####fibonacci
-        
+
         samples = 2*int(self.samples.text()) ## *2 because initially a sphere is constructed, which is then separated.
         normal = [float(x) for x in list(self.normal.text().split(','))]#[1.,0.,1.]
         R = float(self.radius.text()) # Radius
@@ -300,18 +300,20 @@ class diffuseField(load):
 
 
 
-    def writeXML(self, exportAK3, name):
+    def writeXML(self, exportAK3, name, cluster):
         elemLoads = exportAK3.find('ElemLoads')
         oldNoOfLoads = elemLoads.get('N')
         elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
         loadedElems = exportAK3.find('LoadedElems')
         # Create a directory for load dat files
         loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
+        print(loadDir)
         if not os.path.exists(loadDir):
             os.mkdir(loadDir)
         else: # Clean directory
             for filename in os.listdir(loadDir):
                 os.remove(loadDir + '/' + filename)
+        print(cluster)
         # Save loads for each element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nE, surfaceElem in enumerate(self.surfaceElements):
@@ -321,8 +323,12 @@ class diffuseField(load):
             newLoadID = etree.Element('Id')
             newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
             newLoad.append(newLoadID)
-            newFile = etree.Element('File')
-            newFile.text = '../' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
+            newFile = etree.Element('File')'
+            if cluster == 1:
+                strhead = '../../'
+            else:
+                strhead = '../'
+            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
             newLoad.append(newFile)
             elemLoads.append(newLoad)
             # Save one file per load

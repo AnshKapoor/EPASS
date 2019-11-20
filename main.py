@@ -12,7 +12,7 @@ import os
 from lxml import etree
 import numpy as np
 #
-from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction
+from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon
 #
@@ -102,6 +102,7 @@ class loadGUI(QMainWindow):
                 self.update2D()
                 self.update3D()
 
+
     # Open an ak3 file (self.loadButton click event)
     def loadInput(self):
         options = QFileDialog.Options()
@@ -173,6 +174,10 @@ class loadGUI(QMainWindow):
         self.addLoadButton = addButton(self.ak3path)
         self.addLoadButton.clicked.connect(self.addLoad)
         self.loadInfo = loadInfoBox()
+        self.clusterSwitch = QCheckBox()
+        self.clusterSwitch.setChecked(0)
+        self.clusterSwitch.setText('Export for Cluster')
+        self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
         self.exportButton = exportButton()
         self.exportButton.clicked.connect(self.myModel.export)
         # ADD TO LAYOUT
@@ -184,6 +189,7 @@ class loadGUI(QMainWindow):
         self.mainLayoutLeft.addLayout(self.loadLayout)
         self.mainLayoutLeft.addWidget(self.loadInfo)
         self.mainLayoutLeft.setStretchFactor(self.loadInfo, True)
+        self.mainLayoutLeft.addWidget(self.clusterSwitch)
         self.mainLayoutLeft.addWidget(self.exportButton)
         #
         # CREATE WIDGETS | III - 3D Window
@@ -245,6 +251,7 @@ class loadGUI(QMainWindow):
         helpAct.setStatusTip('About the program')
         helpAct.triggered.connect(self.about)
         self.modelMenu.addAction(helpAct)
+
 
     # Update method for 2D graph window
     def update2D(self):
