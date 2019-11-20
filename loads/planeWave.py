@@ -264,7 +264,7 @@ class planeWave(load):
         self.arrowDataLoad.Modified()
         #
 
-    def writeXML(self, exportAK3, name):
+    def writeXML(self, exportAK3, name, cluster):
         elemLoads = exportAK3.find('ElemLoads')
         oldNoOfLoads = elemLoads.get('N')
         elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
@@ -286,7 +286,11 @@ class planeWave(load):
             newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
             newLoad.append(newLoadID)
             newFile = etree.Element('File')
-            newFile.text = '../' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
+            if cluster == 1:
+                strhead = '../../'
+            else:
+                strhead = '../'
+            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
             newLoad.append(newFile)
             elemLoads.append(newLoad)
             # Save one file per load

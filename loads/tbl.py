@@ -86,7 +86,7 @@ class tbl(load):
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             self.surfaceAmps = np.zeros((len(frequencies),len(self.surfacePoints)))
-            if self.dataPoints==[]: 
+            if self.dataPoints==[]:
                 msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
             else:
                 self.nearestNeighbor()
@@ -100,7 +100,7 @@ class tbl(load):
                 x0 = 0.
                 y0 = 0.
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
-                    # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model 
+                    # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model
                     idx = self.euclNearest[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
                     delta = self.par_delta[idx]
                     uE = self.par_uE[idx]
@@ -117,10 +117,10 @@ class tbl(load):
                     nu = eta / rho # kin. viscosity
                     cf = 2*(uTau/uInf)**2
                     #
-                    if self.randomSelector.currentText()=='per element': 
+                    if self.randomSelector.currentText()=='per element':
                         x0 = np.random.rand()*1000.
                         y0 = np.random.rand()*1000.
-                    if self.randomSelector.currentText()=='per data point': 
+                    if self.randomSelector.currentText()=='per data point':
                         x0 = self.rand_x0[idx]
                         y0 = self.rand_y0[idx]
                     for nf, freq in enumerate(frequencies):
@@ -151,17 +151,17 @@ class tbl(load):
                         # Corcos
                         if freq<475.:
                             uC = 0.9*uInf # Haxter und Spehr 2012
-                        elif freq>5000.: 
+                        elif freq>5000.:
                             uC = 0.75*uInf
-                        else: 
+                        else:
                             uC = (0.9 - 0.15*(freq-475.)/4525.) * uInf
                         kC = omega/uC
                         steps = 100
                         dK = 20*kC/(steps-1)
                         kRange = np.linspace(-10*kC,10*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
                         #
-                        eX = np.tile(np.exp(1j*kRange*(surfacePoint[0]-x0)), (len(kRange), 1)) 
-                        eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange))) 
+                        eX = np.tile(np.exp(1j*kRange*(surfacePoint[0]-x0)), (len(kRange), 1))
+                        eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange)))
                         phaseMatrix = eX+eY
                         #
                         densMatrix = self.calcCorcosIntensity(kRange, kRange, omega, uC)
@@ -303,7 +303,7 @@ class tbl(load):
     def loadData(self, filename):
         """
         Loads file with x,y,z flow data for Klabes and Efimtsov parameter.
-        Must be .json and must be a dict like: 
+        Must be .json and must be a dict like:
         {"pointdata":[
           {"coord":[4.00,1.75,0.00], "delta":0.028, "uE":259.25, "MA":0.78, "c0":295.042, "tauW":21.057, "eta":14.3226e-6, "rho":0.274, "TKE":260.2, "FL":370.0, "dcpdx":0.04016},
           {"coord":[6.00,1.75,0.00], "delta":0.058, "uE":241.41, "MA":0.78, "c0":295.042, "tauW":15.737, "eta":14.3226e-6, "rho":0.296, "TKE":218.1, "FL":370.0, "dcpdx":0.06914},
@@ -330,7 +330,7 @@ class tbl(load):
         self.rand_y0 = []
         self.rand_z0 = []
         #
-        for point in ld.get('pointdata'): 
+        for point in ld.get('pointdata'):
             self.dataPoints.append(point.get('coord'))
             self.par_delta.append(float(point.get('delta')))
             self.par_uE.append(float(point.get('uE')))
@@ -424,7 +424,7 @@ class tbl(load):
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
     #
-    def writeXML(self, exportAK3, name):
+    def writeXML(self, exportAK3, name, cluster):
         elemLoads = exportAK3.find('ElemLoads')
         oldNoOfLoads = elemLoads.get('N')
         elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
@@ -446,7 +446,11 @@ class tbl(load):
             newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
             newLoad.append(newLoadID)
             newFile = etree.Element('File')
-            newFile.text = '../' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
+            if cluster == 1:
+                strhead = '../../'
+            else:
+                strhead = '../'
+            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
             newLoad.append(newFile)
             elemLoads.append(newLoad)
             # Save one file per load

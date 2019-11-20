@@ -307,13 +307,11 @@ class diffuseField(load):
         loadedElems = exportAK3.find('LoadedElems')
         # Create a directory for load dat files
         loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
-        print(loadDir)
         if not os.path.exists(loadDir):
             os.mkdir(loadDir)
         else: # Clean directory
             for filename in os.listdir(loadDir):
                 os.remove(loadDir + '/' + filename)
-        print(cluster)
         # Save loads for each element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nE, surfaceElem in enumerate(self.surfaceElements):
@@ -323,7 +321,7 @@ class diffuseField(load):
             newLoadID = etree.Element('Id')
             newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
             newLoad.append(newLoadID)
-            newFile = etree.Element('File')'
+            newFile = etree.Element('File')
             if cluster == 1:
                 strhead = '../../'
             else:
