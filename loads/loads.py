@@ -1,7 +1,10 @@
 #
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy
+import os
 import numpy as np
 import math
+from lxml import etree
+from standardWidgets import progressWindow
 
 # ScrollArea containing loads in bottom left part of program
 class loadInfoBox(QScrollArea):
@@ -34,8 +37,24 @@ class load(QHBoxLayout):
     def __init__(self):
         super(load, self).__init__()
 
-    # Find one point per element at which pressure shall be generated
+
+    def calcLoadNormal(self, elemNormal):
+        """
+        calculates load normal and angle to element normals acc. to user input
+        """
+        loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
+        loadNormal = loadNormal/np.linalg.norm(loadNormal)
+        angle = np.arccos(np.dot(loadNormal, elemNormal) / (np.linalg.norm(loadNormal) * np.linalg.norm(elemNormal)))*180./math.pi
+        if angle>90.:
+            self.surfaceElementNormals.append(-1*elemNormal)
+        else:
+            self.surfaceElementNormals.append(elemNormal)
+
+
     def findRelevantPoints(self):
+        """
+        Find one point per element at which pressure shall be generated
+        """
         self.surfacePoints = []
         self.surfaceElements = []
         self.surfaceElementNormals = []
@@ -64,13 +83,11 @@ class load(QHBoxLayout):
                     vec4 = [ node4[1]-centerX, node4[2]-centerY, node4[3]-centerZ ] # from center to node 4
                     elemNormal = 0.5 * (np.cross(vec1, vec2) + np.cross(vec3, vec4)) # Mean value of two normal vectors
                     elemNormal = elemNormal / np.linalg.norm(elemNormal)
-                    loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
-                    loadNormal = loadNormal/np.linalg.norm(loadNormal)
-                    angle = np.arccos(np.dot(loadNormal, elemNormal) / (np.linalg.norm(loadNormal) * np.linalg.norm(elemNormal)))*180./math.pi
-                    if angle>90.:
-                        self.surfaceElementNormals.append(-1*elemNormal)
-                    else:
-                        self.surfaceElementNormals.append(elemNormal)
+                    try:
+                        self.calcLoadNormal(elemNormal)
+                    except:
+                        pass
+
 
     def nearestNeighbor(self):
         """
@@ -80,3 +97,67 @@ class load(QHBoxLayout):
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
             # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
             self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
+
+
+    def switch(self):
+        """
+        Method changing the objects changedSwitch in order to indicate 2D and 3D update
+        """
+        if self.changeSwitch.isChecked():
+            self.changeSwitch.setChecked(0)
+        else:
+            self.changeSwitch.setChecked(1)
+
+
+    def writeXML(self, exportAK3, name, cluster):
+        """
+        saves loads into existing .xml
+        """
+        elemLoads = exportAK3.find('ElemLoads')
+        oldNoOfLoads = elemLoads.get('N')
+        elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
+        loadedElems = exportAK3.find('LoadedElems')
+        # Create a directory for load dat files
+        loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
+        if not os.path.exists(loadDir):
+            os.mkdir(loadDir)
+        else: # Clean directory
+            for filename in os.listdir(loadDir):
+                os.remove(loadDir + '/' + filename)
+        # Save loads for each element
+        progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
+        for nE, surfaceElem in enumerate(self.surfaceElements):
+            # One load per element
+            newLoad = etree.Element('ElemLoad', Type='structurefrq')
+            newLoad.tail = '\n'
+            newLoadID = etree.Element('Id')
+            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
+            newLoad.append(newLoadID)
+            newFile = etree.Element('File')
+            if cluster == 1:
+                strhead = '../../'
+            else:
+                strhead = '../'
+            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
+            newLoad.append(newFile)
+            elemLoads.append(newLoad)
+            # Save one file per load
+            frequencies = self.myModel.calculationObjects[0].frequencies
+            f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
+            f.write(str(len(frequencies)) + '\n')
+
+            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
+            f.close()
+            # Apply load to element
+            newLoadedElem = etree.Element('LoadedElem')
+            newLoadedElem.tail = '\n'
+            newElemID = etree.Element('Id')
+            newElemID.text = str(surfaceElem) # Element ID
+            newLoadedElem.append(newElemID)
+            newLoadID = etree.Element('Load')
+            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # Load ID
+            newLoadedElem.append(newLoadID)
+            loadedElems.append(newLoadedElem)
+            # Update progress window
+            progWin.setValue(nE)
+            QApplication.processEvents()

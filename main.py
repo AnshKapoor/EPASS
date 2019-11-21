@@ -32,8 +32,13 @@ from tbl import tbl
 #
 # Main class called first
 class loadGUI(QMainWindow):
+    """
+    the main window is constructed here
+    """
     def __init__(self):
-        # Main window global attributes
+        """
+        initialises main window global attributes
+        """
         QMainWindow.__init__(self)
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
@@ -43,7 +48,6 @@ class loadGUI(QMainWindow):
         p = self.palette() # color
         p.setColor(self.backgroundRole(), Qt.white) # color
         self.setPalette(p) # color
-
         #
         self.ak3path = os.path.dirname(os.path.abspath(__file__)) # where we are
         self.myFont = QFont("Verdana", 12)
@@ -55,16 +59,22 @@ class loadGUI(QMainWindow):
         #self.resize(100, 100) # Resize to minimum in order to fit content
         self.statusBar().showMessage('Ready')
 
-    # Message box with information on the program
+
     def about(self):
+        """
+        Message box with information on the program
+        """
         msg = messageboxOK('About', 'elPaSo Load Application\n' +
                                     'Institute for Acoustics, Braunschweig\n' +
                                     'Version 0.1 (2019)\n\n' +
                                     'Program to add specific loads to an ak3 input file.\n' +
-                                    'Supported loads: plane wave')
+                                    'Supported loads: plane wave, diffuse field, \ndistributed time domain, turbulent boundary layer')
 
-    # Add the load selected by self.loadSelector (self.addLoadButton click event)
+
     def addLoad(self):
+        """
+        Add the load selected by self.loadSelector (self.addLoadButton click event)
+        """
         if self.myModel.name == ' - ':
             messageboxOK('Addition of load not possible', 'Open a model first!')
             return
@@ -93,8 +103,11 @@ class loadGUI(QMainWindow):
         self.loadInfo.clearLayout()
         self.loadInfo.updateLayout(self.myModel.loads)
 
-    # User clicks into graph area
+
     def graphWindowClick(self, event):
+        """
+        User clicks into graph area
+        """
         if self.myModel.name != ' - ':
             if event.xdata:
                 self.vtkWindow.currentFrequencyStep = np.argmin(abs(np.array(self.myModel.calculationObjects[0].frequencies)-event.xdata))
@@ -103,8 +116,10 @@ class loadGUI(QMainWindow):
                 self.update3D()
 
 
-    # Open an ak3 file (self.loadButton click event)
     def loadInput(self):
+        """
+        Open an ak3 file (self.loadButton click event)
+        """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","ak3 input file (*.ak3)", options=options)
@@ -126,8 +141,11 @@ class loadGUI(QMainWindow):
             self.update3D()
             self.statusBar().showMessage('Model loaded')
 
-    # Remove a load from list (removeButton click event)
+
     def removeLoad(self, loadIDToRemove):
+        """
+        Remove a load from list (removeButton click event)
+        """
         # Layout is cleared
         self.loadInfo.clearLayout()
         if loadIDToRemove=='button':
@@ -143,8 +161,11 @@ class loadGUI(QMainWindow):
         for loadNo in range(len(self.myModel.loads)):
             self.myModel.loads[loadNo].removeButton.id = loadNo
 
-    # Initialisation of gui (main window content)
+
     def setupGui(self):
+        """
+        Initialisation of gui (main window content)
+        """
         ### Basic splitting in areas ###
         self.mainLayoutLeft = QVBoxLayout()
         self.mainLayoutRight = QVBoxLayout()
@@ -227,8 +248,11 @@ class loadGUI(QMainWindow):
         self.mainLayout.setStretchFactor(self.mainLayoutRight, True)
         self.centralWidget.setLayout(self.mainLayout)
 
-    # Initialisation of the window menu
+
     def setupMenu(self):
+        """
+        Initialisation of the window menu
+        """
         self.menubar = self.menuBar()
         #
         self.fileMenu = self.menubar.addMenu('&File')
@@ -253,12 +277,18 @@ class loadGUI(QMainWindow):
         self.modelMenu.addAction(helpAct)
 
 
-    # Update method for 2D graph window
+
     def update2D(self):
+        """
+        Update method for 2D graph window
+        """
         self.graphWindow.updateWindow(self.myModel)
 
-    # Update method for 3D vtk window
+
     def update3D(self):
+        """
+        Update method for 3D vtk window
+        """
         self.vtkWindow.updateWindow(self.myModel)
 
 # main

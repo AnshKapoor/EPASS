@@ -1,22 +1,24 @@
-#
 from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit
 import vtk
 import numpy as np
-import math
 import os
 from lxml import etree
 from standardWidgets import removeButton, editButton, setupWindow, messageboxOK, progressWindow
 from loads import load
-
 import math, cmath, random, time
 np.random.seed(int(time.time()))
 pi = math.pi
 randomize = True
 
 
-# Diffuse Load from Point Sources
 class diffuseField(load):
+    """
+    class for diffuse field load. provides methods to calculate pressure/phases acc. to load vector and size
+    """
     def __init__(self, ak3path, myModel, vtkWindow):
+        """
+        initialise basic load dependent GUI objects
+        """
         super(diffuseField, self).__init__()
         self.ak3path = ak3path
         self.myModel = myModel
@@ -29,7 +31,7 @@ class diffuseField(load):
         self.dirY = QLineEdit('1.')
         self.dirZ = QLineEdit('1.')
         self.c = QLineEdit('340.')
-
+        #
         self.samples = QLineEdit('1000')
         self.radius = QLineEdit('10.')
         self.normal = QLineEdit('0,0,1')
@@ -59,12 +61,22 @@ class diffuseField(load):
             self.update3DActor()
 
 
+    def clearLayout(self):
+        """
+        clear all content in diffuseField layout
+        """
+        for i in reversed(range(self.count())):
+            if isinstance(self.itemAt(i), QWidgetItem):
+                self.takeAt(i).widget().setParent(None)
+            else:
+                self.removeItem(self.contLayout.takeAt(i))
+
+
     def generatePointCloud(self):
         """
         generates a half sphere point cloud with variable parameters
         """
-        ####fibonacci
-
+        #fibonacci
         samples = 2*int(self.samples.text()) ## *2 because initially a sphere is constructed, which is then separated.
         normal = [float(x) for x in list(self.normal.text().split(','))]#[1.,0.,1.]
         R = float(self.radius.text()) # Radius
@@ -115,15 +127,6 @@ class diffuseField(load):
         self.sourcePoints = np.array(points)
 
 
-    # Clear all content in planeWave layout
-    def clearLayout(self):
-        for i in reversed(range(self.count())):
-            if isinstance(self.itemAt(i), QWidgetItem):
-                self.takeAt(i).widget().setParent(None)
-            else:
-                self.removeItem(self.contLayout.takeAt(i))
-
-
     def generatePressure(self):
         """
         Calculates pressure excitation on the selected blocks due to the created diffuse field
@@ -154,7 +157,7 @@ class diffuseField(load):
                     self.surfacePhases[nf,ne] = cmath.phase(self.surfacePressure[nf,ne])
                     progWin.setValue(nf)
                     QApplication.processEvents()#transition from complex pressure to phase
-            #print(r_matrix,r_matrix.shape,self.surfacePressure,len(self.surfacePressure),self.surfacePhases,len(self.surfacePhases),frequencies,len(frequencies))
+
 
     def getXYdata(self):
         """
@@ -173,7 +176,7 @@ class diffuseField(load):
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
         scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
-
+        #
         arrowSource = vtk.vtkArrowSource()
         self.arrowDataLoad = vtk.vtkPolyData()
         arrowPointLoad = vtk.vtkPoints()
@@ -194,7 +197,6 @@ class diffuseField(load):
         self.arrowActorLoad = vtk.vtkActor()
         self.arrowActorLoad.GetProperty().SetColor(1., 0.6, 0.)
         self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
-
         # Half sphere Point Cloud
         sphereSource = vtk.vtkSphereSource()
         sphereSource.SetRadius(0.05)
@@ -239,12 +241,20 @@ class diffuseField(load):
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 
+
     def resetValues(self):
-        for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c]):
+        """
+        resets parameter values
+        """
+        for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c, self.samples, self.radius, self.normal, self.position]):
             item.setText(self.varSave[n])
 
+
     def showEdit(self):
-        self.varSave = [self.amp.text(), self.dirX.text(), self.dirY.text(), self.dirZ.text(), self.c.text()]
+        """
+        recalculates data with new input parameters
+        """
+        self.varSave = [self.amp.text(), self.dirX.text(), self.dirY.text(), self.dirZ.text(), self.c.text(), self.samples.text(), self.radius.text(), self.normal.text(), self.position.text()]
         var = self.setupWindow.exec_()
         if var == 0: # reset values
             self.resetValues()
@@ -267,15 +277,11 @@ class diffuseField(load):
             self.resetValues()
         return var
 
-    # Method changing the objects changedSwitch in order to indicate 2D and 3D update
-    def switch(self):
-        if self.changeSwitch.isChecked():
-            self.changeSwitch.setChecked(0)
-        else:
-            self.changeSwitch.setChecked(1)
 
     def update3DActor(self):
-        # Get model infos
+        """
+        updates the vtk actors
+        """
         nodes = self.myModel.calculationObjects[0].nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
@@ -297,54 +303,3 @@ class diffuseField(load):
         [spherePointsLoad.InsertNextPoint([point[0], point[1], point[2]]) for p, point in enumerate(self.sourcePoints)]
         self.sphereDataLoad.SetPoints(spherePointsLoad)
         self.sphereDataLoad.Modified()
-
-
-
-    def writeXML(self, exportAK3, name, cluster):
-        elemLoads = exportAK3.find('ElemLoads')
-        oldNoOfLoads = elemLoads.get('N')
-        elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
-        loadedElems = exportAK3.find('LoadedElems')
-        # Create a directory for load dat files
-        loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
-        if not os.path.exists(loadDir):
-            os.mkdir(loadDir)
-        else: # Clean directory
-            for filename in os.listdir(loadDir):
-                os.remove(loadDir + '/' + filename)
-        # Save loads for each element
-        progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        for nE, surfaceElem in enumerate(self.surfaceElements):
-            # One load per element
-            newLoad = etree.Element('ElemLoad', Type='structurefrq')
-            newLoad.tail = '\n'
-            newLoadID = etree.Element('Id')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
-            newLoad.append(newLoadID)
-            newFile = etree.Element('File')
-            if cluster == 1:
-                strhead = '../../'
-            else:
-                strhead = '../'
-            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
-            newLoad.append(newFile)
-            elemLoads.append(newLoad)
-            # Save one file per load
-            frequencies = self.myModel.calculationObjects[0].frequencies
-            f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
-            f.write(str(len(frequencies)) + '\n')
-            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
-            f.close()
-            # Apply load to element
-            newLoadedElem = etree.Element('LoadedElem')
-            newLoadedElem.tail = '\n'
-            newElemID = etree.Element('Id')
-            newElemID.text = str(surfaceElem) # Element ID
-            newLoadedElem.append(newElemID)
-            newLoadID = etree.Element('Load')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # Load ID
-            newLoadedElem.append(newLoadID)
-            loadedElems.append(newLoadedElem)
-            # Update progress window
-            progWin.setValue(nE)
-            QApplication.processEvents()

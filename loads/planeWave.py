@@ -8,16 +8,21 @@ from lxml import etree
 from standardWidgets import removeButton, editButton, setupWindow, messageboxOK, progressWindow
 from loads import load
 
-# Plane wave load
+
 class planeWave(load):
+    """
+    class for plane wave loads. provides methods to calculate pressure/phases acc. to load vector
+    """
     def __init__(self, ak3path, myModel, vtkWindow):
+        """
+        initialise basic load dependent GUI objects
+        """
         super(planeWave, self).__init__()
         self.ak3path = ak3path
         self.myModel = myModel
         self.removeButton = removeButton(self.ak3path)
         self.editButton = editButton()
-        self.type = 'plane wave'
-
+        self.type = 'plane_wave'
         #
         self.amp = QLineEdit('1.')
         self.dirX = QLineEdit('1.')
@@ -46,7 +51,7 @@ class planeWave(load):
             self.generatePressure()
             self.update3DActor()
 
-    #
+
     def clearLayout(self):
         """
         Clear all content in planeWave layout
@@ -57,7 +62,7 @@ class planeWave(load):
             else:
                 self.removeItem(self.contLayout.takeAt(i))
 
-    #
+
     def generatePressure(self):
         """
         Calculates pressure excitation on the selected blocks due to the created plane wave
@@ -65,7 +70,6 @@ class planeWave(load):
         c = float(self.c.text())
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
-        #print(self.surfacePoints)
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             r_vector = []
@@ -88,14 +92,14 @@ class planeWave(load):
                 progWin.setValue(nf)
                 QApplication.processEvents()
 
-    #
+
     def getXYdata(self):
         """
         Return x, y data for plotting; for plane wave: constant amplitude
         """
         return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
 
-    #
+
     def init3DActor(self, vtkWindow):
         """
         initialize vtk objects
@@ -172,17 +176,13 @@ class planeWave(load):
         self.arrowActorLoad = vtk.vtkActor()
         self.arrowActorLoad.GetProperty().SetColor(1., 0.6, 0.)
         self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
-
         #List of Actors for iteration in vtkWindow
         self.actorsList = [self.arrowActorLoad, self.arrowActorSymbol, self.loadActorSymbol]
 
 
-
-
-
     def initSetupWindow(self):
         """
-        basic objects for the individual setup window
+        initialisation of setup popup window for parameter/file path input
         """
         self.setupWindow = setupWindow(self.label.text())
         # ADD TO LAYOUT
@@ -200,10 +200,16 @@ class planeWave(load):
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 
     def resetValues(self):
+        """
+        resets parameter values
+        """
         for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c]):
             item.setText(self.varSave[n])
 
     def showEdit(self):
+        """
+        recalculates data with new input parameters
+        """
         self.varSave = [self.amp.text(), self.dirX.text(), self.dirY.text(), self.dirZ.text(), self.c.text()]
         var = self.setupWindow.exec_()
         if var == 0: # reset values
@@ -225,14 +231,11 @@ class planeWave(load):
             self.resetValues()
         return var
 
-    # Method changing the objects changedSwitch in order to indicate 2D and 3D update
-    def switch(self):
-        if self.changeSwitch.isChecked():
-            self.changeSwitch.setChecked(0)
-        else:
-            self.changeSwitch.setChecked(1)
 
     def update3DActor(self):
+        """
+        updates the vtk actors
+        """
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
@@ -262,53 +265,3 @@ class planeWave(load):
         [arrowVectorsLoad.InsertNextTuple([-0.1*scaleFactor*vec[0], -0.1*scaleFactor*vec[1], -0.1*scaleFactor*vec[2]]) for vec in self.surfaceElementNormals]
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
-        #
-
-    def writeXML(self, exportAK3, name, cluster):
-        elemLoads = exportAK3.find('ElemLoads')
-        oldNoOfLoads = elemLoads.get('N')
-        elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
-        loadedElems = exportAK3.find('LoadedElems')
-        # Create a directory for load dat files
-        loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
-        if not os.path.exists(loadDir):
-            os.mkdir(loadDir)
-        else: # Clean directory
-            for filename in os.listdir(loadDir):
-                os.remove(loadDir + '/' + filename)
-        # Save loads for each element
-        progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        for nE, surfaceElem in enumerate(self.surfaceElements):
-            # One load per element
-            newLoad = etree.Element('ElemLoad', Type='structurefrq')
-            newLoad.tail = '\n'
-            newLoadID = etree.Element('Id')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
-            newLoad.append(newLoadID)
-            newFile = etree.Element('File')
-            if cluster == 1:
-                strhead = '../../'
-            else:
-                strhead = '../'
-            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
-            newLoad.append(newFile)
-            elemLoads.append(newLoad)
-            # Save one file per load
-            frequencies = self.myModel.calculationObjects[0].frequencies
-            f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
-            f.write(str(len(frequencies)) + '\n')
-            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
-            f.close()
-            # Apply load to element
-            newLoadedElem = etree.Element('LoadedElem')
-            newLoadedElem.tail = '\n'
-            newElemID = etree.Element('Id')
-            newElemID.text = str(surfaceElem) # Element ID
-            newLoadedElem.append(newElemID)
-            newLoadID = etree.Element('Load')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # Load ID
-            newLoadedElem.append(newLoadID)
-            loadedElems.append(newLoadedElem)
-            # Update progress window
-            progWin.setValue(nE)
-            QApplication.processEvents()
