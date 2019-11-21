@@ -1,0 +1,1 @@
+writeXML method: still outputs self.amps for every load, also distr. time domain. for distr. time domain there shouldn't be amp=1 (from init) but the real amps from the data!
