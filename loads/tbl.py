@@ -46,12 +46,29 @@ class tbl(load):
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
+        # Constant Efimtsov parameters according to fitting in Haxter, JSV 390(2017): 86-117
+        self.a1 = 0.071
+        self.a2 = 4.1
+        self.a3 = 0.26
+        self.a4 = 0.66
+        self.a5 = 39.0
+        self.a6 = 9.9
         #
         self.editButton.clicked.connect(self.showEdit)
         var = self.showEdit()
         if var == 0: # is the case if the initial setup window is canceled by the user
             self.generatePressure()
             self.update3DActor()
+    #
+    def calcEfimtsovCoherenceLengths(self, omega, delta, uTau, uC):
+        Sh = omega*delta/uTau # Strouhal number for Efimtsov
+        quot1 = uC/uTau
+        quot2 = self.a2/self.a3
+        quot3 = self.a5/self.a6
+        # Coherence lengths
+        Lx = delta * ((self.a1*Sh/quot1)**2 + self.a2**2 / (Sh**2 + quot2**2))**-0.5
+        Ly = delta * ((self.a4*Sh/quot1)**2 + self.a5**2 / (Sh**2 + quot3**2))**-0.5
+        return Lx, Ly
     #
     def calcEfimtsovIntensity(self, kX, kY, omega, uC, Lx, Ly):
         alphaX = uC/(omega*Lx)
@@ -74,7 +91,7 @@ class tbl(load):
     #
     def generatePressure(self):
         """
-        Calculates pressure excitation on the selected blocks according to Klabes 2017 (autospectrum) and Efimtsov (Wavenumber-spectrum) due to a turbulent boundary layer
+        Calculates pressure excitation on the selected blocks according to Klabes internoise 2016 (autospectrum) and Efimtsov (Wavenumber-spectrum) due to a turbulent boundary layer
         """
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
@@ -96,7 +113,7 @@ class tbl(load):
                 y0 = 0.
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
                     # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model
-                    idx = self.euclNearest[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
+                    idx = self.euclNearestDataPoint[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
                     delta = self.par_delta[idx]
                     uE = self.par_uE[idx]
                     MA = self.par_MA[idx]
@@ -162,25 +179,13 @@ class tbl(load):
                         phi = scalingFactor*P1/(P2 + P3)
                         self.surfaceAmps[nf,nsp] = phi**0.5
                         ### Efimtsov; Fitted constants a1-a6 according to Haxter, JSV 390(2017): 86-117
-                        a1 = 0.071
-                        a2 = 4.1
-                        a3 = 0.26
-                        a4 = 0.66
-                        a5 = 39.0
-                        a6 = 9.9
                         if freq<475.:
                             uC = 0.9*uInf # Haxter und Spehr 2012
                         elif freq>5000.:
                             uC = 0.75*uInf
                         else:
                             uC = (0.9 - 0.15*(freq-475.)/4525.) * uInf
-                        Sh = omega*delta/uTau # Strouhal number for Efimtsov
-                        quot1 = uC/uTau
-                        quot2 = a2/a3
-                        quot3 = a5/a6
-                        # Coherence lengths
-                        Lx = delta * ((a1*Sh/quot1)**2 + a2**2 / (Sh**2 + quot2**2))**-0.5;
-                        Ly = delta * ((a4*Sh/quot1)**2 + a5**2 / (Sh**2 + quot3**2))**-0.5;
+                        Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
                         #
                         kC = omega/uC
                         steps = 100
@@ -373,15 +378,49 @@ class tbl(load):
             self.rand_x0.append(np.random.rand()*1000.)
             self.rand_y0.append(np.random.rand()*1000.)
             self.rand_z0.append(np.random.rand()*1000.)
+        # Create coherence grid according to Efimtsov coherence lengths with random origin per grid point (later used if user selects a random origin in that grid)
+        frequencies = self.myModel.calculationObjects[0].frequencies
+        progWin = progressWindow(len(frequencies)-1, "Creating coherence grid")
+        R = 1.75 # Radius
+        startX = min([x[0] for x in self.dataPoints])
+        endX = max([x[0] for x in self.dataPoints])
+        startPhi = -2*R*math.pi/4.
+        endPhi = math.pi*2*R/4.
+        totalPhi  = endPhi- startPhi
+        self.myModel.calculationObjects[0].allGrids = []
+        for nf, freq in enumerate(frequencies):
+            currentGrid = np.empty((0,2))
+            currentX = startX
+            #
+            while 1:
+                # Calc coherence lengths according to Efimtsov at current position for current frequency
+                Lx = 1.
+                Ly = 1.
+                if currentX+Lx>endX:
+                    phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                    yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                    xMidpoints = np.array(len(yMidpoints) * [0.5*(currentX+endX)])
+                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints,yMidpoints))))
+                    break
+                else:
+                    phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                    yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                    xMidpoints = np.array(len(yMidpoints) * [currentX + 0.5*Lx])
+                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints,yMidpoints))))
+                    currentX = currentX + Lx
+            #
+            self.myModel.calculationObjects[0].allGrids.append(currentGrid)
+            progWin.setValue(nf)
+            QApplication.processEvents()
     #
     def nearestNeighbor(self):
         """
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
-        self.euclNearest = []
+        self.euclNearestDataPoint = []
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
             # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
-            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
+            self.euclNearestDataPoint.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
     #
     def resetValues(self):
         for n, item in enumerate([self.dirX, self.dirY, self.dirZ, self.flowDirX, self.flowDirY, self.flowDirZ]):
