@@ -74,7 +74,7 @@ class tbl(load):
     #
     def generatePressure(self):
         """
-        Calculates pressure excitation on the selected blocks according to Klabes 2017 (autospectrum) and Efimtsov (Wavenumber-spectrum) due to a turbulent boundary layer
+        Calculates pressure excitation on the selected blocks according to Klabes internoise 2016 (autospectrum) and Efimtsov (Wavenumber-spectrum) due to a turbulent boundary layer
         """
         frequencies = self.myModel.calculationObjects[0].frequencies
         self.findRelevantPoints()
@@ -96,7 +96,7 @@ class tbl(load):
                 y0 = 0.
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
                     # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model
-                    idx = self.euclNearest[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
+                    idx = self.euclNearestDataPoint[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
                     delta = self.par_delta[idx]
                     uE = self.par_uE[idx]
                     MA = self.par_MA[idx]
@@ -373,15 +373,48 @@ class tbl(load):
             self.rand_x0.append(np.random.rand()*1000.)
             self.rand_y0.append(np.random.rand()*1000.)
             self.rand_z0.append(np.random.rand()*1000.)
+        # Create coherence grid according to Efimtsov coherence lengths with random origin per grid point (later used if user selects a random origin in that grid)
+        frequencies = self.myModel.calculationObjects[0].frequencies
+        progWin = progressWindow(len(frequencies)-1, "Creating coherence grid")
+        R = 1.75 # Radius
+        startX = min([x[0] for x in self.dataPoints])
+        endX = max([x[0] for x in self.dataPoints])
+        startPhi = -2*R*math.pi/4.
+        endPhi = math.pi*2*R/4.
+        totalPhi  = endPhi- startPhi
+        self.myModel.calculationObjects[0].allGrids = []
+        for nf, freq in enumerate(frequencies):
+            currentGrid = np.empty((0,2))
+            currentX = startX
+            #
+            while 1:
+                Lx = 1.
+                Ly = 1.
+                if currentX+Lx>endX:
+                    phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                    yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                    xMidpoints = np.array(len(yMidpoints) * [0.5*(currentX+endX)])
+                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints,yMidpoints))))
+                    break
+                else:
+                    phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                    yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                    xMidpoints = np.array(len(yMidpoints) * [currentX + 0.5*Lx])
+                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints,yMidpoints))))
+                    currentX = currentX + Lx
+            #
+            self.myModel.calculationObjects[0].allGrids.append(currentGrid)
+            progWin.setValue(nf)
+            QApplication.processEvents()
     #
     def nearestNeighbor(self):
         """
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
-        self.euclNearest = []
+        self.euclNearestDataPoint = []
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
             # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
-            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
+            self.euclNearestDataPoint.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
     #
     def resetValues(self):
         for n, item in enumerate([self.dirX, self.dirY, self.dirZ, self.flowDirX, self.flowDirY, self.flowDirZ]):
