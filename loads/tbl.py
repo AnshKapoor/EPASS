@@ -28,7 +28,7 @@ class tbl(load):
         self.flowDirY = QLineEdit('0.')
         self.flowDirZ = QLineEdit('0.')
         self.randomSelector = QComboBox()
-        [self.randomSelector.addItem(x) for x in ['no', 'per data point', 'per element']]
+        [self.randomSelector.addItem(x) for x in ['no', 'per data point', 'per element', 'coherence grid']]
         self.loadButton = ak3LoadButton(self.ak3path)
         self.loadButton.clicked.connect(self.getFilename)
         self.dataPoints = []
@@ -53,14 +53,9 @@ class tbl(load):
             self.generatePressure()
             self.update3DActor()
     #
-    def calcCorcosIntensity_OLD(self, kX, kY, omega, uC, alphaX = 0.1, alphaY = 0.77):
-        P1 = 4.*alphaX*alphaY
-        P2 = alphaY**2. + (kY*uC/omega)**2.
-        P3 = alphaX**2. + (kX*uC/omega - 1.)**2.
-        spectrumFactor = (uC/omega)**2. / (2.*math.pi)**2.
-        return spectrumFactor*P1/(P2*P3)
-    #
-    def calcCorcosIntensity(self, kX, kY, omega, uC, alphaX = 0.1, alphaY = 0.77):
+    def calcEfimtsovIntensity(self, kX, kY, omega, uC, Lx, Ly):
+        alphaX = uC/(omega*Lx)
+        alphaY = uC/(omega*Ly)
         P1 = 4.*alphaX*alphaY
         P2 = alphaY**2. + np.power(np.array(kY)*uC/omega, 2.)
         P3 = alphaX**2. + np.power(np.array(kX)*uC/omega - 1., 2.)
@@ -124,22 +119,40 @@ class tbl(load):
                         x0 = self.rand_x0[idx]
                         y0 = self.rand_y0[idx]
                     for nf, freq in enumerate(frequencies):
+                        if self.randomSelector.currentText()=='coherence grid':
+                            x0 = self.rand_x0[idx]
+                            y0 = self.rand_y0[idx]
                         omega = 2.*math.pi*freq
-                        # Klabes 2017
-                        gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
-                        gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
-                        gammaDG = gammaM*cf + gammaC
+                        ### Klabes 2017
+                        #gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
+                        #gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
+                        #gammaDG = gammaM*cf + gammaC
+                        #a = (TKE / 10.)**gammaDG
+                        #b = 0.5
+                        #betaDeltaL = delta * dcpdx
+                        #ReDeltaL = delta*uE/nu
+                        #c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
+                        #d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
+                        #betaDDeltaL = delta * dcpdx * (2./cf)**0.5
+                        #e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
+                        #f = 1.1
+                        #g = -0.57
+                        #h = 5.5
+                        ### Klabes 2016 internoise
+                        betaDeltaL = delta * dcpdx
+                        betaDDeltaL = (delta * dcpdx) * (2./cf)**0.5
+                        ReDeltaL = delta*uE/nu
+                        ReDDeltaL = (delta*uE/nu) * (2./cf)**0.5
+                        gammaDG = (-592.71*cf + 1.74)*ReDDeltaL**0.01
                         a = (TKE / 10.)**gammaDG
                         b = 0.5
-                        betaDeltaL = delta * dcpdx
-                        ReDeltaL = delta*uE/nu
-                        c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
-                        d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
-                        betaDDeltaL = delta * dcpdx * (2./cf)**0.5
-                        e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
+                        c = 1.35 + 3*betaDeltaL
+                        d = ReDeltaL**0.174 - 6.7
+                        e = -0.11428*betaDDeltaL + 1.55
                         f = 1.1
                         g = -0.57
                         h = 5.5
+                        #
                         Rt = (delta/uE)/(nu/uTau**2.)
                         scalingFactor = ((tauW**2.)*delta)/uE
                         P0 = 2.*math.pi*freq*delta/uE
@@ -148,13 +161,27 @@ class tbl(load):
                         P3 = (f*(Rt**g)*P0)**h
                         phi = scalingFactor*P1/(P2 + P3)
                         self.surfaceAmps[nf,nsp] = phi**0.5
-                        # Corcos
+                        ### Efimtsov; Fitted constants a1-a6 according to Haxter, JSV 390(2017): 86-117
+                        a1 = 0.071
+                        a2 = 4.1
+                        a3 = 0.26
+                        a4 = 0.66
+                        a5 = 39.0
+                        a6 = 9.9
                         if freq<475.:
                             uC = 0.9*uInf # Haxter und Spehr 2012
                         elif freq>5000.:
                             uC = 0.75*uInf
                         else:
                             uC = (0.9 - 0.15*(freq-475.)/4525.) * uInf
+                        Sh = omega*delta/uTau # Strouhal number for Efimtsov
+                        quot1 = uC/uTau
+                        quot2 = a2/a3
+                        quot3 = a5/a6
+                        # Coherence lengths
+                        Lx = delta * ((a1*Sh/quot1)**2 + a2**2 / (Sh**2 + quot2**2))**-0.5;
+                        Ly = delta * ((a4*Sh/quot1)**2 + a5**2 / (Sh**2 + quot3**2))**-0.5;
+                        #
                         kC = omega/uC
                         steps = 100
                         dK = 20*kC/(steps-1)
@@ -164,7 +191,7 @@ class tbl(load):
                         eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange)))
                         phaseMatrix = eX+eY
                         #
-                        densMatrix = self.calcCorcosIntensity(kRange, kRange, omega, uC)
+                        densMatrix = self.calcEfimtsovIntensity(kRange, kRange, omega, uC, Lx, Ly)
                         superimpWave = densMatrix * phaseMatrix
                         #
                         phase = np.angle(np.sum(np.sum(superimpWave)))
