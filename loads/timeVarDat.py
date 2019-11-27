@@ -2,6 +2,7 @@ import json
 from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog
 import vtk
 import numpy as np
+import h5py
 import cmath
 import os
 from lxml import etree
@@ -187,7 +188,7 @@ class timeVarDat(load):
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 
 
-    def loadData(self, filename):
+    def loadDataOld(self, filename):
         """
         loads file with x,y,z data. must be .json and must be a dict like:
         {"pointdata":[
@@ -202,6 +203,19 @@ class timeVarDat(load):
         for point in ld.get('pointdata'):
             self.dataPoints.append(point.get('coord'))
             self.timeValues.append(point.get('timedata'))
+        print(self.dataPoints)
+        print(self.timeValues)
+
+    def loadData(self, filename):
+        f = h5py.File(filename,'r')
+        coord = f.get('ACoord')
+        self.dataPoints = np.array(coord)
+        data = f.get('AData')
+        self.timeValues = np.array(data)
+        self.dataPoints.tolist()
+        self.timeValues.tolist()
+        print(self.dataPoints)
+        print(self.timeValues)
 
 
     def resetValues(self):

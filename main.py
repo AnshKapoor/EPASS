@@ -198,6 +198,7 @@ class loadGUI(QMainWindow):
         self.clusterSwitch = QCheckBox()
         self.clusterSwitch.setChecked(0)
         self.clusterSwitch.setText('Export for Cluster')
+        self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
         self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
         self.exportButton = exportButton()
         self.exportButton.clicked.connect(self.myModel.export)
