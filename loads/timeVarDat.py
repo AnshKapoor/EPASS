@@ -147,6 +147,7 @@ class timeVarDat(load):
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
         scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
 
+
         arrowSource = vtk.vtkArrowSource()
         self.arrowDataLoad = vtk.vtkPolyData()
         arrowPointLoad = vtk.vtkPoints()
@@ -203,8 +204,7 @@ class timeVarDat(load):
         for point in ld.get('pointdata'):
             self.dataPoints.append(point.get('coord'))
             self.timeValues.append(point.get('timedata'))
-        print(self.dataPoints)
-        print(self.timeValues)
+
 
     def loadData(self, filename):
         f = h5py.File(filename,'r')
@@ -214,8 +214,6 @@ class timeVarDat(load):
         self.timeValues = np.array(data)
         self.dataPoints.tolist()
         self.timeValues.tolist()
-        print(self.dataPoints)
-        print(self.timeValues)
 
 
     def resetValues(self):
@@ -285,7 +283,20 @@ class timeVarDat(load):
 
         # Update load
         arrowPointLoad = vtk.vtkPoints()
-        [arrowPointLoad.InsertNextPoint([point[0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], point[1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], point[2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p, point in enumerate(self.surfacePoints)]
+
+        ### get a lower number of arrows if there are more elements or the element size is small
+        numberOfElem = len((self.myModel.calculationObjects[0].elems[0][2]))
+        elemSize = abs(nodes[0,0] - nodes[1,0]) #only very rough
+        elemDensity = numberOfElem / elemSize
+        #print(self.myModel.calculationObjects[0].elems)
+        print(nodes,elemSize)
+
+        arrNoScale = int(numberOfElem/32)
+        if arrNoScale<1:
+            arrNoScale = 1
+        ###
+        [arrowPointLoad.InsertNextPoint([self.surfacePoints[p][0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], self.surfacePoints[p][1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], self.surfacePoints[p][2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p in range(0,len(self.surfacePoints),arrNoScale)]
+        #[arrowPointLoad.InsertNextPoint([point[0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], point[1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], point[2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p, point in enumerate(self.surfacePoints)]
         self.arrowDataLoad.SetPoints(arrowPointLoad)
         arrowVectorsLoad = vtk.vtkDoubleArray()
         arrowVectorsLoad.SetNumberOfComponents(3)

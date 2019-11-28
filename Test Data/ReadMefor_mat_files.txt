@@ -1,7 +1,7 @@
 A .mat file readable by the elPaSo Load Application tool consists of differen arrays with specific names.
 -----
 MATLAB workspace has to be saved via:
-	save('FileName', '-v7.3');
+	>> save('FileName', '-v7.3');
 -----
 Version 7.3 is critical.
 
@@ -26,7 +26,7 @@ Descr.: Contains parameters used for the turbulent boundary layer load case
 //last array:
 Name:	AData
 Descr.: Contains time data for time variable data load case.
-	Is an array of size [(No. of Samples per Point) x 3]
+	Is an array of size [(No. of Samples per Point) x (No. of Points)]
 	like:  pt.1  pt.2  pt.3 pt... pt.n 
         samp0  t0    t0	   t0   ...   
         samp1  t1    t1	   t1

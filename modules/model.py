@@ -141,7 +141,6 @@ class model: # Saves a model
             self.cluster = 1
         else:
             self.cluster = 0
-        print(self.cluster)
 
 # Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain
