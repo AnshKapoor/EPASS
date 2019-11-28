@@ -79,6 +79,14 @@ class tbl(load):
         spectrumFactor = (uC/omega)**2. / (2.*math.pi)**2.
         return spectrumFactor*P1/(P2[:,None]*P3)
     #
+    def calc_uC(self, freq, uInf):
+        if freq<475.:
+            return 0.9*uInf # Haxter und Spehr 2012
+        elif freq>5000.:
+            return 0.75*uInf
+        else:
+            return (0.9 - 0.15*(freq-475.)/4525.) * uInf
+    #
     def clearLayout(self):
         """
         Clear all content in planeWave layout
@@ -179,12 +187,7 @@ class tbl(load):
                         phi = scalingFactor*P1/(P2 + P3)
                         self.surfaceAmps[nf,nsp] = phi**0.5
                         ### Efimtsov; Fitted constants a1-a6 according to Haxter, JSV 390(2017): 86-117
-                        if freq<475.:
-                            uC = 0.9*uInf # Haxter und Spehr 2012
-                        elif freq>5000.:
-                            uC = 0.75*uInf
-                        else:
-                            uC = (0.9 - 0.15*(freq-475.)/4525.) * uInf
+                        uC = self.calc_uC(freq, uInf)
                         Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
                         #
                         kC = omega/uC
@@ -391,11 +394,19 @@ class tbl(load):
         for nf, freq in enumerate(frequencies):
             currentGrid = np.empty((0,2))
             currentX = startX
+            omega = 2*math.pi*freq
             #
             while 1:
                 # Calc coherence lengths according to Efimtsov at current position for current frequency
-                Lx = 1.
-                Ly = 1.
+                idx = np.argmin([abs(dataPoint[0] - currentX) for dataPoint in np.array(self.dataPoints)])
+                delta = self.par_delta[idx]
+                MA = self.par_MA[idx]
+                c0 = self.par_c0[idx]
+                tauW = self.par_tauW[idx]
+                rho = self.par_rho[idx]
+                uTau = (tauW/rho)**0.5
+                uC = self.calc_uC(freq, c0*MA)
+                Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
                 if currentX+Lx>endX:
                     phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
                     yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
@@ -410,6 +421,8 @@ class tbl(load):
                     currentX = currentX + Lx
             #
             self.myModel.calculationObjects[0].allGrids.append(currentGrid)
+            print(freq)
+            print(len(currentGrid))
             progWin.setValue(nf)
             QApplication.processEvents()
     #
