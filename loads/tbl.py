@@ -79,6 +79,14 @@ class tbl(load):
         spectrumFactor = (uC/omega)**2. / (2.*math.pi)**2.
         return spectrumFactor*P1/(P2[:,None]*P3)
     #
+    def calc_uC(self, freq, uInf):
+        if freq<475.:
+            return 0.9*uInf # Haxter und Spehr 2012
+        elif freq>5000.:
+            return 0.75*uInf
+        else:
+            return (0.9 - 0.15*(freq-475.)/4525.) * uInf
+    #
     def clearLayout(self):
         """
         Clear all content in planeWave layout
@@ -137,8 +145,13 @@ class tbl(load):
                         y0 = self.rand_y0[idx]
                     for nf, freq in enumerate(frequencies):
                         if self.randomSelector.currentText()=='coherence grid':
-                            x0 = self.rand_x0[idx]
-                            y0 = self.rand_y0[idx]
+                            # currentGrid contains a midpoint in 2D (2 cylindrical coordinates - x for lengthwise position on aircraft skin and y for phi (radius does not matter)) and a random origin (coords 3-4)
+                            currentGrid = self.myModel.calculationObjects[0].allGrids[nf] 
+                            # find nearest midpoint in grid to current surface point
+                            surfacePointCylindrical = (np.arcsin(surfacePoint[1]/self.R) * surfacePoint[2]/abs(surfacePoint[2]) * self.R)
+                            midpointIdx = np.argmin(np.abs(currentGrid[:,0] - surfacePoint[0]) + np.abs(currentGrid[:,1] - surfacePointCylindrical) )
+                            x0 = currentGrid[midpointIdx,2]
+                            y0 = currentGrid[midpointIdx,3]
                         omega = 2.*math.pi*freq
                         ### Klabes 2017
                         #gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
@@ -179,12 +192,7 @@ class tbl(load):
                         phi = scalingFactor*P1/(P2 + P3)
                         self.surfaceAmps[nf,nsp] = phi**0.5
                         ### Efimtsov; Fitted constants a1-a6 according to Haxter, JSV 390(2017): 86-117
-                        if freq<475.:
-                            uC = 0.9*uInf # Haxter und Spehr 2012
-                        elif freq>5000.:
-                            uC = 0.75*uInf
-                        else:
-                            uC = (0.9 - 0.15*(freq-475.)/4525.) * uInf
+                        uC = self.calc_uC(freq, uInf)
                         Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
                         #
                         kC = omega/uC
@@ -193,7 +201,10 @@ class tbl(load):
                         kRange = np.linspace(-10*kC,10*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
                         #
                         eX = np.tile(np.exp(1j*kRange*(surfacePoint[0]-x0)), (len(kRange), 1))
-                        eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange)))
+                        if self.randomSelector.currentText()=='coherence grid': 
+                            eY = np.tile(np.exp(1j*kRange*(surfacePointCylindrical-y0))[:,None], (1, len(kRange)))
+                        else:
+                            eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange)))
                         phaseMatrix = eX+eY
                         #
                         densMatrix = self.calcEfimtsovIntensity(kRange, kRange, omega, uC, Lx, Ly)
@@ -381,37 +392,45 @@ class tbl(load):
         # Create coherence grid according to Efimtsov coherence lengths with random origin per grid point (later used if user selects a random origin in that grid)
         frequencies = self.myModel.calculationObjects[0].frequencies
         progWin = progressWindow(len(frequencies)-1, "Creating coherence grid")
-        R = 1.75 # Radius
+        self.R = 1.76 # Radius
         startX = min([x[0] for x in self.dataPoints])
         endX = max([x[0] for x in self.dataPoints])
-        startPhi = -2*R*math.pi/4.
-        endPhi = math.pi*2*R/4.
-        totalPhi  = endPhi- startPhi
+        startPhi = -2*self.R*math.pi/4.
+        endPhi = 2*self.R*math.pi/4.
+        totalPhi  = endPhi-startPhi
         self.myModel.calculationObjects[0].allGrids = []
         for nf, freq in enumerate(frequencies):
-            currentGrid = np.empty((0,2))
+            currentGrid = np.empty((0,4))
             currentX = startX
+            omega = 2*math.pi*freq
             #
             while 1:
                 # Calc coherence lengths according to Efimtsov at current position for current frequency
-                Lx = 1.
-                Ly = 1.
-                if currentX+Lx>endX:
+                idx = np.argmin([abs(dataPoint[0] - currentX) for dataPoint in np.array(self.dataPoints)])
+                delta = self.par_delta[idx]
+                MA = self.par_MA[idx]
+                c0 = self.par_c0[idx]
+                tauW = self.par_tauW[idx]
+                rho = self.par_rho[idx]
+                uTau = (tauW/rho)**0.5
+                uC = self.calc_uC(freq, c0*MA)
+                Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
+                if currentX+Lx > endX:
                     phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
                     yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
                     xMidpoints = np.array(len(yMidpoints) * [0.5*(currentX+endX)])
-                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints,yMidpoints))))
+                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
                     break
                 else:
                     phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
                     yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
                     xMidpoints = np.array(len(yMidpoints) * [currentX + 0.5*Lx])
-                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints,yMidpoints))))
+                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
                     currentX = currentX + Lx
             #
             self.myModel.calculationObjects[0].allGrids.append(currentGrid)
             progWin.setValue(nf)
-            QApplication.processEvents()
+            QApplication.processEvents()    
     #
     def nearestNeighbor(self):
         """
