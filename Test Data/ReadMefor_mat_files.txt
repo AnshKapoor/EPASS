@@ -1,4 +1,4 @@
-A .mat file readable by the elPaSo Load Application tool consists of differen arrays with specific names.
+A .mat file readable by the elPaSo Load Application tool consists of different arrays with specific names.
 -----
 MATLAB workspace has to be saved via:
 	>> save('FileName', '-v7.3');

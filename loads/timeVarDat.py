@@ -207,6 +207,9 @@ class timeVarDat(load):
 
 
     def loadData(self, filename):
+        """
+
+        """
         f = h5py.File(filename,'r')
         coord = f.get('ACoord')
         self.dataPoints = np.array(coord)
@@ -286,15 +289,9 @@ class timeVarDat(load):
 
         ### get a lower number of arrows if there are more elements or the element size is small
         numberOfElem = len((self.myModel.calculationObjects[0].elems[0][2]))
-        elemSize = abs(nodes[0,0] - nodes[1,0]) #only very rough
-        elemDensity = numberOfElem / elemSize
-        #print(self.myModel.calculationObjects[0].elems)
-        print(nodes,elemSize)
-
-        arrNoScale = int(numberOfElem/32)
+        arrNoScale = int(numberOfElem/32) #number 32 can be changed
         if arrNoScale<1:
             arrNoScale = 1
-        ###
         [arrowPointLoad.InsertNextPoint([self.surfacePoints[p][0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], self.surfacePoints[p][1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], self.surfacePoints[p][2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p in range(0,len(self.surfacePoints),arrNoScale)]
         #[arrowPointLoad.InsertNextPoint([point[0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], point[1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], point[2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p, point in enumerate(self.surfacePoints)]
         self.arrowDataLoad.SetPoints(arrowPointLoad)
