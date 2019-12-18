@@ -27,7 +27,8 @@ def readNodesNew(calculationObject, binFile):
     #binFile = self.myModel.binFile
     nodesList = binFile.get('nodesSet/n0')
     nodeCount = len(nodesList)
-    calculationObject.nodes = (np.array(nodesList)).tolist()
+    #calculationObject.nodes = (np.array(nodesList)).tolist()
+    calculationObject.nodes = np.array(nodesList)
     QApplication.processEvents()
 
 
@@ -162,6 +163,16 @@ def readElems(calculationObject, ak3tree):
                 QApplication.processEvents()
             calculationObject.elems.append([elem_type, elementGroup.get('GroupId'), currElems])
     return info
+
+
+def readElemsNew(calculationObject, binFile): #for schleife einbauen, die über alle möglochen gruppen iteriert
+    elemsList = binFile.get('elemsSet/g0')
+    elemCount = len(elemsList)
+    elem_type = elemsList.attrs['type']
+    group_id = elemsList.attrs['groupNo']
+    calculationObject.elems.append(elem_type, group_id, np.array(elemsList))
+
+
 
 # Read frequencies from ak3 file
 def readFreqs(myModel):

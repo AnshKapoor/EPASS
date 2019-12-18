@@ -137,10 +137,12 @@ class loadGUI(QMainWindow):
             #branches into standardFunctionsGeneral to use new readNodes/readElems
             ###
             ##NEW: BINARY FILE LOAD
-            self.myModel.binFile = h5py.File('h5TesterNeu.hdf5', 'r') #readOnly
+            self.myModel.binFile = h5py.File('h5Tester2.hdf5', 'r') #readOnly
             ###
-            readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)
+            #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)
             readElems(self.myModel.calculationObjects[0], self.myModel.ak3tree)
+            readNodesNew(self.myModel.calculationObjects[0], self.myModel.binFile)
+            print(self.myModel.calculationObjects[0].nodes)
             readFreqs(self.myModel)
             self.myModel.updateModelInfo(self.vtkWindow)
             self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
@@ -148,20 +150,20 @@ class loadGUI(QMainWindow):
             self.update2D()
             self.update3D()
             self.statusBar().showMessage('Model loaded')
-            print(self.myModel.calculationObjects[0].nodes)
+
             self.nodelist = self.myModel.calculationObjects[0].nodes
 
 
 
-            f = h5py.File('h5Tester2.hdf5', 'w')
-            for i, group in enumerate(self.myModel.calculationObjects[0].elems):
-                i = f.create_dataset('/elementsSet/g'+str(i), data=((group[2].tolist())))
-                i.attrs['type'] = group[0]
-                i.attrs['groupNo'] = group[1]
-
-            for n, node in enumerate(self.myModel.calculationObjects[0].nodes):
-                n = f.create_dataset('/nodesSet/n'+str(n), data=self.myModel.calculationObjects[0].nodes)
-            f.close()
+            # f = h5py.File('h5Tester2.hdf5', 'w')
+            # for i, group in enumerate(self.myModel.calculationObjects[0].elems):
+            #     i = f.create_dataset('/elementsSet/g'+str(i), data=((group[2].tolist())))
+            #     i.attrs['type'] = group[0]
+            #     i.attrs['groupNo'] = group[1]
+            #
+            # for n, node in enumerate(self.myModel.calculationObjects[0].nodes):
+            #     n = f.create_dataset('/nodesSet/n'+str(n), data=self.myModel.calculationObjects[0].nodes)
+            # f.close()
 
 
 
