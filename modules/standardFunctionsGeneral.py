@@ -23,6 +23,15 @@ def readNodes(calculationObject, ak3tree):
         progWin.setValue(n+1)
         QApplication.processEvents()
 
+def readNodesNew(calculationObject, binFile):
+    #binFile = self.myModel.binFile
+    nodesList = binFile.get('nodesSet/n0')
+    nodeCount = len(nodesList)
+    calculationObject.nodes = (np.array(nodesList)).tolist()
+    QApplication.processEvents()
+
+
+
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
 def readElems(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#

@@ -11,6 +11,7 @@ import sys
 import os
 from lxml import etree
 import numpy as np
+import h5py
 #
 from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction
 from PyQt5.QtCore import Qt
@@ -18,7 +19,7 @@ from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
-from standardFunctionsGeneral import readNodes, readElems, readFreqs
+from standardFunctionsGeneral import readNodes, readNodesNew, readElems, readFreqs
 from standardWidgets import sepLine, ak3LoadButton, addButton, loadSelector, messageboxOK, exportButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
@@ -135,6 +136,9 @@ class loadGUI(QMainWindow):
             #self.myModel.modDatFile = //load hdf5//
             #branches into standardFunctionsGeneral to use new readNodes/readElems
             ###
+            ##NEW: BINARY FILE LOAD
+            self.myModel.binFile = h5py.File('h5TesterNeu.hdf5', 'r') #readOnly
+            ###
             readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)
             readElems(self.myModel.calculationObjects[0], self.myModel.ak3tree)
             readFreqs(self.myModel)
@@ -144,6 +148,21 @@ class loadGUI(QMainWindow):
             self.update2D()
             self.update3D()
             self.statusBar().showMessage('Model loaded')
+            print(self.myModel.calculationObjects[0].nodes)
+            self.nodelist = self.myModel.calculationObjects[0].nodes
+
+
+
+            f = h5py.File('h5Tester2.hdf5', 'w')
+            for i, group in enumerate(self.myModel.calculationObjects[0].elems):
+                i = f.create_dataset('/elementsSet/g'+str(i), data=((group[2].tolist())))
+                i.attrs['type'] = group[0]
+                i.attrs['groupNo'] = group[1]
+
+            for n, node in enumerate(self.myModel.calculationObjects[0].nodes):
+                n = f.create_dataset('/nodesSet/n'+str(n), data=self.myModel.calculationObjects[0].nodes)
+            f.close()
+
 
 
     def removeLoad(self, loadIDToRemove):
