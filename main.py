@@ -19,7 +19,7 @@ from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
-from standardFunctionsGeneral import readNodes, readNodesNew, readElems, readFreqs
+from standardFunctionsGeneral import readNodes, readNodesNew, readElems, readElemsNew, readFreqs
 from standardWidgets import sepLine, ak3LoadButton, addButton, loadSelector, messageboxOK, exportButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
@@ -140,7 +140,8 @@ class loadGUI(QMainWindow):
             self.myModel.binFile = h5py.File('h5Tester2.hdf5', 'r') #readOnly
             ###
             #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)
-            readElems(self.myModel.calculationObjects[0], self.myModel.ak3tree)
+            #readElems(self.myModel.calculationObjects[0], self.myModel.ak3tree)
+            readElemsNew(self.myModel.calculationObjects[0], self.myModel.binFile)
             readNodesNew(self.myModel.calculationObjects[0], self.myModel.binFile)
             print(self.myModel.calculationObjects[0].nodes)
             readFreqs(self.myModel)
