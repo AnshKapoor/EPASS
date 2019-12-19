@@ -132,10 +132,6 @@ class loadGUI(QMainWindow):
             [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
             self.myModel.calculationObjects.append(calculationObject('calculation'))
             self.myModel.ak3tree = etree.parse(fileName)
-            ### load binary file for nodes/elems as well: YET TO BE IMPLEMENTED
-            #self.myModel.modDatFile = //load hdf5//
-            #branches into standardFunctionsGeneral to use new readNodes/readElems
-            ###
             ##NEW: BINARY FILE LOAD
             self.myModel.binFile = h5py.File('h5Tester2.hdf5', 'r') #readOnly
             ###

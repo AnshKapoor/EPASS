@@ -166,13 +166,13 @@ def readElems(calculationObject, ak3tree):
     return info
 
 
-def readElemsNew(calculationObject, binFile): #for schleife einbauen, die über alle möglochen gruppen iteriert
-    elemsList = binFile.get('elementsSet/g0')
-    #elemCount = len(elemsList)
-    elem_type = elemsList.attrs['type']
-    group_id = elemsList.attrs['groupNo']
-    calculationObject.elems.append([elem_type, group_id, np.array(elemsList)])
-
+def readElemsNew(calculationObject, binFile):
+    elemsList = binFile.get('elementsSet')
+    for i in range(len(elemsList.keys())):
+        groupdat = elemsList.get('g'+str(i))
+        elem_type = groupdat.attrs['type']
+        group_id = groupdat.attrs['groupNo']
+        calculationObject.elems.append([elem_type, group_id, np.array(groupdat)])
 
 
 # Read frequencies from ak3 file
