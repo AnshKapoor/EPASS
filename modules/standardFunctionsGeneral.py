@@ -8,6 +8,39 @@ import os
 from PyQt5.QtWidgets import QApplication
 from standardWidgets import progressWindow
 import h5py
+from lxml import etree
+
+
+#append new childs to the lxml-tree. old ones with same name will be overwritten
+def buildAk3Framework(ak3tree):
+    root = ak3tree.getroot()
+    newChildList = ['Nodes', 'Elements']
+    for item in newChildList:
+        if (root.find(item)) is not None:
+            root.remove(root.find(item))
+        newChild = etree.SubElement(root, item)
+        newChild.text = '\n'
+        newChild.tail = '\n'
+
+def writeHdf5Child(childlist, binFileName):
+    with h5py.File(binFileName, 'r+') as binFile:
+        for c, child in enumerate(childlist):
+            binFile.create_group('/'+child)
+
+def deleteHdf5Child(childlist, binFileName):
+    with h5py.File(binFileName, 'r+') as binFile:
+        for c, child in enumerate(childlist):
+            if binFile.get('/'+child) is not None:
+                binFile.__delitem__('/'+child)
+
+
+
+def readHdf5(calculationObject, binFileName, ak3tree):
+    readElemsNew(calculationObject, binFileName, ak3tree)
+    readNodesNew(calculationObject, binFileName, ak3tree)
+
+
+
 
 # Read Nodes from ak3, ID and coord are available in calculationObject.nodes after this call
 def readNodes(calculationObject, ak3tree):
@@ -24,13 +57,31 @@ def readNodes(calculationObject, ak3tree):
         progWin.setValue(n+1)
         QApplication.processEvents()
 
-def readNodesNew(calculationObject, binFile):
-    #binFile = self.myModel.binFile
-    nodesList = binFile.get('nodesSet/n0')
-    nodeCount = len(nodesList)
-    #calculationObject.nodes = (np.array(nodesList)).tolist()
-    calculationObject.nodes = np.array(nodesList)
-    QApplication.processEvents()
+def readNodesNew(calculationObject, binFileName, ak3tree):
+    with h5py.File(binFileName, 'r') as binFile:
+        root = ak3tree.getroot()
+        nodesList = binFile.get('nodesSet/n0')
+        nodeCount = len(nodesList)
+        nodes = root.find('Nodes')
+        nodes.set("N", str(nodeCount))
+
+        for i, nodeinfo in enumerate(np.array(nodesList)):
+            node = etree.SubElement(nodes, "Node")
+            ID = etree.SubElement(node, "ID")
+            #print(str(node[0]))
+            ID.text = str(int(nodeinfo[0]))
+            x = etree.SubElement(node, "x")
+            x.text = str(nodeinfo[1])
+            y = etree.SubElement(node, "y")
+            y.text = str(nodeinfo[2])
+            z = etree.SubElement(node, "z")
+            z.text = str(nodeinfo[3])
+            node.tail = '\n'
+
+        #calculationObject.nodes = (np.array(nodesList)).tolist()
+        calculationObject.nodes = np.array(nodesList)
+
+        QApplication.processEvents()
 
 
 
@@ -166,13 +217,28 @@ def readElems(calculationObject, ak3tree):
     return info
 
 
-def readElemsNew(calculationObject, binFile):
-    elemsList = binFile.get('elementsSet')
-    for i in range(len(elemsList.keys())):
-        groupdat = elemsList.get('g'+str(i))
-        elem_type = groupdat.attrs['type']
-        group_id = groupdat.attrs['groupNo']
-        calculationObject.elems.append([elem_type, group_id, np.array(groupdat)])
+def readElemsNew(calculationObject, binFileName, ak3tree):
+    with h5py.File(binFileName, 'r') as binFile:
+        elemsList = binFile.get('elementsSet')
+        root = ak3tree.getroot()
+        for i in range(len(elemsList.keys())):
+            groupdat = elemsList.get('g'+str(i))
+            elements = root.find('Elements')
+            elem_type = groupdat.attrs['type']
+            group_id = groupdat.attrs['groupNo']
+            elements.set('N', str(len(groupdat)))
+            elements.set('GroupId', str(group_id))
+            for item in groupdat:
+                elm = etree.SubElement(elements, str(elem_type))
+                id = etree.SubElement(elm, 'Id')
+                id.text = str(item[0])
+                for node in item:
+                    N = etree.SubElement(elm, 'N')
+                    N.text = str(node)
+                elm.tail = '\n'
+
+            calculationObject.elems.append([elem_type, group_id, np.array(groupdat)])
+
 
 
 # Read frequencies from ak3 file

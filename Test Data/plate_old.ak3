@@ -25,199 +25,10 @@
    <stp2>0</stp2>
    <vtk>1</vtk>
 </Output>
-<Nodes N="153">
-<Node><Id>1</Id><x>0.800000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>2</Id><x>-0.800000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>3</Id><x>0.600000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>4</Id><x>0.400000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>5</Id><x>0.200000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>6</Id><x>0.000000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>7</Id><x>-0.200000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>8</Id><x>-0.400000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>9</Id><x>-0.600000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>10</Id><x>-0.800000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>11</Id><x>-0.800000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>12</Id><x>-0.800000000</x><y>0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>13</Id><x>-0.800000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>14</Id><x>0.800000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>15</Id><x>-0.600000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>16</Id><x>-0.400000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>17</Id><x>-0.200000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>18</Id><x>0.000000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>19</Id><x>0.200000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>20</Id><x>0.400000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>21</Id><x>0.600000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>22</Id><x>0.800000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>23</Id><x>0.800000000</x><y>0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>24</Id><x>0.800000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>25</Id><x>0.600000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>26</Id><x>0.400000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>27</Id><x>0.200000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>28</Id><x>0.000000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>29</Id><x>-0.200000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>30</Id><x>-0.400000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>31</Id><x>-0.600000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>32</Id><x>0.600000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>33</Id><x>0.400000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>34</Id><x>0.200000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>35</Id><x>0.000000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>36</Id><x>-0.200000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>37</Id><x>-0.400000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>38</Id><x>-0.600000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>39</Id><x>0.600000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>40</Id><x>0.400000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>41</Id><x>0.200000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>42</Id><x>0.000000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>43</Id><x>-0.200000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>44</Id><x>-0.400000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>45</Id><x>-0.600000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>46</Id><x>0.700000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>47</Id><x>0.700000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>48</Id><x>0.600000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>49</Id><x>0.700000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>50</Id><x>0.800000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>51</Id><x>0.500000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>52</Id><x>0.500000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>53</Id><x>0.400000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>54</Id><x>0.500000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>55</Id><x>0.300000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>56</Id><x>0.300000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>57</Id><x>0.200000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>58</Id><x>0.300000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>59</Id><x>0.100000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>60</Id><x>0.100000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>61</Id><x>0.000000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>62</Id><x>0.100000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>63</Id><x>-0.100000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>64</Id><x>-0.100000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>65</Id><x>-0.200000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>66</Id><x>-0.100000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>67</Id><x>-0.300000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>68</Id><x>-0.300000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>69</Id><x>-0.400000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>70</Id><x>-0.300000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>71</Id><x>-0.500000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>72</Id><x>-0.500000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>73</Id><x>-0.600000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>74</Id><x>-0.500000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>75</Id><x>-0.700000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>76</Id><x>-0.700000000</x><y>0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>77</Id><x>-0.800000000</x><y>0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>78</Id><x>-0.700000000</x><y>0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>79</Id><x>0.700000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>80</Id><x>0.600000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>81</Id><x>0.700000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>82</Id><x>0.800000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>83</Id><x>0.500000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>84</Id><x>0.400000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>85</Id><x>0.500000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>86</Id><x>0.300000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>87</Id><x>0.200000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>88</Id><x>0.300000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>89</Id><x>0.100000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>90</Id><x>0.000000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>91</Id><x>0.100000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>92</Id><x>-0.100000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>93</Id><x>-0.200000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>94</Id><x>-0.100000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>95</Id><x>-0.300000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>96</Id><x>-0.400000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>97</Id><x>-0.300000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>98</Id><x>-0.500000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>99</Id><x>-0.600000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>100</Id><x>-0.500000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>101</Id><x>-0.700000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>102</Id><x>-0.800000000</x><y>0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>103</Id><x>-0.700000000</x><y>-0.000000000</y><z>0.000000000</z></Node>
-<Node><Id>104</Id><x>0.700000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>105</Id><x>0.600000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>106</Id><x>0.700000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>107</Id><x>0.800000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>108</Id><x>0.500000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>109</Id><x>0.400000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>110</Id><x>0.500000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>111</Id><x>0.300000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>112</Id><x>0.200000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>113</Id><x>0.300000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>114</Id><x>0.100000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>115</Id><x>0.000000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>116</Id><x>0.100000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>117</Id><x>-0.100000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>118</Id><x>-0.200000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>119</Id><x>-0.100000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>120</Id><x>-0.300000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>121</Id><x>-0.400000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>122</Id><x>-0.300000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>123</Id><x>-0.500000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>124</Id><x>-0.600000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>125</Id><x>-0.500000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>126</Id><x>-0.700000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>127</Id><x>-0.800000000</x><y>-0.100000000</y><z>0.000000000</z></Node>
-<Node><Id>128</Id><x>-0.700000000</x><y>-0.200000000</y><z>0.000000000</z></Node>
-<Node><Id>129</Id><x>0.700000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>130</Id><x>0.600000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>131</Id><x>0.700000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>132</Id><x>0.800000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>133</Id><x>0.500000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>134</Id><x>0.400000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>135</Id><x>0.500000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>136</Id><x>0.300000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>137</Id><x>0.200000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>138</Id><x>0.300000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>139</Id><x>0.100000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>140</Id><x>0.000000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>141</Id><x>0.100000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>142</Id><x>-0.100000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>143</Id><x>-0.200000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>144</Id><x>-0.100000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>145</Id><x>-0.300000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>146</Id><x>-0.400000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>147</Id><x>-0.300000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>148</Id><x>-0.500000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>149</Id><x>-0.600000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>150</Id><x>-0.500000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-<Node><Id>151</Id><x>-0.700000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>152</Id><x>-0.800000000</x><y>-0.300000000</y><z>0.000000000</z></Node>
-<Node><Id>153</Id><x>-0.700000000</x><y>-0.400000000</y><z>0.000000000</z></Node>
-</Nodes>
 <Materials N="2">
 <Material Type="isotropic" Name="Steel"><Id>1</Id><E>210000000000</E><nu>0.3</nu><A>0</A><I>0</I><Ix>0</Ix><Iy>0</Iy><Iz>0</Iz><rho>7850</rho><t>0</t><Fi>0</Fi></Material>
 <Material Type="isotropic" Name="Aluminium"><Id>2</Id><E>70000000000</E><nu>0.34</nu><A>0</A><I>0</I><Ix>0</Ix><Iy>0</Iy><Iz>0</Iz><rho>2700</rho><t>0</t><Fi>0</Fi></Material>
 </Materials>
-<Elements N="32" GroupId="1" Group="Block_1_aus_Steel" Material="1" Orientation="global" OrientationFile="">
-<PlShell9><Id>1</Id><N>1</N><N>3</N><N>25</N><N>24</N><N>47</N><N>48</N><N>49</N><N>50</N><N>46</N></PlShell9>
-<PlShell9><Id>2</Id><N>3</N><N>4</N><N>26</N><N>25</N><N>52</N><N>53</N><N>54</N><N>48</N><N>51</N></PlShell9>
-<PlShell9><Id>3</Id><N>4</N><N>5</N><N>27</N><N>26</N><N>56</N><N>57</N><N>58</N><N>53</N><N>55</N></PlShell9>
-<PlShell9><Id>4</Id><N>5</N><N>6</N><N>28</N><N>27</N><N>60</N><N>61</N><N>62</N><N>57</N><N>59</N></PlShell9>
-<PlShell9><Id>5</Id><N>6</N><N>7</N><N>29</N><N>28</N><N>64</N><N>65</N><N>66</N><N>61</N><N>63</N></PlShell9>
-<PlShell9><Id>6</Id><N>7</N><N>8</N><N>30</N><N>29</N><N>68</N><N>69</N><N>70</N><N>65</N><N>67</N></PlShell9>
-<PlShell9><Id>7</Id><N>8</N><N>9</N><N>31</N><N>30</N><N>72</N><N>73</N><N>74</N><N>69</N><N>71</N></PlShell9>
-<PlShell9><Id>8</Id><N>9</N><N>2</N><N>11</N><N>31</N><N>76</N><N>77</N><N>78</N><N>73</N><N>75</N></PlShell9>
-<PlShell9><Id>9</Id><N>24</N><N>25</N><N>32</N><N>23</N><N>49</N><N>80</N><N>81</N><N>82</N><N>79</N></PlShell9>
-<PlShell9><Id>10</Id><N>25</N><N>26</N><N>33</N><N>32</N><N>54</N><N>84</N><N>85</N><N>80</N><N>83</N></PlShell9>
-<PlShell9><Id>11</Id><N>26</N><N>27</N><N>34</N><N>33</N><N>58</N><N>87</N><N>88</N><N>84</N><N>86</N></PlShell9>
-<PlShell9><Id>12</Id><N>27</N><N>28</N><N>35</N><N>34</N><N>62</N><N>90</N><N>91</N><N>87</N><N>89</N></PlShell9>
-<PlShell9><Id>13</Id><N>28</N><N>29</N><N>36</N><N>35</N><N>66</N><N>93</N><N>94</N><N>90</N><N>92</N></PlShell9>
-<PlShell9><Id>14</Id><N>29</N><N>30</N><N>37</N><N>36</N><N>70</N><N>96</N><N>97</N><N>93</N><N>95</N></PlShell9>
-<PlShell9><Id>15</Id><N>30</N><N>31</N><N>38</N><N>37</N><N>74</N><N>99</N><N>100</N><N>96</N><N>98</N></PlShell9>
-<PlShell9><Id>16</Id><N>31</N><N>11</N><N>12</N><N>38</N><N>78</N><N>102</N><N>103</N><N>99</N><N>101</N></PlShell9>
-<PlShell9><Id>17</Id><N>23</N><N>32</N><N>39</N><N>22</N><N>81</N><N>105</N><N>106</N><N>107</N><N>104</N></PlShell9>
-<PlShell9><Id>18</Id><N>32</N><N>33</N><N>40</N><N>39</N><N>85</N><N>109</N><N>110</N><N>105</N><N>108</N></PlShell9>
-<PlShell9><Id>19</Id><N>33</N><N>34</N><N>41</N><N>40</N><N>88</N><N>112</N><N>113</N><N>109</N><N>111</N></PlShell9>
-<PlShell9><Id>20</Id><N>34</N><N>35</N><N>42</N><N>41</N><N>91</N><N>115</N><N>116</N><N>112</N><N>114</N></PlShell9>
-<PlShell9><Id>21</Id><N>35</N><N>36</N><N>43</N><N>42</N><N>94</N><N>118</N><N>119</N><N>115</N><N>117</N></PlShell9>
-<PlShell9><Id>22</Id><N>36</N><N>37</N><N>44</N><N>43</N><N>97</N><N>121</N><N>122</N><N>118</N><N>120</N></PlShell9>
-<PlShell9><Id>23</Id><N>37</N><N>38</N><N>45</N><N>44</N><N>100</N><N>124</N><N>125</N><N>121</N><N>123</N></PlShell9>
-<PlShell9><Id>24</Id><N>38</N><N>12</N><N>13</N><N>45</N><N>103</N><N>127</N><N>128</N><N>124</N><N>126</N></PlShell9>
-<PlShell9><Id>25</Id><N>22</N><N>39</N><N>21</N><N>14</N><N>106</N><N>130</N><N>131</N><N>132</N><N>129</N></PlShell9>
-<PlShell9><Id>26</Id><N>39</N><N>40</N><N>20</N><N>21</N><N>110</N><N>134</N><N>135</N><N>130</N><N>133</N></PlShell9>
-<PlShell9><Id>27</Id><N>40</N><N>41</N><N>19</N><N>20</N><N>113</N><N>137</N><N>138</N><N>134</N><N>136</N></PlShell9>
-<PlShell9><Id>28</Id><N>41</N><N>42</N><N>18</N><N>19</N><N>116</N><N>140</N><N>141</N><N>137</N><N>139</N></PlShell9>
-<PlShell9><Id>29</Id><N>42</N><N>43</N><N>17</N><N>18</N><N>119</N><N>143</N><N>144</N><N>140</N><N>142</N></PlShell9>
-<PlShell9><Id>30</Id><N>43</N><N>44</N><N>16</N><N>17</N><N>122</N><N>146</N><N>147</N><N>143</N><N>145</N></PlShell9>
-<PlShell9><Id>31</Id><N>44</N><N>45</N><N>15</N><N>16</N><N>125</N><N>149</N><N>150</N><N>146</N><N>148</N></PlShell9>
-<PlShell9><Id>32</Id><N>45</N><N>13</N><N>10</N><N>15</N><N>128</N><N>152</N><N>153</N><N>149</N><N>151</N></PlShell9>
-</Elements>
 <NodalForces N="1">
 <NodalForce Type="structure"><Id>1</Id><Fx>0.0</Fx><Fy>0.0</Fy><Fz>-1.0</Fz></NodalForce>
 </NodalForces>
@@ -230,38 +41,38 @@
 </FixedNodes>
 <BCMethod>0</BCMethod>
 <ElemLoads N="32">
-<ElemLoad Type="structurefrq"><Id>11</Id><File>../plate_old_diffuse_field_load_1/elemLoad11.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>12</Id><File>../plate_old_diffuse_field_load_1/elemLoad12.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>13</Id><File>../plate_old_diffuse_field_load_1/elemLoad13.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>14</Id><File>../plate_old_diffuse_field_load_1/elemLoad14.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>15</Id><File>../plate_old_diffuse_field_load_1/elemLoad15.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>16</Id><File>../plate_old_diffuse_field_load_1/elemLoad16.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>17</Id><File>../plate_old_diffuse_field_load_1/elemLoad17.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>18</Id><File>../plate_old_diffuse_field_load_1/elemLoad18.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>19</Id><File>../plate_old_diffuse_field_load_1/elemLoad19.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>110</Id><File>../plate_old_diffuse_field_load_1/elemLoad110.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>111</Id><File>../plate_old_diffuse_field_load_1/elemLoad111.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>112</Id><File>../plate_old_diffuse_field_load_1/elemLoad112.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>113</Id><File>../plate_old_diffuse_field_load_1/elemLoad113.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>114</Id><File>../plate_old_diffuse_field_load_1/elemLoad114.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>115</Id><File>../plate_old_diffuse_field_load_1/elemLoad115.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>116</Id><File>../plate_old_diffuse_field_load_1/elemLoad116.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>117</Id><File>../plate_old_diffuse_field_load_1/elemLoad117.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>118</Id><File>../plate_old_diffuse_field_load_1/elemLoad118.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>119</Id><File>../plate_old_diffuse_field_load_1/elemLoad119.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>120</Id><File>../plate_old_diffuse_field_load_1/elemLoad120.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>121</Id><File>../plate_old_diffuse_field_load_1/elemLoad121.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>122</Id><File>../plate_old_diffuse_field_load_1/elemLoad122.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>123</Id><File>../plate_old_diffuse_field_load_1/elemLoad123.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>124</Id><File>../plate_old_diffuse_field_load_1/elemLoad124.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>125</Id><File>../plate_old_diffuse_field_load_1/elemLoad125.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>126</Id><File>../plate_old_diffuse_field_load_1/elemLoad126.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>127</Id><File>../plate_old_diffuse_field_load_1/elemLoad127.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>128</Id><File>../plate_old_diffuse_field_load_1/elemLoad128.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>129</Id><File>../plate_old_diffuse_field_load_1/elemLoad129.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>130</Id><File>../plate_old_diffuse_field_load_1/elemLoad130.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>131</Id><File>../plate_old_diffuse_field_load_1/elemLoad131.dat</File></ElemLoad>
-<ElemLoad Type="structurefrq"><Id>132</Id><File>../plate_old_diffuse_field_load_1/elemLoad132.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>11</Id><File>../plate_old_plane_wave_load_1/elemLoad11.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>12</Id><File>../plate_old_plane_wave_load_1/elemLoad12.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>13</Id><File>../plate_old_plane_wave_load_1/elemLoad13.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>14</Id><File>../plate_old_plane_wave_load_1/elemLoad14.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>15</Id><File>../plate_old_plane_wave_load_1/elemLoad15.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>16</Id><File>../plate_old_plane_wave_load_1/elemLoad16.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>17</Id><File>../plate_old_plane_wave_load_1/elemLoad17.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>18</Id><File>../plate_old_plane_wave_load_1/elemLoad18.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>19</Id><File>../plate_old_plane_wave_load_1/elemLoad19.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>110</Id><File>../plate_old_plane_wave_load_1/elemLoad110.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>111</Id><File>../plate_old_plane_wave_load_1/elemLoad111.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>112</Id><File>../plate_old_plane_wave_load_1/elemLoad112.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>113</Id><File>../plate_old_plane_wave_load_1/elemLoad113.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>114</Id><File>../plate_old_plane_wave_load_1/elemLoad114.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>115</Id><File>../plate_old_plane_wave_load_1/elemLoad115.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>116</Id><File>../plate_old_plane_wave_load_1/elemLoad116.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>117</Id><File>../plate_old_plane_wave_load_1/elemLoad117.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>118</Id><File>../plate_old_plane_wave_load_1/elemLoad118.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>119</Id><File>../plate_old_plane_wave_load_1/elemLoad119.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>120</Id><File>../plate_old_plane_wave_load_1/elemLoad120.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>121</Id><File>../plate_old_plane_wave_load_1/elemLoad121.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>122</Id><File>../plate_old_plane_wave_load_1/elemLoad122.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>123</Id><File>../plate_old_plane_wave_load_1/elemLoad123.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>124</Id><File>../plate_old_plane_wave_load_1/elemLoad124.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>125</Id><File>../plate_old_plane_wave_load_1/elemLoad125.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>126</Id><File>../plate_old_plane_wave_load_1/elemLoad126.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>127</Id><File>../plate_old_plane_wave_load_1/elemLoad127.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>128</Id><File>../plate_old_plane_wave_load_1/elemLoad128.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>129</Id><File>../plate_old_plane_wave_load_1/elemLoad129.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>130</Id><File>../plate_old_plane_wave_load_1/elemLoad130.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>131</Id><File>../plate_old_plane_wave_load_1/elemLoad131.dat</File></ElemLoad>
+<ElemLoad Type="structurefrq"><Id>132</Id><File>../plate_old_plane_wave_load_1/elemLoad132.dat</File></ElemLoad>
 </ElemLoads>
 <LoadedElems>
 <LoadedElem><Id>1</Id><Load>11</Load></LoadedElem>
@@ -297,4 +108,161 @@
 <LoadedElem><Id>31</Id><Load>131</Load></LoadedElem>
 <LoadedElem><Id>32</Id><Load>132</Load></LoadedElem>
 </LoadedElems>
+<Nodes N="153">
+<Node><ID>1</ID><x>0.8</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>2</ID><x>-0.8</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>3</ID><x>0.6</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>4</ID><x>0.4</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>5</ID><x>0.2</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>6</ID><x>0.0</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>7</ID><x>-0.2</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>8</ID><x>-0.4</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>9</ID><x>-0.6</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>10</ID><x>-0.8</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>11</ID><x>-0.8</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>12</ID><x>-0.8</x><y>0.0</y><z>0.0</z></Node>
+<Node><ID>13</ID><x>-0.8</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>14</ID><x>0.8</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>15</ID><x>-0.6</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>16</ID><x>-0.4</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>17</ID><x>-0.2</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>18</ID><x>0.0</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>19</ID><x>0.2</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>20</ID><x>0.4</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>21</ID><x>0.6</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>22</ID><x>0.8</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>23</ID><x>0.8</x><y>0.0</y><z>0.0</z></Node>
+<Node><ID>24</ID><x>0.8</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>25</ID><x>0.6</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>26</ID><x>0.4</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>27</ID><x>0.2</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>28</ID><x>0.0</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>29</ID><x>-0.2</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>30</ID><x>-0.4</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>31</ID><x>-0.6</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>32</ID><x>0.6</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>33</ID><x>0.4</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>34</ID><x>0.2</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>35</ID><x>0.0</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>36</ID><x>-0.2</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>37</ID><x>-0.4</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>38</ID><x>-0.6</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>39</ID><x>0.6</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>40</ID><x>0.4</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>41</ID><x>0.2</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>42</ID><x>0.0</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>43</ID><x>-0.2</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>44</ID><x>-0.4</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>45</ID><x>-0.6</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>46</ID><x>0.7</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>47</ID><x>0.7</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>48</ID><x>0.6</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>49</ID><x>0.7</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>50</ID><x>0.8</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>51</ID><x>0.5</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>52</ID><x>0.5</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>53</ID><x>0.4</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>54</ID><x>0.5</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>55</ID><x>0.3</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>56</ID><x>0.3</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>57</ID><x>0.2</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>58</ID><x>0.3</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>59</ID><x>0.1</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>60</ID><x>0.1</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>61</ID><x>0.0</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>62</ID><x>0.1</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>63</ID><x>-0.1</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>64</ID><x>-0.1</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>65</ID><x>-0.2</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>66</ID><x>-0.1</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>67</ID><x>-0.3</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>68</ID><x>-0.3</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>69</ID><x>-0.4</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>70</ID><x>-0.3</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>71</ID><x>-0.5</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>72</ID><x>-0.5</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>73</ID><x>-0.6</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>74</ID><x>-0.5</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>75</ID><x>-0.7</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>76</ID><x>-0.7</x><y>0.4</y><z>0.0</z></Node>
+<Node><ID>77</ID><x>-0.8</x><y>0.3</y><z>0.0</z></Node>
+<Node><ID>78</ID><x>-0.7</x><y>0.2</y><z>0.0</z></Node>
+<Node><ID>79</ID><x>0.7</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>80</ID><x>0.6</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>81</ID><x>0.7</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>82</ID><x>0.8</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>83</ID><x>0.5</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>84</ID><x>0.4</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>85</ID><x>0.5</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>86</ID><x>0.3</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>87</ID><x>0.2</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>88</ID><x>0.3</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>89</ID><x>0.1</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>90</ID><x>0.0</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>91</ID><x>0.1</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>92</ID><x>-0.1</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>93</ID><x>-0.2</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>94</ID><x>-0.1</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>95</ID><x>-0.3</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>96</ID><x>-0.4</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>97</ID><x>-0.3</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>98</ID><x>-0.5</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>99</ID><x>-0.6</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>100</ID><x>-0.5</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>101</ID><x>-0.7</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>102</ID><x>-0.8</x><y>0.1</y><z>0.0</z></Node>
+<Node><ID>103</ID><x>-0.7</x><y>-0.0</y><z>0.0</z></Node>
+<Node><ID>104</ID><x>0.7</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>105</ID><x>0.6</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>106</ID><x>0.7</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>107</ID><x>0.8</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>108</ID><x>0.5</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>109</ID><x>0.4</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>110</ID><x>0.5</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>111</ID><x>0.3</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>112</ID><x>0.2</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>113</ID><x>0.3</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>114</ID><x>0.1</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>115</ID><x>0.0</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>116</ID><x>0.1</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>117</ID><x>-0.1</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>118</ID><x>-0.2</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>119</ID><x>-0.1</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>120</ID><x>-0.3</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>121</ID><x>-0.4</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>122</ID><x>-0.3</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>123</ID><x>-0.5</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>124</ID><x>-0.6</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>125</ID><x>-0.5</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>126</ID><x>-0.7</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>127</ID><x>-0.8</x><y>-0.1</y><z>0.0</z></Node>
+<Node><ID>128</ID><x>-0.7</x><y>-0.2</y><z>0.0</z></Node>
+<Node><ID>129</ID><x>0.7</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>130</ID><x>0.6</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>131</ID><x>0.7</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>132</ID><x>0.8</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>133</ID><x>0.5</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>134</ID><x>0.4</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>135</ID><x>0.5</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>136</ID><x>0.3</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>137</ID><x>0.2</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>138</ID><x>0.3</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>139</ID><x>0.1</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>140</ID><x>0.0</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>141</ID><x>0.1</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>142</ID><x>-0.1</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>143</ID><x>-0.2</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>144</ID><x>-0.1</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>145</ID><x>-0.3</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>146</ID><x>-0.4</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>147</ID><x>-0.3</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>148</ID><x>-0.5</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>149</ID><x>-0.6</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>150</ID><x>-0.5</x><y>-0.4</y><z>0.0</z></Node>
+<Node><ID>151</ID><x>-0.7</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>152</ID><x>-0.8</x><y>-0.3</y><z>0.0</z></Node>
+<Node><ID>153</ID><x>-0.7</x><y>-0.4</y><z>0.0</z></Node>
+</Nodes>
+<Elements>
+</Elements>
 </FEM>

@@ -4,6 +4,7 @@ import os
 import numpy as np
 import math
 from lxml import etree
+import h5py
 from standardWidgets import progressWindow
 
 # ScrollArea containing loads in bottom left part of program
@@ -109,55 +110,67 @@ class load(QHBoxLayout):
             self.changeSwitch.setChecked(1)
 
 
-    def writeXML(self, exportAK3, name, cluster):
+    def writeXML(self, exportAK3, exportbin, name, cluster):
         """
-        saves loads into existing .xml
+        saves loads into existing .ak3 and hdf5
         """
-        elemLoads = exportAK3.find('ElemLoads')
-        oldNoOfLoads = elemLoads.get('N')
-        elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
-        loadedElems = exportAK3.find('LoadedElems')
-        # Create a directory for load dat files
-        loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
-        if not os.path.exists(loadDir):
-            os.mkdir(loadDir)
-        else: # Clean directory
-            for filename in os.listdir(loadDir):
-                os.remove(loadDir + '/' + filename)
-        # Save loads for each element
-        progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        for nE, surfaceElem in enumerate(self.surfaceElements):
-            # One load per element
-            newLoad = etree.Element('ElemLoad', Type='structurefrq')
-            newLoad.tail = '\n'
-            newLoadID = etree.Element('Id')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
-            newLoad.append(newLoadID)
-            newFile = etree.Element('File')
-            if cluster == 1:
-                strhead = '../../'
-            else:
-                strhead = '../'
-            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
-            newLoad.append(newFile)
-            elemLoads.append(newLoad)
-            # Save one file per load
-            frequencies = self.myModel.calculationObjects[0].frequencies
-            f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
-            f.write(str(len(frequencies)) + '\n')
+        with h5py.File(exportbin, 'r+') as binfile:
+            #binfile = self.myModel.binFile
+            if binfile.get('/loads') is not None:
+                binfile.__delitem__('/loads')
+            elemLoads = exportAK3.find('ElemLoads')
+            oldNoOfLoads = elemLoads.get('N')
+            elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
+            loadedElems = exportAK3.find('LoadedElems')
+            # Create a directory for load dat files
+            loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
+            if not os.path.exists(loadDir):
+                os.mkdir(loadDir)
+            else: # Clean directory
+                for filename in os.listdir(loadDir):
+                    os.remove(loadDir + '/' + filename)
+            # Save loads for each element
+            progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
+            for nE, surfaceElem in enumerate(self.surfaceElements):
+                # One load per element
+                newLoad = etree.Element('ElemLoad', Type='structurefrq')
+                newLoad.tail = '\n'
+                newLoadID = etree.Element('Id')
+                newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
+                newLoad.append(newLoadID)
+                newFile = etree.Element('File')
+                if cluster == 1:
+                    strhead = '../../'
+                else:
+                    strhead = '../'
+                newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
+                newLoad.append(newFile)
+                elemLoads.append(newLoad)
+                # Save one file per load
+                frequencies = self.myModel.calculationObjects[0].frequencies
+                f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
+                f.write(str(len(frequencies)) + '\n')
 
-            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
-            f.close()
-            # Apply load to element
-            newLoadedElem = etree.Element('LoadedElem')
-            newLoadedElem.tail = '\n'
-            newElemID = etree.Element('Id')
-            newElemID.text = str(surfaceElem) # Element ID
-            newLoadedElem.append(newElemID)
-            newLoadID = etree.Element('Load')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # Load ID
-            newLoadedElem.append(newLoadID)
-            loadedElems.append(newLoadedElem)
-            # Update progress window
-            progWin.setValue(nE)
-            QApplication.processEvents()
+                [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.amp.text())*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
+                f.close()
+
+                # Apply load to element
+                newLoadedElem = etree.Element('LoadedElem')
+                newLoadedElem.tail = '\n'
+                newElemID = etree.Element('Id')
+                newElemID.text = str(surfaceElem) # Element ID
+                newLoadedElem.append(newElemID)
+                newLoadID = etree.Element('Load')
+                newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # Load ID
+                newLoadedElem.append(newLoadID)
+                loadedElems.append(newLoadedElem)
+                ###same for h5py file:
+                dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
+                set = binfile.create_dataset('/loads/loaddata/l'+str(self.removeButton.id+1) + str(surfaceElem), data=(dataArray))
+                set.attrs['FreqCount'] = len(frequencies)
+                loadElDat = [int(surfaceElem),int(str(self.removeButton.id+1)+str(surfaceElem))]
+                binfile.create_dataset('/loads/loadedElems/le'+str(self.removeButton.id+1) + str(surfaceElem), data=(loadElDat))
+                ###
+                # Update progress window
+                progWin.setValue(nE)
+                QApplication.processEvents()

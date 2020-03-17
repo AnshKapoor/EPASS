@@ -19,7 +19,7 @@ from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
-from standardFunctionsGeneral import readNodes, readNodesNew, readElems, readElemsNew, readFreqs
+from standardFunctionsGeneral import buildAk3Framework, readNodes, readNodesNew, readElems, readElemsNew, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5
 from standardWidgets import sepLine, ak3LoadButton, addButton, loadSelector, messageboxOK, exportButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
@@ -119,7 +119,7 @@ class loadGUI(QMainWindow):
 
     def loadInput(self):
         """
-        Open an ak3 file (self.loadButton click event)
+        Open an ak3 file (self.loadButton click event) and read necessary infirmation out of an hdf5 file
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -127,19 +127,25 @@ class loadGUI(QMainWindow):
         if fileName:
             self.vtkWindow.clearWindow()
             self.myModel.name = fileName.split('/')[-1].split('.')[0]
+            print(fileName.split('.')[0])
             self.myModel.path =  '/'.join(fileName.split('/')[:-1])
             self.myModel.calculationObjects = [] # Only one model can be loaded - every time a file is chosen, the model is reset
             [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
             self.myModel.calculationObjects.append(calculationObject('calculation'))
             self.myModel.ak3tree = etree.parse(fileName)
             ##NEW: BINARY FILE LOAD
-            self.myModel.binFile = h5py.File('h5Tester2.hdf5', 'r') #readOnly
+            self.myModel.binfilename = str(fileName.split('.')[0])+'.hdf5'
+            deleteHdf5Child(['freq', 'mat'], self.myModel.binfilename)
+            #self.myModel.binFile = h5py.File(self.myModel.binfilename, 'r+') #readWrite
             ###
             #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)
             #readElems(self.myModel.calculationObjects[0], self.myModel.ak3tree)
-            readElemsNew(self.myModel.calculationObjects[0], self.myModel.binFile)
-            readNodesNew(self.myModel.calculationObjects[0], self.myModel.binFile)
-            print(self.myModel.calculationObjects[0].nodes)
+            buildAk3Framework(self.myModel.ak3tree)
+            readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree)
+            #readElemsNew(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree)
+            #readNodesNew(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree)
+            #print(self.myModel.calculationObjects[0].elems)
+            #print(self.myModel.calculationObjects[0].nodes)
             readFreqs(self.myModel)
             self.myModel.updateModelInfo(self.vtkWindow)
             self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
@@ -151,7 +157,7 @@ class loadGUI(QMainWindow):
             self.nodelist = self.myModel.calculationObjects[0].nodes
 
 
-
+            ## HOW TO BUILD AN H5PY FILE:
             # f = h5py.File('h5Tester2.hdf5', 'w')
             # for i, group in enumerate(self.myModel.calculationObjects[0].elems):
             #     i = f.create_dataset('/elementsSet/g'+str(i), data=((group[2].tolist())))

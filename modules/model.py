@@ -8,6 +8,7 @@ import vtk
 import numpy as np
 import copy
 from lxml import etree
+import h5py
 from standardWidgets import progressWindow
 
 # Saves a model, objects created by readModels()
@@ -34,7 +35,7 @@ class model: # Saves a model
             loadedElems.remove(loadedElem)
         # Create new entries for requested loads
         for load in self.loads:
-            load.writeXML(exportAK3, self.name, self.cluster)
+            load.writeXML(exportAK3, self.binfilename, self.name, self.cluster)
         # Write new ak3 file to disc
         progWin = progressWindow(2, 'Writing input file')
         with open(self.path + '/' + self.name + '_old.ak3', 'wb') as f:
