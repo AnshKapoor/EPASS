@@ -33,17 +33,18 @@ def deleteHdf5Child(childlist, binFileName):
             if binFile.get('/'+child) is not None:
                 binFile.__delitem__('/'+child)
 
-
-
-def readHdf5(calculationObject, binFileName, ak3tree):
-    readElemsNew(calculationObject, binFileName, ak3tree)
-    readNodesNew(calculationObject, binFileName, ak3tree)
-
+def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp):
+    with h5py.File(binFileName, 'r+') as binFile:
+        groups = list(binFile.keys())
+        print(set(binFile.keys()))
+        for item in groups:
+            if item in DataToLookUp:
+                DataToLookUp[item](calculationObject, binFileName, ak3tree);
 
 
 
 # Read Nodes from ak3, ID and coord are available in calculationObject.nodes after this call
-def readNodes(calculationObject, ak3tree):
+def readNodesOld(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#
     nodeCount = int(ak3tree.find('Nodes').get('N')) # count nodes
     nodesTree = ak3tree.find('Nodes').findall('Node') # get each node
@@ -57,10 +58,10 @@ def readNodes(calculationObject, ak3tree):
         progWin.setValue(n+1)
         QApplication.processEvents()
 
-def readNodesNew(calculationObject, binFileName, ak3tree):
+def readNodes(calculationObject, binFileName, ak3tree):
     with h5py.File(binFileName, 'r') as binFile:
         root = ak3tree.getroot()
-        nodesList = binFile.get('nodesSet/n0')
+        nodesList = binFile.get('nodes/n0')
         nodeCount = len(nodesList)
         nodes = root.find('Nodes')
         nodes.set("N", str(nodeCount))
@@ -217,9 +218,9 @@ def readElems(calculationObject, ak3tree):
     return info
 
 
-def readElemsNew(calculationObject, binFileName, ak3tree):
+def readElements(calculationObject, binFileName, ak3tree):
     with h5py.File(binFileName, 'r') as binFile:
-        elemsList = binFile.get('elementsSet')
+        elemsList = binFile.get('elements')
         root = ak3tree.getroot()
         for i in range(len(elemsList.keys())):
             groupdat = elemsList.get('g'+str(i))

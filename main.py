@@ -19,7 +19,7 @@ from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
-from standardFunctionsGeneral import buildAk3Framework, readNodes, readNodesNew, readElems, readElemsNew, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5
+from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5
 from standardWidgets import sepLine, ak3LoadButton, addButton, loadSelector, messageboxOK, exportButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
@@ -135,13 +135,13 @@ class loadGUI(QMainWindow):
             self.myModel.ak3tree = etree.parse(fileName)
             ##NEW: BINARY FILE LOAD
             self.myModel.binfilename = str(fileName.split('.')[0])+'.hdf5'
-            deleteHdf5Child(['freq', 'mat'], self.myModel.binfilename)
+            #deleteHdf5Child(['freq', 'mat'], self.myModel.binfilename)
             #self.myModel.binFile = h5py.File(self.myModel.binfilename, 'r+') #readWrite
             ###
             #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)
             #readElems(self.myModel.calculationObjects[0], self.myModel.ak3tree)
             buildAk3Framework(self.myModel.ak3tree)
-            readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree)
+            readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, {'elements':readElements,'nodes':readNodes})
             #readElemsNew(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree)
             #readNodesNew(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree)
             #print(self.myModel.calculationObjects[0].elems)
