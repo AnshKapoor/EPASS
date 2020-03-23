@@ -33,13 +33,14 @@ def deleteHdf5Child(childlist, binFileName):
             if binFile.get('/'+child) is not None:
                 binFile.__delitem__('/'+child)
 
-def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp):
+def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp): #Convention: Read Functions always need to have the same name as the group in the file!
     with h5py.File(binFileName, 'r+') as binFile:
         groups = list(binFile.keys())
         print(set(binFile.keys()))
         for item in groups:
             if item in DataToLookUp:
-                DataToLookUp[item](calculationObject, binFileName, ak3tree);
+                globals()['read'+item.capitalize()](calculationObject, binFileName, ak3tree) #looks for a function with the corresponding name
+
 
 
 
@@ -87,7 +88,7 @@ def readNodes(calculationObject, binFileName, ak3tree):
 
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
-def readElems(calculationObject, ak3tree):
+def readElemsOld(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#
     for elementGroup in ak3tree.findall('Elements'):
         no_of_nodes = 0

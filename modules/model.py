@@ -146,6 +146,7 @@ class model: # Saves a model
 # Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain
     def __init__(self, name):
+        self.LookUpTable = ['elements','nodes'] #contains a string for each element, that will be stored somewhere. !yet to be filled!
         self.name = name
         self.filename = name
         self.frequencyObjects = [] # Each calculation_object consists of several frequency_objects (one frequency step)
