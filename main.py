@@ -13,7 +13,7 @@ from lxml import etree
 import numpy as np
 import h5py
 #
-from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction
+from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction, QTabWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon
 #
@@ -30,6 +30,7 @@ from planeWave import planeWave
 from diffuseField import diffuseField
 from timeVarDat import timeVarDat
 from tbl import tbl
+from hdf5Reader import hdf5Reader
 #
 # Main class called first
 class loadGUI(QMainWindow):
@@ -138,7 +139,9 @@ class loadGUI(QMainWindow):
 
             buildAk3Framework(self.myModel.ak3tree)
             toBeLoaded = ['elements','nodes']
-            readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, toBeLoaded)#{'elements':readElements,'nodes':readNodes})
+            with h5py.File(self.myModel.binfilename, 'r+') as self.binFile:
+                hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
+            #readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, toBeLoaded)#{'elements':readElements,'nodes':readNodes})
             readFreqs(self.myModel)
             self.myModel.updateModelInfo(self.vtkWindow)
             self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
@@ -204,11 +207,24 @@ class loadGUI(QMainWindow):
         self.loadButtonLayout.addStretch(1)
         self.modelLayout.addLayout(self.loadButtonLayout)
         self.modelLayout.addLayout(self.myModel.layout)
-        self.modelLayout.addStretch(1)
+        self.modelLayout.addStretch(2)
         self.mainLayoutLeft.addWidget(self.label1)
         self.mainLayoutLeft.addLayout(self.modelLayout)
         self.mainLayoutLeft.addWidget(self.sepLine1)
         #
+
+
+
+        self.tabsLeft = QTabWidget()
+        self.tabLoads = QWidget()
+        self.tabMaterials = QWidget()
+        #self.tabsLeft.resize(300,300)
+
+        self.tabsLeft.addTab(self.tabLoads,"Loads")
+        self.tabsLeft.addTab(self.tabMaterials,"Materials")
+
+
+
         # CREATE WIDGETS | II - LOADS
         self.label2 = QLabel('Loads')
         self.label2.setFont(self.myFont)
@@ -216,6 +232,32 @@ class loadGUI(QMainWindow):
         self.addLoadButton = addButton(self.ak3path)
         self.addLoadButton.clicked.connect(self.addLoad)
         self.loadInfo = loadInfoBox()
+
+        # ADD TO LAYOUT
+        self.loadUpperLayout = QHBoxLayout()
+        self.loadUpperLayout.addWidget(self.loadSelector)
+        self.loadUpperLayout.addWidget(self.addLoadButton)
+        self.loadUpperLayout.addStretch(1)
+        self.loadLayout = QVBoxLayout()
+        self.loadLayout.addLayout(self.loadUpperLayout)
+        self.loadLayout.addWidget(self.label2)
+        self.loadLayout.addLayout(self.loadLayout)
+        self.loadLayout.addWidget(self.loadInfo)
+        #self.loadLayout.setStretchFactor(self.loadInfo, True)
+        self.tabLoads.layout = QVBoxLayout(self)
+        self.tabLoads.setLayout(self.loadLayout)
+
+        #
+        # CREATE WIDGETS | II - MATERIALS
+        self.labelMat = QLabel('Fill me, please :)')
+        self.labelMat.setFont(self.myFont)
+        # ADD TO LAYOUT
+        self.MatLayout = QVBoxLayout()
+        self.MatLayout.addWidget(self.labelMat)
+        #self.MatLayout.setStretchFactor(self.loadInfo, True)
+        self.tabMaterials.layout = QVBoxLayout(self)
+        self.tabMaterials.setLayout(self.MatLayout)
+
         self.clusterSwitch = QCheckBox()
         self.clusterSwitch.setChecked(0)
         self.clusterSwitch.setText('Export for Cluster')
@@ -223,18 +265,51 @@ class loadGUI(QMainWindow):
         self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
         self.exportButton = exportButton()
         self.exportButton.clicked.connect(self.myModel.export)
-        # ADD TO LAYOUT
-        self.loadLayout = QHBoxLayout()
-        self.loadLayout.addWidget(self.loadSelector)
-        self.loadLayout.addWidget(self.addLoadButton)
-        self.loadLayout.addStretch(1)
-        self.mainLayoutLeft.addWidget(self.label2)
-        self.mainLayoutLeft.addLayout(self.loadLayout)
-        self.mainLayoutLeft.addWidget(self.loadInfo)
-        self.mainLayoutLeft.setStretchFactor(self.loadInfo, True)
+
+        self.mainLayoutLeft.addWidget(self.tabsLeft)
         self.mainLayoutLeft.addWidget(self.clusterSwitch)
         self.mainLayoutLeft.addWidget(self.exportButton)
-        #
+
+
+
+
+
+
+
+
+
+
+        # # CREATE WIDGETS | II - LOADS
+        # self.label2 = QLabel('Loads')
+        # self.label2.setFont(self.myFont)
+        # self.loadSelector = loadSelector()
+        # self.addLoadButton = addButton(self.ak3path)
+        # self.addLoadButton.clicked.connect(self.addLoad)
+        # self.loadInfo = loadInfoBox()
+        # self.clusterSwitch = QCheckBox()
+        # self.clusterSwitch.setChecked(0)
+        # self.clusterSwitch.setText('Export for Cluster')
+        # self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
+        # self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
+        # self.exportButton = exportButton()
+        # self.exportButton.clicked.connect(self.myModel.export)
+        # # ADD TO LAYOUT
+        # self.loadLayout = QHBoxLayout()
+        # self.loadLayout.addWidget(self.loadSelector)
+        # self.loadLayout.addWidget(self.addLoadButton)
+        # self.loadLayout.addStretch(1)
+        # self.mainLayoutLeft.addWidget(self.label2)
+        # self.mainLayoutLeft.addLayout(self.loadLayout)
+        # self.mainLayoutLeft.addWidget(self.loadInfo)
+        # self.mainLayoutLeft.setStretchFactor(self.loadInfo, True)
+        # self.mainLayoutLeft.addWidget(self.clusterSwitch)
+        # self.mainLayoutLeft.addWidget(self.exportButton)
+        # #
+
+
+
+
+
         # CREATE WIDGETS | III - 3D Window
         self.label3 = QLabel('3D View')
         self.label3.setFont(self.myFont)
