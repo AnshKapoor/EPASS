@@ -1,2 +1,2 @@
 writeXML method: still outputs self.amps for every load, also distr. time domain. for distr. time domain there shouldn't be amp=1 (from init) but the real amps from the data!
-pyQt doesn't work if in modern linux systems wayland window management is used instead of standard x11
+pyQt doesn't work if in modern linux systems wayland window management is used instead of standard x11-> works with new kernel

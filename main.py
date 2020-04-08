@@ -13,14 +13,14 @@ from lxml import etree
 import numpy as np
 import h5py
 #
-from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction, QTabWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QPushButton, QLineEdit, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction, QTabWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
 from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5
-from standardWidgets import sepLine, ak3LoadButton, addButton, loadSelector, messageboxOK, exportButton
+from standardWidgets import sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
 from graphWindow import graphWindow
@@ -189,6 +189,8 @@ class loadGUI(QMainWindow):
     def setupGui(self):
         """
         Initialisation of gui (main window content)
+        To-Do: Put all the stuff into separate modules and import them.
+        One big "GUI" module, which itself loads from smaller modules.
         """
         ### Basic splitting in areas ###
         self.mainLayoutLeft = QVBoxLayout()
@@ -207,23 +209,21 @@ class loadGUI(QMainWindow):
         self.loadButtonLayout.addStretch(1)
         self.modelLayout.addLayout(self.loadButtonLayout)
         self.modelLayout.addLayout(self.myModel.layout)
-        self.modelLayout.addStretch(2)
+        self.modelLayout.addStretch(1)
         self.mainLayoutLeft.addWidget(self.label1)
         self.mainLayoutLeft.addLayout(self.modelLayout)
         self.mainLayoutLeft.addWidget(self.sepLine1)
         #
 
-
-
+        # INIT DIFFERENT TABS
         self.tabsLeft = QTabWidget()
         self.tabLoads = QWidget()
         self.tabMaterials = QWidget()
-        #self.tabsLeft.resize(300,300)
+        self.tabAnalysis = QWidget()
 
         self.tabsLeft.addTab(self.tabLoads,"Loads")
         self.tabsLeft.addTab(self.tabMaterials,"Materials")
-
-
+        self.tabsLeft.addTab(self.tabAnalysis, 'Analysis')
 
         # CREATE WIDGETS | II - LOADS
         self.label2 = QLabel('Loads')
@@ -241,23 +241,67 @@ class loadGUI(QMainWindow):
         self.loadLayout = QVBoxLayout()
         self.loadLayout.addLayout(self.loadUpperLayout)
         self.loadLayout.addWidget(self.label2)
-        self.loadLayout.addLayout(self.loadLayout)
         self.loadLayout.addWidget(self.loadInfo)
         #self.loadLayout.setStretchFactor(self.loadInfo, True)
-        self.tabLoads.layout = QVBoxLayout(self)
+        #self.tabLoads.layout = QVBoxLayout(self)
         self.tabLoads.setLayout(self.loadLayout)
 
         #
-        # CREATE WIDGETS | II - MATERIALS
+        # CREATE WIDGETS | III - MATERIALS
         self.labelMat = QLabel('Fill me, please :)')
         self.labelMat.setFont(self.myFont)
         # ADD TO LAYOUT
         self.MatLayout = QVBoxLayout()
         self.MatLayout.addWidget(self.labelMat)
         #self.MatLayout.setStretchFactor(self.loadInfo, True)
-        self.tabMaterials.layout = QVBoxLayout(self)
+        #self.tabMaterials.layout = QVBoxLayout(self)
         self.tabMaterials.setLayout(self.MatLayout)
 
+        # CREATE WIDGETS | IV - Analysis
+        self.labelAna = QLabel('frequency range:')
+        self.labelAna.setFont(self.myFont)
+        self.freqEdit = QPushButton('...')
+        self.freqEdit.setStyleSheet("background-color:rgb(255,255,255)")
+        self.freqEdit.setStatusTip('Edit frequencies')
+        self.freqEdit.setMaximumWidth(23)
+        self.freqEdit.setMaximumHeight(23)
+        self.freqstart = QLineEdit('100')
+        self.startLabel = QLabel('Start [Hz]:')
+        self.freqdelta = QLineEdit('10')
+        self.deltaLabel = QLabel('Delta [Hz]:')
+        self.freqsteps = QLineEdit('100')
+        self.stepsLabel = QLabel('Steps:')
+        self.freqEdit.clicked.connect(self.showFreqEdit)
+        self.labelType = QLabel('Analysis Type:')
+        self.labelSolver = QLabel('Solver:')
+        self.AnasepLine1 = sepLine()
+        self.AnasepLine2 = sepLine()
+        self.freqSaveButton = saveButton()
+        self.freqSaveButton.clicked.connect(self.showFreqEdit)
+        # ADD TO LAYOUT
+        self.AnaLayout = QVBoxLayout()
+        self.AnaLayout1 = QHBoxLayout()
+        self.AnaLayout2 = QHBoxLayout()
+        self.AnaLayout3 = QHBoxLayout()
+        self.AnaLayout.addWidget(self.labelAna)
+        self.AnaLayout1.addWidget(self.startLabel)
+        self.AnaLayout1.addWidget(self.freqstart)
+        self.AnaLayout1.addWidget(self.deltaLabel)
+        self.AnaLayout1.addWidget(self.freqdelta)
+        self.AnaLayout1.addWidget(self.stepsLabel)
+        self.AnaLayout1.addWidget(self.freqsteps)
+        self.AnaLayout1.addWidget(self.freqSaveButton)
+
+        self.AnaLayout2.addWidget(self.labelType)
+        self.AnaLayout2.addWidget(self.labelSolver)
+        self.AnaLayout.addLayout(self.AnaLayout1, 2)
+        self.AnaLayout.addWidget(self.AnasepLine1)
+        self.AnaLayout.addLayout(self.AnaLayout2, 1)
+        self.AnaLayout.addWidget(self.AnasepLine2)
+        self.AnaLayout.addLayout(self.AnaLayout3, 1)
+        self.tabAnalysis.setLayout(self.AnaLayout)
+
+        # LEFT SIDE EXPORT SETTINGS
         self.clusterSwitch = QCheckBox()
         self.clusterSwitch.setChecked(0)
         self.clusterSwitch.setText('Export for Cluster')
@@ -266,46 +310,10 @@ class loadGUI(QMainWindow):
         self.exportButton = exportButton()
         self.exportButton.clicked.connect(self.myModel.export)
 
-        self.mainLayoutLeft.addWidget(self.tabsLeft)
+        #  PUT LEFT SIDE TOGETHER
+        self.mainLayoutLeft.addWidget(self.tabsLeft, 2)
         self.mainLayoutLeft.addWidget(self.clusterSwitch)
         self.mainLayoutLeft.addWidget(self.exportButton)
-
-
-
-
-
-
-
-
-
-
-        # # CREATE WIDGETS | II - LOADS
-        # self.label2 = QLabel('Loads')
-        # self.label2.setFont(self.myFont)
-        # self.loadSelector = loadSelector()
-        # self.addLoadButton = addButton(self.ak3path)
-        # self.addLoadButton.clicked.connect(self.addLoad)
-        # self.loadInfo = loadInfoBox()
-        # self.clusterSwitch = QCheckBox()
-        # self.clusterSwitch.setChecked(0)
-        # self.clusterSwitch.setText('Export for Cluster')
-        # self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
-        # self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
-        # self.exportButton = exportButton()
-        # self.exportButton.clicked.connect(self.myModel.export)
-        # # ADD TO LAYOUT
-        # self.loadLayout = QHBoxLayout()
-        # self.loadLayout.addWidget(self.loadSelector)
-        # self.loadLayout.addWidget(self.addLoadButton)
-        # self.loadLayout.addStretch(1)
-        # self.mainLayoutLeft.addWidget(self.label2)
-        # self.mainLayoutLeft.addLayout(self.loadLayout)
-        # self.mainLayoutLeft.addWidget(self.loadInfo)
-        # self.mainLayoutLeft.setStretchFactor(self.loadInfo, True)
-        # self.mainLayoutLeft.addWidget(self.clusterSwitch)
-        # self.mainLayoutLeft.addWidget(self.exportButton)
-        # #
-
 
 
 
@@ -345,6 +353,15 @@ class loadGUI(QMainWindow):
         self.mainLayout.setStretchFactor(self.mainLayoutRight, True)
         self.centralWidget.setLayout(self.mainLayout)
 
+
+    def showFreqEdit(self):
+        # self.window = editWindowBasic('frequencies')
+        # self.window.layout.addRow(QLabel('Start'), self.freqstart)
+        # self.window.layout.addRow(QLabel('Steps'), self.freqsteps)
+        # self.window.layout.addRow(QLabel('delta'), self.freqdelta)
+        # self.window.exec_()
+        self.myModel.calculationObjects[-1].frequencies = [int(self.freqstart.text())+n*int(self.freqdelta.text()) for n in range(int(self.freqsteps.text()))]
+        self.myModel.updateModelInfo(self.vtkWindow)
 
     def setupMenu(self):
         """

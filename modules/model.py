@@ -2,14 +2,14 @@
 ### Common standard classes for entire python framework ###
 ###########################################################
 
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QHeaderView, QApplication
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView, QApplication, QPushButton
 from PyQt5.QtCore import Qt
 import vtk
 import numpy as np
 import copy
 from lxml import etree
 import h5py
-from standardWidgets import progressWindow
+from standardWidgets import progressWindow, editButton, editWindowBasic
 
 # Saves a model, objects created by readModels()
 class model: # Saves a model
@@ -54,6 +54,7 @@ class model: # Saves a model
         self.nodeInfo = QLabel('Nodes: - ')
         self.elementInfo = QLabel('Blocks: - ')
         self.frequencyInfo = QLabel('Frequencies: - \n ')
+
         self.blockInfo = QTableWidget(1,4)
         self.blockInfo.verticalHeader().setVisible(False)
         self.blockInfo.setHorizontalHeaderLabels(['', 'Block ID', 'Element type', '#Elements'])
@@ -142,6 +143,8 @@ class model: # Saves a model
             self.cluster = 1
         else:
             self.cluster = 0
+
+
 
 # Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain

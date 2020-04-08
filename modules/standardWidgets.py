@@ -12,6 +12,15 @@ class sepLine(QFrame):
         self.setLineWidth(1)
         self.setFixedHeight(5)
 
+# Vertical line
+class sepLineV(QFrame):
+    def __init__(self):
+        super(sepLineV, self).__init__()
+        self.setFrameShape(QFrame.VLine)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.setLineWidth(1)
+        #self.setFixedHeight(5)
+
 # Button to load something
 class ak3LoadButton(QPushButton):
     def __init__(self, ak3path):
@@ -30,6 +39,17 @@ class resetButton(QPushButton):
         self.setIconSize(QSize(20, 20))
         self.setStatusTip('Reset 3D View')
         self.setMaximumWidth(23)
+        self.setMaximumHeight(23)
+
+# Button to save something
+class saveButton(QPushButton):
+    def __init__(self):
+        super(saveButton, self).__init__('Save')
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        #self.setIcon(QIcon(ak3path + '/pics/ref_button.png'))
+        #self.setIconSize(QSize(20, 20))
+        self.setStatusTip('Save Frequencies')
+        self.setMaximumWidth(46)
         self.setMaximumHeight(23)
 
 # Button to add something
@@ -129,3 +149,26 @@ class setupWindow(QDialog):
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
         #
+
+class editWindowBasic(QDialog):
+    def __init__(self, Type):
+        super(QDialog, self).__init__()
+        self.setWindowTitle('Edit '+Type)
+
+        self.setAutoFillBackground(True) # color
+        p = self.palette() # color
+        p.setColor(self.backgroundRole(), Qt.white) # color
+        self.setPalette(p) # color
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.formGroupBox = QGroupBox(Type)
+        self.layout = QFormLayout()
+        self.formGroupBox.setLayout(self.layout)
+
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(self.formGroupBox)
+        self.mainLayout.addWidget(self.buttonBox)
+        self.setLayout(self.mainLayout)
