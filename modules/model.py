@@ -36,6 +36,7 @@ class model: # Saves a model
         # Create new entries for requested loads
         for load in self.loads:
             load.writeXML(exportAK3, self.binfilename, self.name, self.cluster)
+        self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
         # Write new ak3 file to disc
         progWin = progressWindow(2, 'Writing input file')
         with open(self.path + '/' + self.name + '_old.ak3', 'wb') as f:
@@ -145,20 +146,34 @@ class model: # Saves a model
             self.cluster = 0
 
 
+    def writeToFile(self,binFile,objList):
+        with h5py.File(binFile, 'r+') as fileObj:
+            name='mtxFemNodes'
+            for no, obj in enumerate(objList):
+                # if obj == self.calculationObjects[0].nodes:
+                #     name = 'nodes'
+                if fileObj.get('/Nodes') is not None:
+                    fileObj.__delitem__('/Nodes')
+                fileObj.create_dataset('/Nodes/'+name, data = obj)
 
 # Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain
     def __init__(self, name):
-        self.LookUpTable = ['elements','nodes'] #contains a string for each element, that will be stored somewhere. !yet to be filled!
+        #add nodes to the table again!
+        self.LookUpTable = ['elements']#,'nodes'] #contains a string for each element, that will be stored somewhere. !yet to be filled!
         self.name = name
         self.filename = name
         self.frequencyObjects = [] # Each calculation_object consists of several frequency_objects (one frequency step)
         self.nodes = [] # Nodes are saved here by readNodes()
         self.elems = [] # elements are saved here by readElems()
         self.nodesets = []
+        self.freqSteps = 1
+        self.freqDelta = 1
+        self.freqStart = 1
         self.frequencies = [] # freqs are saved here readFreqs()
         self.frequencyFile = 0
         self.stepValues = [] # should replace self.frequencies list considering time and frequency domain support
         self.physicalValues = [] # stores information on supported physical values
         self.analysisType = 'undefined' # stores the analysis type used to determine proper postprocessing and visualising
+        self.solver = 'undefined'
         self.doPreCalculationRayleigh = 0

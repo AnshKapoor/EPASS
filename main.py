@@ -19,8 +19,9 @@ from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
-from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5
-from standardWidgets import sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
+sys.path.append(os.path.dirname(sys.argv[0]) + './tabs')
+from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5, saveParameters
+from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
 from graphWindow import graphWindow
@@ -32,6 +33,11 @@ from timeVarDat import timeVarDat
 from tbl import tbl
 from hdf5Reader import hdf5Reader
 #
+from trial_mat2 import trial_mat #Materials Tab
+from analysis_tab import analysis_tab
+
+
+
 # Main class called first
 class loadGUI(QMainWindow):
     """
@@ -137,10 +143,24 @@ class loadGUI(QMainWindow):
             ##NEW: BINARY FILE LOAD
             self.myModel.binfilename = str(fileName.split('.')[0])+'.hdf5'
 
+
+
+            readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)#bald wieder löschen!
+            #readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
+
             buildAk3Framework(self.myModel.ak3tree)
             toBeLoaded = ['elements','nodes']
-            with h5py.File(self.myModel.binfilename, 'r+') as self.binFile:
+
+
+
+
+
+
+            with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
                 hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
+
+
+
             #readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, toBeLoaded)#{'elements':readElements,'nodes':readNodes})
             readFreqs(self.myModel)
             self.myModel.updateModelInfo(self.vtkWindow)
@@ -216,10 +236,17 @@ class loadGUI(QMainWindow):
         #
 
         # INIT DIFFERENT TABS
+        self.tabMatCont = trial_mat()
+        #self.analysis_tab = analysis_tab()                 #Hier weitermachen
         self.tabsLeft = QTabWidget()
         self.tabLoads = QWidget()
-        self.tabMaterials = QWidget()
+        self.tabMaterials = self.tabMatCont#QWidget()
         self.tabAnalysis = QWidget()
+        #self.tabAnalysis = self.analysis_tab               #Hier weitermachen
+
+        self.tabMaterials.tester()
+        self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
+
 
         self.tabsLeft.addTab(self.tabLoads,"Loads")
         self.tabsLeft.addTab(self.tabMaterials,"Materials")
@@ -252,10 +279,12 @@ class loadGUI(QMainWindow):
         self.labelMat.setFont(self.myFont)
         # ADD TO LAYOUT
         self.MatLayout = QVBoxLayout()
-        self.MatLayout.addWidget(self.labelMat)
+
+        #self.MatLayout.addWidget(self.tabMatCont)
+        #self.MatLayout.addWidget(self.labelMat)
         #self.MatLayout.setStretchFactor(self.loadInfo, True)
         #self.tabMaterials.layout = QVBoxLayout(self)
-        self.tabMaterials.setLayout(self.MatLayout)
+        #self.tabMaterials.setLayout(self.MatLayout)
 
         # CREATE WIDGETS | IV - Analysis
         self.labelAna = QLabel('frequency range:')
@@ -271,13 +300,15 @@ class loadGUI(QMainWindow):
         self.deltaLabel = QLabel('Delta [Hz]:')
         self.freqsteps = QLineEdit('100')
         self.stepsLabel = QLabel('Steps:')
-        self.freqEdit.clicked.connect(self.showFreqEdit)
+        self.freqEdit.clicked.connect(self.showSaveEdit)
         self.labelType = QLabel('Analysis Type:')
+        self.selectorType = analysisTypeSelector()
         self.labelSolver = QLabel('Solver:')
+        self.selectorSolver = solverTypeSelector()
         self.AnasepLine1 = sepLine()
         self.AnasepLine2 = sepLine()
         self.freqSaveButton = saveButton()
-        self.freqSaveButton.clicked.connect(self.showFreqEdit)
+        self.freqSaveButton.clicked.connect(self.showSaveEdit)
         # ADD TO LAYOUT
         self.AnaLayout = QVBoxLayout()
         self.AnaLayout1 = QHBoxLayout()
@@ -293,7 +324,9 @@ class loadGUI(QMainWindow):
         self.AnaLayout1.addWidget(self.freqSaveButton)
 
         self.AnaLayout2.addWidget(self.labelType)
+        self.AnaLayout2.addWidget(self.selectorType)
         self.AnaLayout2.addWidget(self.labelSolver)
+        self.AnaLayout2.addWidget(self.selectorSolver)
         self.AnaLayout.addLayout(self.AnaLayout1, 2)
         self.AnaLayout.addWidget(self.AnasepLine1)
         self.AnaLayout.addLayout(self.AnaLayout2, 1)
@@ -354,14 +387,16 @@ class loadGUI(QMainWindow):
         self.centralWidget.setLayout(self.mainLayout)
 
 
-    def showFreqEdit(self):
-        # self.window = editWindowBasic('frequencies')
-        # self.window.layout.addRow(QLabel('Start'), self.freqstart)
-        # self.window.layout.addRow(QLabel('Steps'), self.freqsteps)
-        # self.window.layout.addRow(QLabel('delta'), self.freqdelta)
-        # self.window.exec_()
+    def showSaveEdit(self):
+        self.myModel.calculationObjects[-1].freqStart = int(self.freqstart.text())
+        self.myModel.calculationObjects[-1].freqSteps = int(self.freqsteps.text())
+        self.myModel.calculationObjects[-1].freqDelta = int(self.freqdelta.text())
         self.myModel.calculationObjects[-1].frequencies = [int(self.freqstart.text())+n*int(self.freqdelta.text()) for n in range(int(self.freqsteps.text()))]
+        self.myModel.calculationObjects[-1].analysisType = self.selectorType.currentText()
+        self.myModel.calculationObjects[-1].solver = self.selectorSolver.currentText()
         self.myModel.updateModelInfo(self.vtkWindow)
+        print(self.myModel.calculationObjects[-1].analysisType)
+        saveParameters(self.myModel.calculationObjects[-1], self.myModel.binfilename)
 
     def setupMenu(self):
         """

@@ -103,6 +103,25 @@ class loadSelector(QComboBox):
         self.setFixedWidth(200)
         [self.addItem(load) for load in ['Plane wave', 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer']]
 
+# Dropdown menu to select an analysis type
+class analysisTypeSelector(QComboBox):
+    def __init__(self):
+        super(analysisTypeSelector, self).__init__()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Selected a type')
+        self.setFixedWidth(200)
+        [self.addItem(type) for type in ['static', 'eigen', 'frequency', 'time']]
+
+# Dropdown menu to select a solver type
+class solverTypeSelector(QComboBox):
+    def __init__(self):
+        super(solverTypeSelector, self).__init__()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Selected a type')
+        self.setFixedWidth(200)
+        [self.addItem(type) for type in ['elPaSo', 'elPaSoC']]
+
+
 # A standard message box with ok button only
 class messageboxOK(QMessageBox):
     def __init__(self, title, text):

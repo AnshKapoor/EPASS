@@ -22,6 +22,15 @@ def buildAk3Framework(ak3tree):
         newChild.text = '\n'
         newChild.tail = '\n'
 
+def saveParameters(calculationObject, binFileName):
+    with h5py.File(binFileName, 'r+') as binFile:
+        analysisList = binFile.get('Analysis')
+        analysisList.attrs.modify('type',np.string_(calculationObject.analysisType))
+        analysisList.attrs.modify('solver',np.string_(calculationObject.solver))
+        analysisList.attrs.modify('start',calculationObject.freqStart)
+        analysisList.attrs.modify('steps',calculationObject.freqSteps)
+        analysisList.attrs.modify('delta',calculationObject.freqDelta)
+
 def writeHdf5Child(childlist, binFileName):
     with h5py.File(binFileName, 'r+') as binFile:
         for c, child in enumerate(childlist):
@@ -45,7 +54,7 @@ def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp): #Convention
 
 
 # Read Nodes from ak3, ID and coord are available in calculationObject.nodes after this call
-def readNodesOld(calculationObject, ak3tree):
+def readNodes(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#
     nodeCount = int(ak3tree.find('Nodes').get('N')) # count nodes
     nodesTree = ak3tree.find('Nodes').findall('Node') # get each node
@@ -58,11 +67,13 @@ def readNodesOld(calculationObject, ak3tree):
         calculationObject.nodes[n,3] = float(oneNode.find('z').text) # get node's z-Coords
         progWin.setValue(n+1)
         QApplication.processEvents()
+    print(calculationObject.nodes)
 
-def readNodes(calculationObject, binFileName, ak3tree):
+
+def readNodesNew(calculationObject, binFileName, ak3tree):
     with h5py.File(binFileName, 'r') as binFile:
         root = ak3tree.getroot()
-        nodesList = binFile.get('nodes/n0')
+        nodesList = binFile.get('Nodes/mtxFemNodes')
         nodeCount = len(nodesList)
         nodes = root.find('Nodes')
         nodes.set("N", str(nodeCount))
@@ -88,7 +99,7 @@ def readNodes(calculationObject, binFileName, ak3tree):
 
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
-def readElemsOld(calculationObject, ak3tree):
+def readElementsOld(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#
     for elementGroup in ak3tree.findall('Elements'):
         no_of_nodes = 0
@@ -230,6 +241,7 @@ def readElements(calculationObject, binFileName, ak3tree):
             group_id = groupdat.attrs['groupNo']
             elements.set('N', str(len(groupdat)))
             elements.set('GroupId', str(group_id))
+
             for item in groupdat:
                 elm = etree.SubElement(elements, str(elem_type))
                 id = etree.SubElement(elm, 'Id')

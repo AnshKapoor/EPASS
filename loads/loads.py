@@ -116,8 +116,8 @@ class load(QHBoxLayout):
         """
         with h5py.File(exportbin, 'r+') as binfile:
             #binfile = self.myModel.binFile
-            if binfile.get('/loads') is not None:
-                binfile.__delitem__('/loads')
+            if binfile.get('/ElemLoads') is not None:
+                binfile.__delitem__('/ElemLoads')
             elemLoads = exportAK3.find('ElemLoads')
             oldNoOfLoads = elemLoads.get('N')
             elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
@@ -166,10 +166,10 @@ class load(QHBoxLayout):
                 loadedElems.append(newLoadedElem)
                 ###same for h5py file:
                 dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
-                set = binfile.create_dataset('/loads/loaddata/l'+str(self.removeButton.id+1) + str(surfaceElem), data=(dataArray))
+                set = binfile.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + str(surfaceElem), data=(dataArray))
                 set.attrs['FreqCount'] = len(frequencies)
                 loadElDat = [int(surfaceElem),int(str(self.removeButton.id+1)+str(surfaceElem))]
-                binfile.create_dataset('/loads/loadedElems/le'+str(self.removeButton.id+1) + str(surfaceElem), data=(loadElDat))
+                #binfile.create_dataset('/loads/loadedElems/le'+str(self.removeButton.id+1) + str(surfaceElem), data=(loadElDat)) ID! Das muss jetzt mit in die mtxFemElemLoad als Attribute.
                 ###
                 # Update progress window
                 progWin.setValue(nE)
