@@ -146,7 +146,7 @@ class loadGUI(QMainWindow):
 
 
             readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)#bald wieder löschen!
-            #readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
+            readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
 
             buildAk3Framework(self.myModel.ak3tree)
             toBeLoaded = ['elements','nodes']
@@ -156,8 +156,8 @@ class loadGUI(QMainWindow):
 
 
 
-            with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
-                hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
+            # with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
+            #     hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
 
 
 

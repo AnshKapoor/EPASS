@@ -99,7 +99,7 @@ def readNodesNew(calculationObject, binFileName, ak3tree):
 
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
-def readElementsOld(calculationObject, ak3tree):
+def readElements(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#
     for elementGroup in ak3tree.findall('Elements'):
         no_of_nodes = 0
@@ -223,14 +223,14 @@ def readElementsOld(calculationObject, ak3tree):
             progWin = progressWindow(elem_count-1, 'Reading elements of block ' + elementGroup.get('GroupId'))
             for i in range(len(elems_dom)):
                 oneElem = elems_dom[i]
-                currElems[i,1:no_of_nodes+1] = [int(oneNode.text) for oneNode in oneElem.findall('N')] # get all element information
+                currElems[i,0:no_of_nodes+1] = [int(oneNode.text) for oneNode in oneElem.findall('N')] # get all element information    change 0 to 1 for normal stuff! (so except for christophers ak3->hdf5 project)
                 progWin.setValue(i+1)
                 QApplication.processEvents()
             calculationObject.elems.append([elem_type, elementGroup.get('GroupId'), currElems])
     return info
 
 
-def readElements(calculationObject, binFileName, ak3tree):
+def readElementsNew(calculationObject, binFileName, ak3tree):
     with h5py.File(binFileName, 'r') as binFile:
         elemsList = binFile.get('elements')
         root = ak3tree.getroot()
