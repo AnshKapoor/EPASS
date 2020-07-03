@@ -154,7 +154,8 @@ class model: # Saves a model
                 #     name = 'nodes'
                 if fileObj.get('/Nodes') is not None:
                     fileObj.__delitem__('/Nodes')
-                fileObj.create_dataset('/Nodes/'+name, data = obj)
+                set = fileObj.create_dataset('/Nodes/'+name, data = obj)
+                set.attrs['MethodType'] = 'FEM'
 
 # Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain

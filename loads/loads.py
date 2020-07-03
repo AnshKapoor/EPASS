@@ -168,6 +168,10 @@ class load(QHBoxLayout):
                 dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
                 set = binfile.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + str(surfaceElem), data=(dataArray))
                 set.attrs['FreqCount'] = len(frequencies)
+                set.attrs['Id'] = str(self.removeButton.id+1) + str(surfaceElem)
+                set.attrs['ElementId'] = str(surfaceElem)
+                set.attrs['LoadType'] = self.type
+                set.attrs['MethodType'] = 'FEM'
                 loadElDat = [int(surfaceElem),int(str(self.removeButton.id+1)+str(surfaceElem))]
                 #binfile.create_dataset('/loads/loadedElems/le'+str(self.removeButton.id+1) + str(surfaceElem), data=(loadElDat)) ID! Das muss jetzt mit in die mtxFemElemLoad als Attribute.
                 ###
