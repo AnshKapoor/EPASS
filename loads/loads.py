@@ -110,7 +110,7 @@ class load(QHBoxLayout):
             self.changeSwitch.setChecked(1)
 
 
-    def writeXML(self, exportAK3, exportbin, name, cluster):
+    def writeXMLOld(self, exportAK3, exportbin, name, cluster):
         """
         saves loads into existing .ak3 and hdf5
         """
@@ -178,3 +178,30 @@ class load(QHBoxLayout):
                 # Update progress window
                 progWin.setValue(nE)
                 QApplication.processEvents()
+
+    def writeXML(self, exportbin, name, cluster):
+        """
+        saves loads into existing .ak3 and hdf5
+        """
+        print('hier!')
+        with h5py.File(exportbin, 'r+') as binfile:
+            #binfile = self.myModel.binFile
+            if binfile.get('/ElemLoads') is not None:
+                binfile.__delitem__('/ElemLoads')
+            for nE, surfaceElem in enumerate(self.surfaceElements):
+                frequencies = self.myModel.calculationObjects[0].frequencies
+                dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
+                set = binfile.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
+                set.attrs['FreqCount'] = len(frequencies)
+                set.attrs['Id'] = str(self.removeButton.id+1) + str(surfaceElem)
+                set.attrs['ElementId'] = str(surfaceElem)
+                set.attrs['LoadType'] = self.type
+                set.attrs['MethodType'] = 'FEM'
+                loadElDat = [float(surfaceElem),float(str(self.removeButton.id+1)+str(surfaceElem))]
+                #binfile.create_dataset('/loads/loadedElems/le'+str(self.removeButton.id+1) + str(surfaceElem), data=(loadElDat)) ID! Das muss jetzt mit in die mtxFemElemLoad als Attribute.
+                ###
+                # Update progress window
+
+                #progWin.setValue(nE)
+                QApplication.processEvents()
+            print('been in writeXML')

@@ -130,7 +130,8 @@ class loadGUI(QMainWindow):
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","ak3 input file (*.ak3)", options=options)
+        #fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","ak3 input file (*.ak3)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5)", options=options)
         if fileName:
             self.vtkWindow.clearWindow()
             self.myModel.name = fileName.split('/')[-1].split('.')[0]
@@ -139,16 +140,16 @@ class loadGUI(QMainWindow):
             self.myModel.calculationObjects = [] # Only one model can be loaded - every time a file is chosen, the model is reset
             [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
             self.myModel.calculationObjects.append(calculationObject('calculation'))
-            self.myModel.ak3tree = etree.parse(fileName)
+            #self.myModel.ak3tree = etree.parse(fileName)
             ##NEW: BINARY FILE LOAD
             self.myModel.binfilename = str(fileName.split('.')[0])+'.hdf5'
 
 
 
-            readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)#bald wieder löschen!
-            readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
+            #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)#bald wieder löschen!
+            #readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
 
-            buildAk3Framework(self.myModel.ak3tree)
+            #buildAk3Framework(self.myModel.ak3tree)
             toBeLoaded = ['elements','nodes']
 
 
@@ -156,8 +157,8 @@ class loadGUI(QMainWindow):
 
 
 
-            # with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
-            #     hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
+            with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
+                hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
 
 
 
@@ -171,8 +172,9 @@ class loadGUI(QMainWindow):
             self.statusBar().showMessage('Model loaded')
 
             self.nodelist = self.myModel.calculationObjects[0].nodes
-
-
+            print(self.nodelist)
+            self.update2D()
+            self.update3D()
             ## HOW TO BUILD AN H5PY FILE:
             # f = h5py.File('h5Tester2.hdf5', 'w')
             # for i, group in enumerate(self.myModel.calculationObjects[0].elems):
@@ -342,6 +344,7 @@ class loadGUI(QMainWindow):
         self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
         self.exportButton = exportButton()
         self.exportButton.clicked.connect(self.myModel.export)
+        #self.exportButton.clicked.connect(self.myModel.writeToFile())
 
         #  PUT LEFT SIDE TOGETHER
         self.mainLayoutLeft.addWidget(self.tabsLeft, 2)

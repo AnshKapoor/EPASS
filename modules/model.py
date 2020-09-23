@@ -23,7 +23,7 @@ class model: # Saves a model
         self.initLayout()
         self.calculationObjects = [] # For each model several calculations are possible (e.g. parameter variations)
 
-    def export(self):
+    def exportOld(self):
         exportAK3 = copy.deepcopy(self.ak3tree)
         elemLoads = exportAK3.find('ElemLoads')
         elemLoads.set('N', '0')
@@ -47,6 +47,35 @@ class model: # Saves a model
             f.write(etree.tostring(exportAK3))
         progWin.setValue(2)
         QApplication.processEvents()
+
+    def export(self):
+        #exportAK3 = copy.deepcopy(self.ak3tree)
+        #elemLoads = exportAK3.find('ElemLoads')
+        #elemLoads.set('N', '0')
+        #loadedElems = exportAK3.find('LoadedElems')
+        # Delete old elem load entries
+        # for elemLoad in elemLoads.findall('ElemLoad'):
+        #     elemLoads.remove(elemLoad)
+        # for loadedElem in loadedElems.findall('LoadedElem'):
+        #     loadedElems.remove(loadedElem)
+        # Create new entries for requested loads
+        for load in self.loads:
+            load.writeXML(self.binfilename, self.name, self.cluster)
+            
+        print('exported')
+        #self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
+        #self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
+        # Write new ak3 file to disc
+        #progWin = progressWindow(2, 'Writing input file')
+        # with open(self.path + '/' + self.name + '_old.ak3', 'wb') as f:
+        #     f.write(etree.tostring(self.ak3tree))
+        # progWin.setValue(1)
+        # QApplication.processEvents()
+        # with open(self.path + '/' + self.name + '.ak3', 'wb') as f:
+        #     f.write(etree.tostring(exportAK3))
+        # progWin.setValue(2)
+        QApplication.processEvents()
+
 
     def initModelInfo(self):
         # CREATE WIDGETS
@@ -156,6 +185,7 @@ class model: # Saves a model
                     fileObj.__delitem__('/Nodes')
                 set = fileObj.create_dataset('/Nodes/'+name, data = obj)
                 set.attrs['MethodType'] = 'FEM'
+
 
 # Saves one calculation
 class calculationObject: # Saves one calculation in frequency domain

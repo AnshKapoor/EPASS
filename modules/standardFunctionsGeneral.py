@@ -24,12 +24,13 @@ def buildAk3Framework(ak3tree):
 
 def saveParameters(calculationObject, binFileName):
     with h5py.File(binFileName, 'r+') as binFile:
-        analysisList = binFile.get('Analysis')
-        analysisList.attrs.modify('type',np.string_(calculationObject.analysisType))
-        analysisList.attrs.modify('solver',np.string_(calculationObject.solver))
-        analysisList.attrs.modify('start',calculationObject.freqStart)
-        analysisList.attrs.modify('steps',calculationObject.freqSteps)
-        analysisList.attrs.modify('delta',calculationObject.freqDelta)
+        #analysisList = binFile.get('Analysis')
+
+        binFile.attrs.modify('3_Analysis',np.string_(calculationObject.analysisType))
+        binFile.attrs.modify('2_Solver',np.string_(calculationObject.solver))
+        binFile.attrs.create('4_Freq_start',str(calculationObject.freqStart))
+        binFile.attrs.create('5_steps',str(calculationObject.freqSteps))
+        binFile.attrs.create('6_delta',str(calculationObject.freqDelta))
 
 def writeHdf5Child(childlist, binFileName):
     with h5py.File(binFileName, 'r+') as binFile:
@@ -257,14 +258,21 @@ def readElementsNew(calculationObject, binFileName, ak3tree):
 
 # Read frequencies from ak3 file
 def readFreqs(myModel):
-    if os.path.exists(myModel.path + '/' + myModel.name + '.frq'):
-        freqFile = open(myModel.path + '/' + myModel.name + '.frq', 'r')
-        myModel.calculationObjects[-1].frequencies = [float(x) for x in freqFile]
-        myModel.calculationObjects[-1].frequencyFile = 1
-        freqFile.close()
-    else:
-        freq_start = float(myModel.ak3tree.find('Analysis').find('start').text)
-        freq_steps = int(myModel.ak3tree.find('Analysis').find('steps').text)
-        freq_delta = float(myModel.ak3tree.find('Analysis').find('delta').text)
+    try:
+        if os.path.exists(myModel.path + '/' + myModel.name + '.frq'):
+            freqFile = open(myModel.path + '/' + myModel.name + '.frq', 'r')
+            myModel.calculationObjects[-1].frequencies = [float(x) for x in freqFile]
+            myModel.calculationObjects[-1].frequencyFile = 1
+            freqFile.close()
+        else:
+            freq_start = float(myModel.ak3tree.find('Analysis').find('start').text)
+            freq_steps = int(myModel.ak3tree.find('Analysis').find('steps').text)
+            freq_delta = float(myModel.ak3tree.find('Analysis').find('delta').text)
+            myModel.calculationObjects[-1].frequencyFile = 0
+            myModel.calculationObjects[-1].frequencies = [freq_start+n*freq_delta for n in range(freq_steps)]
+    except:
+        freq_start = 1
+        freq_steps = 100
+        freq_delta = 1
         myModel.calculationObjects[-1].frequencyFile = 0
         myModel.calculationObjects[-1].frequencies = [freq_start+n*freq_delta for n in range(freq_steps)]
