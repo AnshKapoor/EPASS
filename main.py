@@ -247,6 +247,7 @@ class loadGUI(QMainWindow):
         #self.tabAnalysis = self.analysis_tab               #Hier weitermachen
 
         self.tabMaterials.tester()
+
         self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
 
 
@@ -391,6 +392,7 @@ class loadGUI(QMainWindow):
 
 
     def showSaveEdit(self):
+        self.myModel.calculationObjects[-1].materials = self.tabMaterials.MatList
         self.myModel.calculationObjects[-1].freqStart = int(self.freqstart.text())
         self.myModel.calculationObjects[-1].freqSteps = int(self.freqsteps.text())
         self.myModel.calculationObjects[-1].freqDelta = int(self.freqdelta.text())

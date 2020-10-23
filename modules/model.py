@@ -61,7 +61,21 @@ class model: # Saves a model
         # Create new entries for requested loads
         for load in self.loads:
             load.writeXML(self.binfilename, self.name, self.cluster)
-            
+
+        with h5py.File(self.binfilename, 'r+') as binfile:
+            if binfile.get('/Materials') is not None:
+                binfile.__delitem__('/Materials')
+            matList = binfile.create_group('Materials')
+            for i, mat in enumerate(self.calculationObjects[-1].materials):
+                type = mat[0]
+                name = mat[1]
+
+                mat = [float(x) for x in mat[2:]]
+                set = binfile.create_dataset('/Materials/mat'+str(i), data=mat)
+                set.attrs['type'] = type
+                set.attrs['name'] = material
+
+
         print('exported')
         #self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
         #self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
@@ -197,6 +211,7 @@ class calculationObject: # Saves one calculation in frequency domain
         self.frequencyObjects = [] # Each calculation_object consists of several frequency_objects (one frequency step)
         self.nodes = [] # Nodes are saved here by readNodes()
         self.elems = [] # elements are saved here by readElems()
+        self.materials = []
         self.nodesets = []
         self.freqSteps = 1
         self.freqDelta = 1

@@ -77,10 +77,12 @@ class trial_mat(QtWidgets.QMainWindow):
         addMat.clicked.connect(self.addRow) # set functionality when clicked
 
         # Save Mat Button
-        self.saveMat = QPushButton('Save all Materials.txt', self)  # construct load-button
+        self.saveMat = QPushButton('Prepare Export', self)  # construct load-button
         self.saveMat.setMaximumWidth(150)
-        self.saveMat.setToolTip('<b>Save your mat file and substitue all materials. (Attention: Overwrites existing file!!!)</b>')
-        self.saveMat.clicked.connect(self.saveMatToFile)
+        self.saveMat.setToolTip('<b>Writes material data into internal memory. Export works only after this button was clicked.</b>')
+        #self.saveMat.clicked.connect(self.saveMatToFile) For txt saving
+        self.saveMat.clicked.connect(self.prepareForExport)
+
 
         # Setting Layouts for all the widgets
         self.horiz_layout.setSpacing(15)
@@ -211,6 +213,25 @@ class trial_mat(QtWidgets.QMainWindow):
     def addMatToTabData(self, NewMaterialObject):
         self.Mat_Object.append(NewMaterialObject)
         self.Mat_Para.append(NewMaterialObject.getInfo())
+
+
+    def prepareForExport(self):
+        self.MatList = []
+        for iMat, Mat in enumerate(self.Mat_Object):
+            if (isinstance(Mat, Structural_Isotropic) or isinstance(Mat, Viscoelastic) or isinstance(Mat,
+                                                                                                     Frequency_Viscoelastic) or Frequency_Viscoelastic_Param or
+                    isinstance(Mat, Structural_Orthotropic) or isinstance(Mat,
+                                                                          Structural_viscoOrthotropic) or isinstance(
+                        Mat, ViscoelasticCLD_CH) or isinstance(Mat, ViscoelasticCLD_RKU) or
+                    isinstance(Mat, Fluid) or isinstance(Mat, Fluid_loss) or isinstance(Mat,
+                                                                                        equivfluid) or isinstance(
+                        Mat, Cloaking_fluid) or
+                    isinstance(Mat, Poro_Elastic) or isinstance(Mat, spring) or isinstance(Mat, pointmass)):
+
+
+                self.MatList.append(Mat.getExportData())
+        print(self.MatList)
+
 
     def saveMatToFile(self,exportbin):
 
