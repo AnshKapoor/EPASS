@@ -73,7 +73,7 @@ class model: # Saves a model
                 mat = [float(x) for x in mat[2:]]
                 set = binfile.create_dataset('/Materials/mat'+str(i), data=mat)
                 set.attrs['type'] = type
-                set.attrs['name'] = material
+                set.attrs['name'] = name
 
 
         print('exported')
