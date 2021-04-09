@@ -51,52 +51,59 @@ def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp): #Convention
             if item in DataToLookUp:
                 globals()['read'+item.capitalize()](calculationObject, binFileName, ak3tree) #looks for a function with the corresponding name
 
-
-
-
-# Read Nodes from cub5 and save them into hdf5 OR read nodes from hdf5
+# Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
 def readNodes(calculationObject, hdf5File, cub5File=0):
     if cub5File: 
         nodeIDs = cub5File['Mesh/Nodes/Node IDs']
         nodeData = np.zeros((len(nodeIDs),4))
-        nodeData[:,0] = cub5File['Mesh/Nodes/Node IDs'][()]
-        nodeData[:,1] = cub5File['Mesh/Nodes/X Coords'][()]
-        nodeData[:,2] = cub5File['Mesh/Nodes/Y Coords'][()]
-        nodeData[:,3] = cub5File['Mesh/Nodes/Z Coords'][()]
         g = hdf5File.create_group('Nodes')
         g.create_dataset('mtxFemNodes', data=nodeData)
+        dataSet = g['mtxFemNodes']
+        dataSet[:,0] = cub5File['Mesh/Nodes/Node IDs'][()]
+        dataSet[:,1] = cub5File['Mesh/Nodes/X Coords'][()]
+        dataSet[:,2] = cub5File['Mesh/Nodes/Y Coords'][()]
+        dataSet[:,3] = cub5File['Mesh/Nodes/Z Coords'][()]
     calculationObject.nodes = hdf5File['Nodes/mtxFemNodes']
 
-def readNodesNew(calculationObject, binFileName, ak3tree):
-    with h5py.File(binFileName, 'r') as binFile:
-        root = ak3tree.getroot()
-        nodesList = binFile.get('Nodes/mtxFemNodes')
-        nodeCount = len(nodesList)
-        nodes = root.find('Nodes')
-        nodes.set("N", str(nodeCount))
+# Read Elements from cub5 and save them into hdf5 OR only read elements directly from hdf5
+def readElements(calculationObject, hdf5File, cub5File=0):
+    if cub5File: 
+        g = hdf5File.create_group('Elements')
+        for block in cub5File['Simulation Model/Blocks'].keys():
+            groupID = cub5File['Simulation Model/Blocks/' + block].attrs['block_id'][()][0]
+            elemType = cub5File['Simulation Model/Blocks/' + block].attrs['element_type'][()]
+            coreformKey, elemType, M = identifyElemType(elemType)
+            N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
+            if elemType is not 'notSupported':
+                dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
+                dataSet[:,0] = cub5File['Simulation Model/Blocks/' + block + '/member ids'][:].T
+                elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs']
+                idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in dataSet[:,0]]
+                dataSet[:,1:] = cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][idx,:]
+            #self.calculationObject.elems.append([elemType, groupID, np.array((2,2)])
+    #calculationObject.elems.append(hdf5File['Nodes/mtxFemNodes'])
 
-        for i, nodeinfo in enumerate(np.array(nodesList)):
-            node = etree.SubElement(nodes, "Node")
-            ID = etree.SubElement(node, "ID")
-            #print(str(node[0]))
-            ID.text = str(int(nodeinfo[0]))
-            x = etree.SubElement(node, "x")
-            x.text = str(nodeinfo[1])
-            y = etree.SubElement(node, "y")
-            y.text = str(nodeinfo[2])
-            z = etree.SubElement(node, "z")
-            z.text = str(nodeinfo[3])
-            node.tail = '\n'
+def identifyElemType(elemType): 
+    if elemType[0] == 22: # Shell9
+        return 'QUAD_9', 'PlShell9', 10;
+    else:
+        return 'notSupported'
 
-        #calculationObject.nodes = (np.array(nodesList)).tolist()
-        calculationObject.nodes = np.array(nodesList)
-
-        QApplication.processEvents()
-
-
+def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem):
+    elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint32)
+    dataSet = group.create_dataset('mtxFemElemGroup' + str(groupID), data=elemData)
+    dataSet.attrs['ElementType'] = elemType
+    dataSet.attrs['Id'] = groupID
+    dataSet.attrs['MaterialType'] = 1
+    dataSet.attrs['MethodType'] = 'FEM'
+    dataSet.attrs['N'] = totalElems
+    dataSet.attrs['Name'] = 'Block_' + str(groupID)
+    dataSet.attrs['Orientation'] = 'global'
+    dataSet.attrs['OrientationFile'] = ''
+    return dataSet
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
-def readElements(calculationObject, ak3tree):
+def readElements2(calculationObject, ak3tree):
     #YET TO BE CHANGED FOR BINARY FILE#
     for elementGroup in ak3tree.findall('Elements'):
         no_of_nodes = 0

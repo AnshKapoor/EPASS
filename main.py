@@ -152,6 +152,7 @@ class loadGUI(QMainWindow):
                     try: 
                         with h5py.File(fileName,'r') as cub5File:
                             readNodes(self.myModel.calculationObjects[-1], self.myModel.hdf5File, cub5File)
+                            readElements(self.myModel.calculationObjects[-1], self.myModel.hdf5File, cub5File)
                         messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
                     except:
                         self.myModel.hdf5File.close()
