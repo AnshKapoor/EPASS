@@ -14,8 +14,10 @@ from standardWidgets import progressWindow, editButton, editWindowBasic
 # Saves a model, objects created by readModels()
 class model: # Saves a model
     def __init__(self):
+        self.fileEnding = ''
         self.name = ' - '
         self.path = ''
+        self.hdf5File = 0
         self.cluster = 0
         self.loads = []
         self.initModelInfo()

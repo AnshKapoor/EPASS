@@ -36,7 +36,6 @@ class hdf5Reader():
         for i, nodeinfo in enumerate(np.array(nodesList)):
             #calculationObject.nodes = (np.array(nodesList)).tolist()
             self.calculationObject.nodes = np.array(nodesList)
-        print(self.calculationObject.nodes)
             #QApplication.processEvents()
 
     def readElements(self):

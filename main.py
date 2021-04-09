@@ -9,7 +9,8 @@
 # Load modules
 import sys
 import os
-from lxml import etree
+import atexit
+#from lxml import etree
 import numpy as np
 import h5py
 #
@@ -37,8 +38,6 @@ from hdf5Reader import hdf5Reader
 from trial_mat2 import trial_mat #Materials Tab
 from analysis_tab import analysis_tab
 
-
-
 # Main class called first
 class loadGUI(QMainWindow):
     """
@@ -52,20 +51,20 @@ class loadGUI(QMainWindow):
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
         self.setupMenu() # Create the menu
-        self.setWindowTitle('elPaSo Load Application')
+        self.setWindowTitle('elPaSo Model Setup')
         self.setAutoFillBackground(True) # color
         p = self.palette() # color
         p.setColor(self.backgroundRole(), Qt.white) # color
         self.setPalette(p) # color
         #
-        self.ak3path = os.path.dirname(os.path.abspath(__file__)) # where we are
+        self.locPath = os.path.dirname(os.path.abspath(__file__)) # where we are
         self.myFont = QFont("Verdana", 12)
         self.myModel = model() # all model information are saved here
-        self.myModel.blockInfo.itemClicked.connect(self.update3D) # table containing model information (click event)
+        #self.myModel.blockInfo.itemClicked.connect(self.update3D) # table containing model information (click event)
         #
         self.setupGui()
         self.show()
-        #self.resize(100, 100) # Resize to minimum in order to fit content
+        self.loadInput()
         self.statusBar().showMessage('Ready')
 
 
@@ -88,19 +87,19 @@ class loadGUI(QMainWindow):
             messageboxOK('Addition of load not possible', 'Open a model first!')
             return
         if self.loadSelector.currentText() == 'Plane wave':
-            self.myModel.loads.append(planeWave(self.ak3path, self.myModel, self.vtkWindow))
+            self.myModel.loads.append(planeWave(self.locPath, self.myModel, self.vtkWindow))
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
         if self.loadSelector.currentText() == 'Diffuse field':
-            self.myModel.loads.append(diffuseField(self.ak3path, self.myModel, self.vtkWindow))
+            self.myModel.loads.append(diffuseField(self.locPath, self.myModel, self.vtkWindow))
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
         if self.loadSelector.currentText() == 'Distributed time domain load':
-            self.myModel.loads.append(timeVarDat(self.ak3path, self.myModel, self.vtkWindow))
+            self.myModel.loads.append(timeVarDat(self.locPath, self.myModel, self.vtkWindow))
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
         if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
-            self.myModel.loads.append(tbl(self.ak3path, self.myModel, self.vtkWindow))
+            self.myModel.loads.append(tbl(self.locPath, self.myModel, self.vtkWindow))
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
             self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
         # Reset new ids for button in order to identify button on next click correctly and reconnect buttons
@@ -127,55 +126,65 @@ class loadGUI(QMainWindow):
 
     def loadInput(self):
         """
-        Open an ak3 file (self.loadButton click event) and read necessary infirmation out of an hdf5 file
+        Open an hdf5 file (self.loadButton click event)
         """
+        if self.myModel.hdf5File: 
+            self.myModel.hdf5File.close()
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        #fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","ak3 input file (*.ak3)", options=options)
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5 *.cub5)", options=options)
         if fileName:
             self.vtkWindow.clearWindow()
             self.myModel.name = fileName.split('/')[-1].split('.')[0]
-            print(fileName.split('.')[0])
             self.myModel.path =  '/'.join(fileName.split('/')[:-1])
             self.myModel.calculationObjects = [] # Only one model can be loaded - every time a file is chosen, the model is reset
             [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
             self.myModel.calculationObjects.append(calculationObject('calculation'))
-            #self.myModel.ak3tree = etree.parse(fileName)
-            ##NEW: BINARY FILE LOAD
-            self.myModel.binfilename = str(fileName.split('.')[0])+'.hdf5'
-
-
-
+            #
+            self.myModel.fileEnding = fileName.split('.')[-1]
+            # cub5 file from Trelis/coreform opened
+            if self.myModel.fileEnding == 'cub5':
+                newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+                if not os.path.isfile(newFile + 'dummy'):
+                    self.myModel.hdf5File = h5py.File(newFile, 'w')
+                    atexit.register(self.myModel.hdf5File.close)
+                    # relevant cub5 data is transferred to new hdf5 file
+                    try: 
+                        with h5py.File(fileName,'r') as cub5File:
+                            readNodes(self.myModel.calculationObjects[-1], self.myModel.hdf5File, cub5File)
+                        messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
+                    except:
+                        self.myModel.hdf5File.close()
+                        os.remove(newFile)
+                        messageboxOK('Error','cub5 file not transferred')
+                else:
+                    messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
+            # existing hdf5 file opened
+            elif self.myModel.fileEnding == 'hdf5':
+                self.myModel.hdf5File = h5py.File(self.myModel.fileName, 'r+')
+                self.myModel.nodes = self.myModel.hdf5File['Nodes/mtxFemNodes']
+                atexit.register(self.myModel.hdf5File.close)
+            else:
+                self.statusBar().showMessage('Unknown file ending (cub5 and hdf5 supported) - no model loaded!')
+            
             #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)#bald wieder löschen!
             #readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
-
-            #buildAk3Framework(self.myModel.ak3tree)
-            toBeLoaded = ['elements','nodes']
-
-
-
-
-
-
-            with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
-                hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
-
-
-
+            
+            #with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
+            #    hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
+            
             #readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, toBeLoaded)#{'elements':readElements,'nodes':readNodes})
-            readFreqs(self.myModel)
-            self.myModel.updateModelInfo(self.vtkWindow)
-            self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
-            self.graphWindow.currentFrequency = self.myModel.calculationObjects[0].frequencies[ self.vtkWindow.currentFrequencyStep ]
-            self.update2D()
-            self.update3D()
-            self.statusBar().showMessage('Model loaded')
+            # readFreqs(self.myModel)
+            # self.myModel.updateModelInfo(self.vtkWindow)
+            # self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
+            # self.graphWindow.currentFrequency = self.myModel.calculationObjects[0].frequencies[ self.vtkWindow.currentFrequencyStep ]
+            # self.update2D()
+            # self.update3D()
+            # self.statusBar().showMessage('Model loaded')
 
-            self.nodelist = self.myModel.calculationObjects[0].nodes
-            print(self.nodelist)
-            self.update2D()
-            self.update3D()
+            # self.nodelist = self.myModel.calculationObjects[0].nodes
+            # self.update2D()
+            # self.update3D()
             ## HOW TO BUILD AN H5PY FILE:
             # f = h5py.File('h5Tester2.hdf5', 'w')
             # for i, group in enumerate(self.myModel.calculationObjects[0].elems):
@@ -186,8 +195,6 @@ class loadGUI(QMainWindow):
             # for n, node in enumerate(self.myModel.calculationObjects[0].nodes):
             #     n = f.create_dataset('/nodesSet/n'+str(n), data=self.myModel.calculationObjects[0].nodes)
             # f.close()
-
-
 
     def removeLoad(self, loadIDToRemove):
         """
@@ -207,8 +214,7 @@ class loadGUI(QMainWindow):
         # Reset new ids for button in order to identify button on next click correctly
         for loadNo in range(len(self.myModel.loads)):
             self.myModel.loads[loadNo].removeButton.id = loadNo
-
-
+        
     def setupGui(self):
         """
         Initialisation of gui (main window content)
@@ -222,7 +228,7 @@ class loadGUI(QMainWindow):
         # CREATE WIDGETS | I - MODEL
         self.label1 = QLabel('Model')
         self.label1.setFont(self.myFont)
-        self.loadButton = ak3LoadButton(self.ak3path)
+        self.loadButton = ak3LoadButton(self.locPath)
         self.loadButton.clicked.connect(self.loadInput)
         self.sepLine1 = sepLine()
         # ADD TO LAYOUT
@@ -260,7 +266,7 @@ class loadGUI(QMainWindow):
         self.label2 = QLabel('Loads')
         self.label2.setFont(self.myFont)
         self.loadSelector = loadSelector()
-        self.addLoadButton = addButton(self.ak3path)
+        self.addLoadButton = addButton(self.locPath)
         self.addLoadButton.clicked.connect(self.addLoad)
         self.loadInfo = loadInfoBox()
 
@@ -352,15 +358,12 @@ class loadGUI(QMainWindow):
         self.mainLayoutLeft.addWidget(self.tabsLeft, 2)
         self.mainLayoutLeft.addWidget(self.clusterSwitch)
         self.mainLayoutLeft.addWidget(self.exportButton)
-
-
-
-
+        
         # CREATE WIDGETS | III - 3D Window
         self.label3 = QLabel('3D View')
         self.label3.setFont(self.myFont)
         self.vtkWindowParent = QWidget()
-        self.vtkWindow = vtkWindow(self.vtkWindowParent, self.ak3path)
+        self.vtkWindow = vtkWindow(self.vtkWindowParent, self.locPath)
         self.vtkWindow.setMinimumWidth(450)
         self.vtkWindow.setMinimumHeight(250)
         self.sepLine3 = sepLine()
@@ -448,6 +451,7 @@ class loadGUI(QMainWindow):
 
 # main
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = QApplication([])
     gui = loadGUI()
-    sys.exit(app.exec_())
+    app.exec_()
+    

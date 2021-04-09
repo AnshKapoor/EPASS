@@ -54,22 +54,18 @@ def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp): #Convention
 
 
 
-# Read Nodes from ak3, ID and coord are available in calculationObject.nodes after this call
-def readNodes(calculationObject, ak3tree):
-    #YET TO BE CHANGED FOR BINARY FILE#
-    nodeCount = int(ak3tree.find('Nodes').get('N')) # count nodes
-    nodesTree = ak3tree.find('Nodes').findall('Node') # get each node
-    calculationObject.nodes = np.zeros((nodeCount,4)) # prepare matrix for nodes
-    progWin = progressWindow(nodeCount-1, 'Reading nodes')
-    for n, oneNode in enumerate(nodesTree):
-        calculationObject.nodes[n,0] = int(oneNode.find('Id').text) # get node's IDs
-        calculationObject.nodes[n,1] = float(oneNode.find('x').text) # get node's x-Coords
-        calculationObject.nodes[n,2] = float(oneNode.find('y').text) # get node's y-Coords
-        calculationObject.nodes[n,3] = float(oneNode.find('z').text) # get node's z-Coords
-        progWin.setValue(n+1)
-        QApplication.processEvents()
-    print(calculationObject.nodes)
-
+# Read Nodes from cub5 and save them into hdf5 OR read nodes from hdf5
+def readNodes(calculationObject, hdf5File, cub5File=0):
+    if cub5File: 
+        nodeIDs = cub5File['Mesh/Nodes/Node IDs']
+        nodeData = np.zeros((len(nodeIDs),4))
+        nodeData[:,0] = cub5File['Mesh/Nodes/Node IDs'][()]
+        nodeData[:,1] = cub5File['Mesh/Nodes/X Coords'][()]
+        nodeData[:,2] = cub5File['Mesh/Nodes/Y Coords'][()]
+        nodeData[:,3] = cub5File['Mesh/Nodes/Z Coords'][()]
+        g = hdf5File.create_group('Nodes')
+        g.create_dataset('mtxFemNodes', data=nodeData)
+    calculationObject.nodes = hdf5File['Nodes/mtxFemNodes']
 
 def readNodesNew(calculationObject, binFileName, ak3tree):
     with h5py.File(binFileName, 'r') as binFile:
