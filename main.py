@@ -17,9 +17,10 @@ from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QPush
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QIcon
 #
-sys.path.append(os.path.dirname(sys.argv[0]) + './modules')
-sys.path.append(os.path.dirname(sys.argv[0]) + './loads')
-sys.path.append(os.path.dirname(sys.argv[0]) + './tabs')
+sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
+sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
+sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
+sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
 from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5, saveParameters
 from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
 from model import model, calculationObject

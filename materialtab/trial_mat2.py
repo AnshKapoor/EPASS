@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 ###############################IMPORTING MATERIAL CLASSES###########################
-sys.path.append('./tabs/materials')
+sys.path.append(os.path.dirname(sys.argv[0]) + '\materials')
 from Structural_Isotropic_dev import Structural_Isotropic
 from Structural_Orthotropic_dev import Structural_Orthotropic
 from Structural_viscoOrthotropic_dev import Structural_viscoOrthotropic

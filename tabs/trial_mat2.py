@@ -7,7 +7,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import h5py
 ###############################IMPORTING MATERIAL CLASSES###########################
-sys.path.append('./materialtab/materials')
 from Structural_Isotropic_dev import Structural_Isotropic
 from Structural_Orthotropic_dev import Structural_Orthotropic
 from Structural_viscoOrthotropic_dev import Structural_viscoOrthotropic
