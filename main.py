@@ -22,7 +22,7 @@ sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
-from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readFreqs, writeHdf5Child, deleteHdf5Child, readHdf5, saveParameters
+from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readSetup, writeHdf5Child, deleteHdf5Child, readHdf5, saveParameters
 from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
 from model import model, calculationObject
 from vtkWindow import vtkWindow
@@ -72,10 +72,10 @@ class loadGUI(QMainWindow):
         """
         Message box with information on the program
         """
-        msg = messageboxOK('About', 'elPaSo Load Application\n' +
+        msg = messageboxOK('About', 'elPaSo Model Setup\n' +
                                     'Institute for Acoustics, Braunschweig\n' +
                                     'Version 0.1 (2019)\n\n' +
-                                    'Program to add specific loads to an ak3 input file.\n' +
+                                    'Program to set up an hdf5 input file for elpaos.\n' +
                                     'Supported loads: plane wave, diffuse field, \ndistributed time domain, turbulent boundary layer')
 
 
@@ -137,9 +137,9 @@ class loadGUI(QMainWindow):
             self.vtkWindow.clearWindow()
             self.myModel.name = fileName.split('/')[-1].split('.')[0]
             self.myModel.path =  '/'.join(fileName.split('/')[:-1])
-            self.myModel.calculationObjects = [] # Only one model can be loaded - every time a file is chosen, the model is reset
+            #self.myModel.calculationObjects = [] # Only one model can be loaded - every time a file is chosen, the model is reset
             [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
-            self.myModel.calculationObjects.append(calculationObject('calculation'))
+            #self.myModel.calculationObjects.append(calculationObject('calculation'))
             #
             self.myModel.fileEnding = fileName.split('.')[-1]
             # cub5 file from Trelis/coreform opened
@@ -151,8 +151,9 @@ class loadGUI(QMainWindow):
                     # relevant cub5 data is transferred to new hdf5 file
                     try: 
                         with h5py.File(fileName,'r') as cub5File:
-                            readNodes(self.myModel.calculationObjects[-1], self.myModel.hdf5File, cub5File)
-                            readElements(self.myModel.calculationObjects[-1], self.myModel.hdf5File, cub5File)
+                            readNodes(self.myModel, self.myModel.hdf5File, cub5File)
+                            readElements(self.myModel, self.myModel.hdf5File, cub5File)
+                            readSetup(self.myModel, self.myModel.hdf5File, cub5File)
                         messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
                     except:
                         self.myModel.hdf5File.close()
@@ -162,20 +163,18 @@ class loadGUI(QMainWindow):
                     messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
             # existing hdf5 file opened
             elif self.myModel.fileEnding == 'hdf5':
-                self.myModel.hdf5File = h5py.File(self.myModel.fileName, 'r+')
-                self.myModel.nodes = self.myModel.hdf5File['Nodes/mtxFemNodes']
+                self.myModel.hdf5File = h5py.File(fileName, 'r+')
                 atexit.register(self.myModel.hdf5File.close)
+                readNodes(self.myModel, self.myModel.hdf5File)
+                readElements(self.myModel, self.myModel.hdf5File)
+                readSetup(self.myModel, self.myModel.hdf5File)
+                messageboxOK('Ready','hdf5 file successfully loaded')
             else:
                 self.statusBar().showMessage('Unknown file ending (cub5 and hdf5 supported) - no model loaded!')
             
-            #readNodes(self.myModel.calculationObjects[0], self.myModel.ak3tree)#bald wieder löschen!
-            #readElements(self.myModel.calculationObjects[0], self.myModel.ak3tree)#same!
-            
-            #with h5py.File(self.myModel.binfilename, 'r+') as self.binFile: #bald wieder einfügen!
-            #    hdf5Reader(self.binFile, self.myModel, self.myModel.calculationObjects[0])
             
             #readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, toBeLoaded)#{'elements':readElements,'nodes':readNodes})
-            # readFreqs(self.myModel)
+            # 
             # self.myModel.updateModelInfo(self.vtkWindow)
             # self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
             # self.graphWindow.currentFrequency = self.myModel.calculationObjects[0].frequencies[ self.vtkWindow.currentFrequencyStep ]

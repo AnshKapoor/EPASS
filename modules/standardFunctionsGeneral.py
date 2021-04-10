@@ -52,7 +52,7 @@ def readHdf5(calculationObject, binFileName, ak3tree, DataToLookUp): #Convention
                 globals()['read'+item.capitalize()](calculationObject, binFileName, ak3tree) #looks for a function with the corresponding name
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
-def readNodes(calculationObject, hdf5File, cub5File=0):
+def readNodes(myModel, hdf5File, cub5File=0):
     if cub5File: 
         nodeIDs = cub5File['Mesh/Nodes/Node IDs']
         nodeData = np.zeros((len(nodeIDs),4))
@@ -63,10 +63,10 @@ def readNodes(calculationObject, hdf5File, cub5File=0):
         dataSet[:,1] = cub5File['Mesh/Nodes/X Coords'][()]
         dataSet[:,2] = cub5File['Mesh/Nodes/Y Coords'][()]
         dataSet[:,3] = cub5File['Mesh/Nodes/Z Coords'][()]
-    calculationObject.nodes = hdf5File['Nodes/mtxFemNodes']
+    myModel.nodes = hdf5File['Nodes/mtxFemNodes']
 
 # Read Elements from cub5 and save them into hdf5 OR only read elements directly from hdf5
-def readElements(calculationObject, hdf5File, cub5File=0):
+def readElements(myModel, hdf5File, cub5File=0):
     if cub5File: 
         g = hdf5File.create_group('Elements')
         for block in cub5File['Simulation Model/Blocks'].keys():
@@ -80,8 +80,10 @@ def readElements(calculationObject, hdf5File, cub5File=0):
                 elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs']
                 idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in dataSet[:,0]]
                 dataSet[:,1:] = cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][idx,:]
-            #self.calculationObject.elems.append([elemType, groupID, np.array((2,2)])
-    #calculationObject.elems.append(hdf5File['Nodes/mtxFemNodes'])
+            myModel.elems.append(dataSet)
+    else: 
+        for block in hdf5File['Elements'].keys():
+            myModel.elems.append(hdf5File['Elements/' + block])
 
 def identifyElemType(elemType): 
     if elemType[0] == 22: # Shell9
@@ -101,6 +103,40 @@ def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem
     dataSet.attrs['Orientation'] = 'global'
     dataSet.attrs['OrientationFile'] = ''
     return dataSet
+
+# Read setup from hdf5 file
+def readSetup(myModel, hdf5File, cub5File=0):
+    if cub5File: 
+        # Write standard values to hdf5 file
+        g = hdf5File.create_group('Analysis')
+        g.attrs['id'] = myModel.analysisID 
+        g.attrs['type'] = myModel.analysisType 
+        g.attrs['start'] = myModel.freqStart 
+        g.attrs['steps'] = myModel.freqSteps 
+        g.attrs['delta'] = myModel.freqDelta
+        g.attrs['solver'] = myModel.solver
+        g.attrs['revision'] = myModel.revision
+        g.attrs['description'] = myModel.description
+        # Then point to the file itself if values are changed
+        myModel.analysisID = g.attrs['id']
+        myModel.analysisType = g.attrs['type']
+        myModel.freqStart = g.attrs['start']
+        myModel.freqSteps = g.attrs['steps']
+        myModel.freqDelta = g.attrs['delta']
+        myModel.solver = g.attrs['solver']
+        myModel.revision = g.attrs['revision']
+        myModel.description = g.attrs['description']
+    else:
+        g = hdf5File['Analysis']
+        myModel.analysisID = g.attrs['id'][()]
+        myModel.analysisType = g.attrs['type'][:]
+        myModel.freqStart = g.attrs['start'][()]
+        myModel.freqSteps = g.attrs['steps'][()]
+        myModel.freqDelta = g.attrs['delta'][()]
+        myModel.solver = g.attrs['solver'][:]
+        myModel.revision = g.attrs['revision'][()]
+        myModel.description = g.attrs['description'][:]
+        myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
 def readElements2(calculationObject, ak3tree):
@@ -257,25 +293,3 @@ def readElementsNew(calculationObject, binFileName, ak3tree):
 
             calculationObject.elems.append([elem_type, group_id, np.array(groupdat)])
 
-
-
-# Read frequencies from ak3 file
-def readFreqs(myModel):
-    try:
-        if os.path.exists(myModel.path + '/' + myModel.name + '.frq'):
-            freqFile = open(myModel.path + '/' + myModel.name + '.frq', 'r')
-            myModel.calculationObjects[-1].frequencies = [float(x) for x in freqFile]
-            myModel.calculationObjects[-1].frequencyFile = 1
-            freqFile.close()
-        else:
-            freq_start = float(myModel.ak3tree.find('Analysis').find('start').text)
-            freq_steps = int(myModel.ak3tree.find('Analysis').find('steps').text)
-            freq_delta = float(myModel.ak3tree.find('Analysis').find('delta').text)
-            myModel.calculationObjects[-1].frequencyFile = 0
-            myModel.calculationObjects[-1].frequencies = [freq_start+n*freq_delta for n in range(freq_steps)]
-    except:
-        freq_start = 1
-        freq_steps = 100
-        freq_delta = 1
-        myModel.calculationObjects[-1].frequencyFile = 0
-        myModel.calculationObjects[-1].frequencies = [freq_start+n*freq_delta for n in range(freq_steps)]

@@ -19,11 +19,24 @@ class model: # Saves a model
         self.path = ''
         self.hdf5File = 0
         self.cluster = 0
+        self.nodes = 0
+        self.nodeSets = []
+        self.elems = []
+        self.elementSets = []
         self.loads = []
+        self.materials = []
+        self.freqStart = 10
+        self.freqSteps = 10
+        self.freqDelta = 10
+        self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)]) # freqs are saved here readFreqs()
+        self.analysisType = 'frequency' # stores the analysis type used to determine proper postprocessing and visualising
+        self.solver = 'elpasoC'
+        self.analysisID = 0
+        self.revision = 6
+        self.description = 'problem'
         self.initModelInfo()
         self.initLayout()
-        self.initLayout()
-        self.calculationObjects = [] # For each model several calculations are possible (e.g. parameter variations)
+        #self.calculationObjects = [] # For each model several calculations are possible (e.g. parameter variations)
 
     def exportOld(self):
         exportAK3 = copy.deepcopy(self.ak3tree)
