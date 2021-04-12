@@ -12,6 +12,7 @@ import h5py
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
 def readNodes(myModel, hdf5File, cub5File=0):
     if cub5File: 
+        # Nodes 
         nodeIDs = cub5File['Mesh/Nodes/Node IDs']
         nodeData = np.zeros((len(nodeIDs),4))
         g = hdf5File.create_group('Nodes')
@@ -21,7 +22,17 @@ def readNodes(myModel, hdf5File, cub5File=0):
         dataSet[:,1] = cub5File['Mesh/Nodes/X Coords'][()]
         dataSet[:,2] = cub5File['Mesh/Nodes/Y Coords'][()]
         dataSet[:,3] = cub5File['Mesh/Nodes/Z Coords'][()]
+        # Nodesets 
+        g = hdf5File.create_group('Nodesets')
+        if 'Nodesets' in cub5File['Simulation Model'].keys(): # If nodesets exist in cub5 file by coreform, then read them
+            for nodeset in cub5File['Simulation Model/Nodesets'].keys():
+                nodesetID = cub5File['Simulation Model/Nodesets/' + nodeset].attrs['nodeset_id'][()][0]
+                g.create_dataset('nodeset' + str(nodesetID), data=cub5File['Simulation Model/Nodesets/' + nodeset + '/member ids'][()])
+                g['nodeset' + str(nodesetID)].attrs['Id'] = nodesetID
+    # Standard ops/assignments
     myModel.nodes = hdf5File['Nodes/mtxFemNodes']
+    for nodeset in hdf5File['Nodesets'].keys():
+        myModel.nodeSets.append(hdf5File['Nodesets/' + nodeset])
 
 # Read Elements from cub5 and save them into hdf5 OR only read elements directly from hdf5
 def readElements(myModel, hdf5File, cub5File=0):
@@ -39,9 +50,18 @@ def readElements(myModel, hdf5File, cub5File=0):
                 idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in dataSet[:,0]]
                 dataSet[:,1:] = cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][idx,:]
             myModel.elems.append(dataSet)
+        # Element-/Sidesets 
+        g = hdf5File.create_group('Elementsets')
+        if 'Sidesets' in cub5File['Simulation Model'].keys(): # If sidesets exist in cub5 file by coreform, then read them as element sets
+            for elemset in cub5File['Simulation Model/Sidesets'].keys():
+                elemsetID = cub5File['Simulation Model/Sidesets/' + elemset].attrs['sideset_id'][()][0]
+                g.create_dataset('elemset' + str(elemsetID), data=cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][()])
+                g['elemset' + str(elemsetID)].attrs['Id'] = elemsetID
     else: 
         for block in hdf5File['Elements'].keys():
             myModel.elems.append(hdf5File['Elements/' + block])
+    for elemset in hdf5File['Elementsets'].keys():
+        myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
 
 def identifyElemType(elemType): 
     if elemType[0] == 22: # Shell9

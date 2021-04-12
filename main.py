@@ -1,8 +1,6 @@
 ################################################
 ##                                            ##
-##   Tool for load application into elpaso    ##
-##                 SFB880 A6                  ##
-##             Christopher Blech              ##
+##   Tool for setting up elpaso input files   ##
 ##                                            ##
 ################################################
 
@@ -10,7 +8,6 @@
 import sys
 import os
 import atexit
-#from lxml import etree
 import numpy as np
 import h5py
 #
@@ -22,9 +19,9 @@ sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
-from standardFunctionsGeneral import buildAk3Framework, readNodes, readElements, readSetup, writeHdf5Child, deleteHdf5Child, readHdf5, saveParameters
+from standardFunctionsGeneral import readNodes, readElements, readSetup
 from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
-from model import model, calculationObject
+from model import model
 from vtkWindow import vtkWindow
 from graphWindow import graphWindow
 from loads import loadInfoBox
@@ -33,9 +30,8 @@ from planeWave import planeWave
 from diffuseField import diffuseField
 from timeVarDat import timeVarDat
 from tbl import tbl
-from hdf5Reader import hdf5Reader
 #
-from trial_mat2 import trial_mat #Materials Tab
+from trial_mat2 import trial_mat # Materials Tab
 from analysis_tab import analysis_tab
 
 # Main class called first
@@ -74,7 +70,7 @@ class loadGUI(QMainWindow):
         msg = messageboxOK('About', 'elPaSo Model Setup\n' +
                                     'Institute for Acoustics, Braunschweig\n' +
                                     'Version 0.1 (2019)\n\n' +
-                                    'Program to set up an hdf5 input file for elpaos.\n' +
+                                    'Program to set up an hdf5 input file for elpaso.\n' +
                                     'Supported loads: plane wave, diffuse field, \ndistributed time domain, turbulent boundary layer')
 
     def addLoad(self):
@@ -174,20 +170,6 @@ class loadGUI(QMainWindow):
             self.update2D()
             self.update3D()
             self.statusBar().showMessage('Model loaded')
-
-            # self.nodelist = self.myModel.calculationObjects[0].nodes
-            # self.update2D()
-            # self.update3D()
-            ## HOW TO BUILD AN H5PY FILE:
-            # f = h5py.File('h5Tester2.hdf5', 'w')
-            # for i, group in enumerate(self.myModel.calculationObjects[0].elems):
-            #     i = f.create_dataset('/elementsSet/g'+str(i), data=((group[2].tolist())))
-            #     i.attrs['type'] = group[0]
-            #     i.attrs['groupNo'] = group[1]
-            #
-            # for n, node in enumerate(self.myModel.calculationObjects[0].nodes):
-            #     n = f.create_dataset('/nodesSet/n'+str(n), data=self.myModel.calculationObjects[0].nodes)
-            # f.close()
 
     def removeLoad(self, loadIDToRemove):
         """
