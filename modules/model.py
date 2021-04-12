@@ -37,32 +37,6 @@ class model: # Saves a model
         self.description = 'problem'
         self.initModelInfo()
         self.initLayout()
-        #self.calculationObjects = [] # For each model several calculations are possible (e.g. parameter variations)
-
-    def exportOld(self):
-        exportAK3 = copy.deepcopy(self.ak3tree)
-        elemLoads = exportAK3.find('ElemLoads')
-        elemLoads.set('N', '0')
-        loadedElems = exportAK3.find('LoadedElems')
-        # Delete old elem load entries
-        for elemLoad in elemLoads.findall('ElemLoad'):
-            elemLoads.remove(elemLoad)
-        for loadedElem in loadedElems.findall('LoadedElem'):
-            loadedElems.remove(loadedElem)
-        # Create new entries for requested loads
-        for load in self.loads:
-            load.writeXML(exportAK3, self.binfilename, self.name, self.cluster)
-        self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
-        # Write new ak3 file to disc
-        progWin = progressWindow(2, 'Writing input file')
-        with open(self.path + '/' + self.name + '_old.ak3', 'wb') as f:
-            f.write(etree.tostring(self.ak3tree))
-        progWin.setValue(1)
-        QApplication.processEvents()
-        with open(self.path + '/' + self.name + '.ak3', 'wb') as f:
-            f.write(etree.tostring(exportAK3))
-        progWin.setValue(2)
-        QApplication.processEvents()
 
     def export(self):
         #exportAK3 = copy.deepcopy(self.ak3tree)
@@ -105,7 +79,6 @@ class model: # Saves a model
         #     f.write(etree.tostring(exportAK3))
         # progWin.setValue(2)
         QApplication.processEvents()
-
 
     def initModelInfo(self):
         # CREATE WIDGETS
@@ -204,7 +177,6 @@ class model: # Saves a model
         else:
             self.cluster = 0
 
-
     def writeToFile(self,binFile,objList):
         with h5py.File(binFile, 'r+') as fileObj:
             name='mtxFemNodes'
@@ -215,27 +187,3 @@ class model: # Saves a model
                     fileObj.__delitem__('/Nodes')
                 set = fileObj.create_dataset('/Nodes/'+name, data = obj)
                 set.attrs['MethodType'] = 'FEM'
-
-
-# Saves one calculation
-class calculationObject: # Saves one calculation in frequency domain
-    def __init__(self, name):
-        #add nodes to the table again!
-        self.LookUpTable = ['elements']#,'nodes'] #contains a string for each element, that will be stored somewhere. !yet to be filled!
-        self.name = name
-        self.filename = name
-        self.frequencyObjects = [] # Each calculation_object consists of several frequency_objects (one frequency step)
-        self.nodes = [] # Nodes are saved here by readNodes()
-        self.elems = [] # elements are saved here by readElems()
-        self.materials = []
-        self.nodesets = []
-        self.freqSteps = 1
-        self.freqDelta = 1
-        self.freqStart = 1
-        self.frequencies = [] # freqs are saved here readFreqs()
-        self.frequencyFile = 0
-        self.stepValues = [] # should replace self.frequencies list considering time and frequency domain support
-        self.physicalValues = [] # stores information on supported physical values
-        self.analysisType = 'undefined' # stores the analysis type used to determine proper postprocessing and visualising
-        self.solver = 'undefined'
-        self.doPreCalculationRayleigh = 0
