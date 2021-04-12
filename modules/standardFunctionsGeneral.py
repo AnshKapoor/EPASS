@@ -117,15 +117,6 @@ def readSetup(myModel, hdf5File, cub5File=0):
         g.attrs['solver'] = myModel.solver
         g.attrs['revision'] = myModel.revision
         g.attrs['description'] = myModel.description
-        # Then point to the file itself if values are changed
-        myModel.analysisID = g.attrs['id']
-        myModel.analysisType = g.attrs['type']
-        myModel.freqStart = g.attrs['start']
-        myModel.freqSteps = g.attrs['steps']
-        myModel.freqDelta = g.attrs['delta']
-        myModel.solver = g.attrs['solver']
-        myModel.revision = g.attrs['revision']
-        myModel.description = g.attrs['description']
     else:
         g = hdf5File['Analysis']
         myModel.analysisID = g.attrs['id'][()]
@@ -137,6 +128,15 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.revision = g.attrs['revision'][()]
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
+    # Then point to the file itself if values are changed
+    myModel.analysisID = g.attrs['id']
+    myModel.analysisType = g.attrs['type']
+    myModel.freqStart = g.attrs['start']
+    myModel.freqSteps = g.attrs['steps']
+    myModel.freqDelta = g.attrs['delta']
+    myModel.solver = g.attrs['solver']
+    myModel.revision = g.attrs['revision']
+    myModel.description = g.attrs['description']
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
 def readElements2(calculationObject, ak3tree):

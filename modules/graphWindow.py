@@ -34,7 +34,7 @@ class graphWindow(FigureCanvas):
         # Vertical line at current Frequency
         self.plot([self.currentFrequency, self.currentFrequency], self.axes.get_ylim(), 'k', '--')
         # Set appropriate x/y limits
-        self.axes.set_xlim([min(myModel.calculationObjects[0].frequencies), max(myModel.calculationObjects[0].frequencies)])
+        self.axes.set_xlim([min(myModel.frequencies), max(myModel.frequencies)])
         # Redraw canvas
         self.draw()
     

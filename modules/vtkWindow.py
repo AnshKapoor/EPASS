@@ -77,7 +77,6 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.iren.Start()
 
     def updateLoads(self, loads):
-
         blocksToDraw = []
         for n, load in enumerate(loads):
             for act in load.actorsList:
@@ -124,7 +123,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
                 self.ren.AddActor(self.edgeActors[blockIdx])
         self.ren.RemoveActor(self.scalarBar)
         self.updateLoads(myModel.loads)
-        self.stepValueActor.SetInput(str(myModel.calculationObjects[-1].frequencies[self.currentFrequencyStep]) + ' Hz')
+        self.stepValueActor.SetInput(str(myModel.frequencies[self.currentFrequencyStep]) + ' Hz')
         self.GetRenderWindow().Render()
 
     def axisChange(self):

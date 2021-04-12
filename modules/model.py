@@ -5,6 +5,7 @@
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView, QApplication, QPushButton
 from PyQt5.QtCore import Qt
 import vtk
+from vtk.util import numpy_support
 import numpy as np
 import copy
 from lxml import etree
@@ -137,38 +138,38 @@ class model: # Saves a model
     def updateModelInfo(self, vtkWindow):
         # UPDATE WIDGETS
         self.title.setText('Name: ' + self.name)
-        if len(self.calculationObjects) > 0:
+        if self.name is not ' - ':
             # VTK Points
             self.vtkPoints = vtk.vtkPoints()
-            [self.vtkPoints.InsertNextPoint(float(node[1]), float(node[2]), float(node[3])) for node in self.calculationObjects[0].nodes]
+            self.vtkPoints.SetData(numpy_support.numpy_to_vtk(self.nodes[:,1:])) # Attention - vtk points simply count from 0
             # Infobox
-            self.nodeInfo.setText('Nodes: ' + str(len(self.calculationObjects[0].nodes)))
-            self.elementInfo.setText('Blocks: ' + str(len(self.calculationObjects[0].elems)))
-            addInfo = '\n                      (df=' + str(self.calculationObjects[-1].frequencies[1]-self.calculationObjects[-1].frequencies[0]) + ' Hz)'
-            if self.calculationObjects[-1].frequencyFile == 1:
-                addInfo = '\n                      (from frq file)'
-            self.frequencyInfo.setText('Frequencies: ' + str(min(self.calculationObjects[-1].frequencies)) + ' - ' + str(max(self.calculationObjects[-1].frequencies)) + ' Hz' + addInfo)
-            self.blockInfo.setRowCount(len(self.calculationObjects[0].elems))
+            self.nodeInfo.setText('Nodes: ' + str(self.nodes[:,1:].shape[0]))
+            self.elementInfo.setText('Blocks: ' + str(len(self.elems)))
+            addInfo = '\n                      (df=' + str(self.frequencies[1]-self.frequencies[0]) + ' Hz)'
+            #if self.calculationObjects[-1].frequencyFile == 1:
+            #    addInfo = '\n                      (from frq file)'
+            self.frequencyInfo.setText('Frequencies: ' + str(min(self.frequencies)) + ' - ' + str(max(self.frequencies)) + ' Hz' + addInfo)
+            self.blockInfo.setRowCount(len(self.elems))
             # Loop over all blocks
             vtkWindow.grids = []
             vtkWindow.mappers = []
             vtkWindow.edgeMappers = []
             vtkWindow.actors = []
             vtkWindow.edgeActors = []
-            progWin = progressWindow(len(self.calculationObjects[0].elems)-1, 'Updating window')
-            for m, block in enumerate(self.calculationObjects[0].elems):
+            #
+            progWin = progressWindow(len(self.elems)-1, 'Updating window')
+            #
+            for m, block in enumerate(self.elems):
                 # VTK Elements
                 newGrid = vtk.vtkUnstructuredGrid()
                 newGrid.SetPoints(self.vtkPoints)
                 # Loop over all elements in block m; elem is a list with elements ids and connected nodes
-                for elem in block[2]:
+                for elemCount in range(block.shape[0]):
                     quad_ = vtk.vtkQuad()
-                    for p in range(4): # Set four nodes
-                        correctNodePosition = int(np.where(self.calculationObjects[0].nodes[:,0] == elem[p+1])[0]) # Get correct node position (nodes can have any id in elpaso)
-                        quad_.GetPointIds().SetId(p, int(correctNodePosition))
+                    [quad_.GetPointIds().SetId(p, int(np.where(self.nodes[:,0] == block[elemCount,p+1])[0])) for p in range(4)] # Get correct 4 node positions and insert node (nodes can have any id in elpaso)
                     newGrid.InsertNextCell(quad_.GetCellType(), quad_.GetPointIds())
                 # Infotable
-                items = [QTableWidgetItem(), QTableWidgetItem(str(block[1])), QTableWidgetItem(str(block[0])), QTableWidgetItem(str(len(block[2])))]
+                items = [QTableWidgetItem(), QTableWidgetItem(block.attrs['ElementType'][:]), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(str(block.shape[0]))]
                 for n, item in enumerate(items):
                     if n==0: # Checkbox
                         item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)

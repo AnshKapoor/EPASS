@@ -60,13 +60,12 @@ class loadGUI(QMainWindow):
         self.locPath = os.path.dirname(os.path.abspath(__file__)) # where we are
         self.myFont = QFont("Verdana", 12)
         self.myModel = model() # all model information are saved here
-        #self.myModel.blockInfo.itemClicked.connect(self.update3D) # table containing model information (click event)
+        self.myModel.blockInfo.itemClicked.connect(self.update3D) # table containing model information (click event)
         #
         self.setupGui()
         self.show()
         self.loadInput()
         self.statusBar().showMessage('Ready')
-
 
     def about(self):
         """
@@ -77,7 +76,6 @@ class loadGUI(QMainWindow):
                                     'Version 0.1 (2019)\n\n' +
                                     'Program to set up an hdf5 input file for elpaos.\n' +
                                     'Supported loads: plane wave, diffuse field, \ndistributed time domain, turbulent boundary layer')
-
 
     def addLoad(self):
         """
@@ -111,18 +109,16 @@ class loadGUI(QMainWindow):
         self.loadInfo.clearLayout()
         self.loadInfo.updateLayout(self.myModel.loads)
 
-
     def graphWindowClick(self, event):
         """
         User clicks into graph area
         """
         if self.myModel.name != ' - ':
             if event.xdata:
-                self.vtkWindow.currentFrequencyStep = np.argmin(abs(np.array(self.myModel.calculationObjects[0].frequencies)-event.xdata))
-                self.graphWindow.currentFrequency = self.myModel.calculationObjects[0].frequencies[ self.vtkWindow.currentFrequencyStep ]
+                self.vtkWindow.currentFrequencyStep = np.argmin(abs(np.array(self.myModel.frequencies)-event.xdata))
+                self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
                 self.update2D()
                 self.update3D()
-
 
     def loadInput(self):
         """
@@ -171,16 +167,13 @@ class loadGUI(QMainWindow):
                 messageboxOK('Ready','hdf5 file successfully loaded')
             else:
                 self.statusBar().showMessage('Unknown file ending (cub5 and hdf5 supported) - no model loaded!')
-            
-            
-            #readHdf5(self.myModel.calculationObjects[0], self.myModel.binfilename, self.myModel.ak3tree, toBeLoaded)#{'elements':readElements,'nodes':readNodes})
-            # 
-            # self.myModel.updateModelInfo(self.vtkWindow)
-            # self.vtkWindow.currentFrequencyStep = int(len(self.myModel.calculationObjects[0].frequencies)/2.)
-            # self.graphWindow.currentFrequency = self.myModel.calculationObjects[0].frequencies[ self.vtkWindow.currentFrequencyStep ]
-            # self.update2D()
-            # self.update3D()
-            # self.statusBar().showMessage('Model loaded')
+            # Update 2D / 3D windows
+            self.myModel.updateModelInfo(self.vtkWindow)
+            self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
+            self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
+            self.update2D()
+            self.update3D()
+            self.statusBar().showMessage('Model loaded')
 
             # self.nodelist = self.myModel.calculationObjects[0].nodes
             # self.update2D()
@@ -257,7 +250,6 @@ class loadGUI(QMainWindow):
 
         self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
 
-
         self.tabsLeft.addTab(self.tabLoads,"Loads")
         self.tabsLeft.addTab(self.tabMaterials,"Materials")
         self.tabsLeft.addTab(self.tabAnalysis, 'Analysis')
@@ -282,7 +274,6 @@ class loadGUI(QMainWindow):
         #self.loadLayout.setStretchFactor(self.loadInfo, True)
         #self.tabLoads.layout = QVBoxLayout(self)
         self.tabLoads.setLayout(self.loadLayout)
-
         #
         # CREATE WIDGETS | III - MATERIALS
         self.labelMat = QLabel('Fill me, please :)')
@@ -434,14 +425,11 @@ class loadGUI(QMainWindow):
         helpAct.triggered.connect(self.about)
         self.modelMenu.addAction(helpAct)
 
-
-
     def update2D(self):
         """
         Update method for 2D graph window
         """
         self.graphWindow.updateWindow(self.myModel)
-
 
     def update3D(self):
         """
