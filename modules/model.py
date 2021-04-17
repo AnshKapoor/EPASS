@@ -31,14 +31,15 @@ class model: # Saves a model
         self.freqDelta = 10
         self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)]) # freqs are saved here readFreqs()
         self.analysisType = 'frequency' # stores the analysis type used to determine proper postprocessing and visualising
-        self.solver = 'elpasoC'
+        self.solverType = 'elpasoC'
         self.analysisID = 0
         self.revision = 6
-        self.description = 'problem'
+        self.description = 'my problem'
         self.initModelInfo()
         self.initLayout()
 
-    def export(self):
+    #def saveAndExit(self):
+        #
         #exportAK3 = copy.deepcopy(self.ak3tree)
         #elemLoads = exportAK3.find('ElemLoads')
         #elemLoads.set('N', '0')
@@ -49,24 +50,23 @@ class model: # Saves a model
         # for loadedElem in loadedElems.findall('LoadedElem'):
         #     loadedElems.remove(loadedElem)
         # Create new entries for requested loads
-        for load in self.loads:
-            load.writeXML(self.binfilename, self.name, self.cluster)
+        #
+        # for load in self.loads:
+            # load.writeXML(self.binfilename, self.name, self.cluster)
+        #
+        # with h5py.File(self.binfilename, 'r+') as binfile:
+            # if binfile.get('/Materials') is not None:
+                # binfile.__delitem__('/Materials')
+            # matList = binfile.create_group('Materials')
+            # for i, mat in enumerate(self.calculationObjects[-1].materials):
+                # type = mat[0]
+                # name = mat[1]
 
-        with h5py.File(self.binfilename, 'r+') as binfile:
-            if binfile.get('/Materials') is not None:
-                binfile.__delitem__('/Materials')
-            matList = binfile.create_group('Materials')
-            for i, mat in enumerate(self.calculationObjects[-1].materials):
-                type = mat[0]
-                name = mat[1]
-
-                mat = [float(x) for x in mat[2:]]
-                set = binfile.create_dataset('/Materials/mat'+str(i), data=mat)
-                set.attrs['type'] = type
-                set.attrs['name'] = name
-
-
-        print('exported')
+                # mat = [float(x) for x in mat[2:]]
+                # set = binfile.create_dataset('/Materials/mat'+str(i), data=mat)
+                # set.attrs['type'] = type
+                # set.attrs['name'] = name
+        #
         #self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
         #self.writeToFile(self.binfilename,[self.calculationObjects[0].nodes])
         # Write new ak3 file to disc
@@ -78,7 +78,6 @@ class model: # Saves a model
         # with open(self.path + '/' + self.name + '.ak3', 'wb') as f:
         #     f.write(etree.tostring(exportAK3))
         # progWin.setValue(2)
-        QApplication.processEvents()
 
     def initModelInfo(self):
         # CREATE WIDGETS
@@ -107,22 +106,26 @@ class model: # Saves a model
         self.layout = QHBoxLayout()
         self.layout.addLayout(self.sublayout1)
         self.layout.addWidget(self.blockInfo)
-
-    def updateModelInfo(self, vtkWindow):
+        
+    def updateModelSetup(self):
+        self.nodeInfo.setText('Nodes: ' + str(self.nodes[:,1:].shape[0]))
+        self.elementInfo.setText('Blocks: ' + str(len(self.elems)))
+        self.blockInfo.setRowCount(len(self.elems))
+        self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)])
+        addInfo = '\n                      (df=' + str(self.frequencies[1]-self.frequencies[0]) + ' Hz)'
+        #if self.calculationObjects[-1].frequencyFile == 1:
+        #    addInfo = '\n                      (from frq file)'
+        self.frequencyInfo.setText('Frequencies: ' + str(min(self.frequencies)) + ' - ' + str(max(self.frequencies)) + ' Hz' + addInfo)
+        
+    def updateModel(self, vtkWindow):
         # UPDATE WIDGETS
         self.title.setText('Name: ' + self.name)
         if self.name is not ' - ':
+            # Update Infobox
+            self.updateModelSetup()
             # VTK Points
             self.vtkPoints = vtk.vtkPoints()
             self.vtkPoints.SetData(numpy_support.numpy_to_vtk(self.nodes[:,1:])) # Attention - vtk points simply count from 0
-            # Infobox
-            self.nodeInfo.setText('Nodes: ' + str(self.nodes[:,1:].shape[0]))
-            self.elementInfo.setText('Blocks: ' + str(len(self.elems)))
-            addInfo = '\n                      (df=' + str(self.frequencies[1]-self.frequencies[0]) + ' Hz)'
-            #if self.calculationObjects[-1].frequencyFile == 1:
-            #    addInfo = '\n                      (from frq file)'
-            self.frequencyInfo.setText('Frequencies: ' + str(min(self.frequencies)) + ' - ' + str(max(self.frequencies)) + ' Hz' + addInfo)
-            self.blockInfo.setRowCount(len(self.elems))
             # Loop over all blocks
             vtkWindow.grids = []
             vtkWindow.mappers = []
@@ -177,13 +180,3 @@ class model: # Saves a model
         else:
             self.cluster = 0
 
-    def writeToFile(self,binFile,objList):
-        with h5py.File(binFile, 'r+') as fileObj:
-            name='mtxFemNodes'
-            for no, obj in enumerate(objList):
-                # if obj == self.calculationObjects[0].nodes:
-                #     name = 'nodes'
-                if fileObj.get('/Nodes') is not None:
-                    fileObj.__delitem__('/Nodes')
-                set = fileObj.create_dataset('/Nodes/'+name, data = obj)
-                set.attrs['MethodType'] = 'FEM'

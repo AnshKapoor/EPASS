@@ -11,8 +11,8 @@ import atexit
 import numpy as np
 import h5py
 #
-from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QHBoxLayout, QPushButton, QLineEdit, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction, QTabWidget
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QCheckBox, QHBoxLayout, QPushButton, QLineEdit, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction, QTabWidget
+from PyQt5.QtCore import Qt, QCoreApplication
 from PyQt5.QtGui import QFont, QIcon
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
 from standardFunctionsGeneral import readNodes, readElements, readSetup
-from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine, sepLineV, ak3LoadButton, addButton, editWindowBasic, loadSelector, messageboxOK, exportButton, saveButton
+from standardWidgets import *
 from model import model
 from vtkWindow import vtkWindow
 from graphWindow import graphWindow
@@ -32,7 +32,7 @@ from timeVarDat import timeVarDat
 from tbl import tbl
 #
 from trial_mat2 import trial_mat # Materials Tab
-from analysis_tab import analysis_tab
+from analysisTab import analysisTab
 
 # Main class called first
 class loadGUI(QMainWindow):
@@ -122,6 +122,7 @@ class loadGUI(QMainWindow):
         """
         if self.myModel.hdf5File: 
             self.myModel.hdf5File.close()
+            self.myModel.__init__()
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5 *.cub5)", options=options)
@@ -129,15 +130,16 @@ class loadGUI(QMainWindow):
             self.vtkWindow.clearWindow()
             self.myModel.name = fileName.split('/')[-1].split('.')[0]
             self.myModel.path =  '/'.join(fileName.split('/')[:-1])
-            #self.myModel.calculationObjects = [] # Only one model can be loaded - every time a file is chosen, the model is reset
             [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
-            #self.myModel.calculationObjects.append(calculationObject('calculation'))
             #
             self.myModel.fileEnding = fileName.split('.')[-1]
             # cub5 file from Trelis/coreform opened
             if self.myModel.fileEnding == 'cub5':
                 newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
-                if not os.path.isfile(newFile + 'dummy'):
+                reply  = QMessageBox.Yes
+                if os.path.isfile(newFile):
+                    reply = QMessageBox.question(self, 'File existing', 'Overwrite ' + str(newFile) + '?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if reply == QMessageBox.Yes:
                     self.myModel.hdf5File = h5py.File(newFile, 'w')
                     atexit.register(self.myModel.hdf5File.close)
                     # relevant cub5 data is transferred to new hdf5 file
@@ -151,8 +153,10 @@ class loadGUI(QMainWindow):
                         self.myModel.hdf5File.close()
                         os.remove(newFile)
                         messageboxOK('Error','cub5 file not transferred')
+                        return 0
                 else:
                     messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
+                    return 0
             # existing hdf5 file opened
             elif self.myModel.fileEnding == 'hdf5':
                 self.myModel.hdf5File = h5py.File(fileName, 'r+')
@@ -164,11 +168,13 @@ class loadGUI(QMainWindow):
             else:
                 self.statusBar().showMessage('Unknown file ending (cub5 and hdf5 supported) - no model loaded!')
             # Update 2D / 3D windows
-            self.myModel.updateModelInfo(self.vtkWindow)
+            self.myModel.updateModel(self.vtkWindow)
             self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
             self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
             self.update2D()
             self.update3D()
+            # Update tabs
+            self.updateTabs()
             self.statusBar().showMessage('Model loaded')
 
     def removeLoad(self, loadIDToRemove):
@@ -218,23 +224,69 @@ class loadGUI(QMainWindow):
         self.mainLayoutLeft.addLayout(self.modelLayout)
         self.mainLayoutLeft.addWidget(self.sepLine1)
         #
-
         # INIT DIFFERENT TABS
-        self.tabMatCont = trial_mat()
-        #self.analysis_tab = analysis_tab()                 #Hier weitermachen
+        self.tabAnalysis = analysisTab()
+        [x.textChanged.connect(self.analysisTabChangeEvent) for x in self.tabAnalysis.changeObjects]
+        self.tabMatCont = trial_mat()            
         self.tabsLeft = QTabWidget()
         self.tabLoads = QWidget()
         self.tabMaterials = self.tabMatCont#QWidget()
-        self.tabAnalysis = QWidget()
-        #self.tabAnalysis = self.analysis_tab               #Hier weitermachen
+        #self.tabAnalysis = QWidget()
 
-        self.tabMaterials.tester()
+        #self.tabMaterials.tester()
+        #self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
 
-        self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
-
+        self.tabsLeft.addTab(self.tabAnalysis, self.tabAnalysis.titleText)
         self.tabsLeft.addTab(self.tabLoads,"Loads")
         self.tabsLeft.addTab(self.tabMaterials,"Materials")
-        self.tabsLeft.addTab(self.tabAnalysis, 'Analysis')
+
+        # # CREATE WIDGETS | IV - Analysis
+        # self.labelAna = QLabel('frequency range:')
+        # self.labelAna.setFont(self.myFont)
+        # self.freqEdit = QPushButton('...')
+        # self.freqEdit.setStyleSheet("background-color:rgb(255,255,255)")
+        # self.freqEdit.setStatusTip('Edit frequencies')
+        # self.freqEdit.setMaximumWidth(23)
+        # self.freqEdit.setMaximumHeight(23)
+        # self.freqstart = QLineEdit('100')
+        # self.startLabel = QLabel('Start [Hz]:')
+        # self.freqdelta = QLineEdit('10')
+        # self.deltaLabel = QLabel('Delta [Hz]:')
+        # self.freqsteps = QLineEdit('100')
+        # self.stepsLabel = QLabel('Steps:')
+        # self.freqEdit.clicked.connect(self.showSaveEdit)
+        # self.labelType = QLabel('Analysis Type:')
+        # self.selectorType = analysisTypeSelector()
+        # self.labelSolver = QLabel('Solver:')
+        # self.selectorSolver = solverTypeSelector()
+        # self.AnasepLine1 = sepLine()
+        # self.AnasepLine2 = sepLine()
+        # self.freqSaveButton = saveButton()
+        # self.freqSaveButton.clicked.connect(self.showSaveEdit)
+        # # ADD TO LAYOUT
+        # self.AnaLayout = QVBoxLayout()
+        # self.AnaLayout1 = QHBoxLayout()
+        # self.AnaLayout2 = QHBoxLayout()
+        # self.AnaLayout3 = QHBoxLayout()
+        # self.AnaLayout.addWidget(self.labelAna)
+        # self.AnaLayout1.addWidget(self.startLabel)
+        # self.AnaLayout1.addWidget(self.freqstart)
+        # self.AnaLayout1.addWidget(self.deltaLabel)
+        # self.AnaLayout1.addWidget(self.freqdelta)
+        # self.AnaLayout1.addWidget(self.stepsLabel)
+        # self.AnaLayout1.addWidget(self.freqsteps)
+        # self.AnaLayout1.addWidget(self.freqSaveButton)
+
+        # self.AnaLayout2.addWidget(self.labelType)
+        # self.AnaLayout2.addWidget(self.selectorType)
+        # self.AnaLayout2.addWidget(self.labelSolver)
+        # self.AnaLayout2.addWidget(self.selectorSolver)
+        # self.AnaLayout.addLayout(self.AnaLayout1, 2)
+        # self.AnaLayout.addWidget(self.AnasepLine1)
+        # self.AnaLayout.addLayout(self.AnaLayout2, 1)
+        # self.AnaLayout.addWidget(self.AnasepLine2)
+        # self.tabAnalysis.setLayout(self.AnaLayout)
+        # self.AnaLayout.addLayout(self.AnaLayout3, 1)
 
         # CREATE WIDGETS | II - LOADS
         self.label2 = QLabel('Loads')
@@ -269,68 +321,19 @@ class loadGUI(QMainWindow):
         #self.tabMaterials.layout = QVBoxLayout(self)
         #self.tabMaterials.setLayout(self.MatLayout)
 
-        # CREATE WIDGETS | IV - Analysis
-        self.labelAna = QLabel('frequency range:')
-        self.labelAna.setFont(self.myFont)
-        self.freqEdit = QPushButton('...')
-        self.freqEdit.setStyleSheet("background-color:rgb(255,255,255)")
-        self.freqEdit.setStatusTip('Edit frequencies')
-        self.freqEdit.setMaximumWidth(23)
-        self.freqEdit.setMaximumHeight(23)
-        self.freqstart = QLineEdit('100')
-        self.startLabel = QLabel('Start [Hz]:')
-        self.freqdelta = QLineEdit('10')
-        self.deltaLabel = QLabel('Delta [Hz]:')
-        self.freqsteps = QLineEdit('100')
-        self.stepsLabel = QLabel('Steps:')
-        self.freqEdit.clicked.connect(self.showSaveEdit)
-        self.labelType = QLabel('Analysis Type:')
-        self.selectorType = analysisTypeSelector()
-        self.labelSolver = QLabel('Solver:')
-        self.selectorSolver = solverTypeSelector()
-        self.AnasepLine1 = sepLine()
-        self.AnasepLine2 = sepLine()
-        self.freqSaveButton = saveButton()
-        self.freqSaveButton.clicked.connect(self.showSaveEdit)
-        # ADD TO LAYOUT
-        self.AnaLayout = QVBoxLayout()
-        self.AnaLayout1 = QHBoxLayout()
-        self.AnaLayout2 = QHBoxLayout()
-        self.AnaLayout3 = QHBoxLayout()
-        self.AnaLayout.addWidget(self.labelAna)
-        self.AnaLayout1.addWidget(self.startLabel)
-        self.AnaLayout1.addWidget(self.freqstart)
-        self.AnaLayout1.addWidget(self.deltaLabel)
-        self.AnaLayout1.addWidget(self.freqdelta)
-        self.AnaLayout1.addWidget(self.stepsLabel)
-        self.AnaLayout1.addWidget(self.freqsteps)
-        self.AnaLayout1.addWidget(self.freqSaveButton)
-
-        self.AnaLayout2.addWidget(self.labelType)
-        self.AnaLayout2.addWidget(self.selectorType)
-        self.AnaLayout2.addWidget(self.labelSolver)
-        self.AnaLayout2.addWidget(self.selectorSolver)
-        self.AnaLayout.addLayout(self.AnaLayout1, 2)
-        self.AnaLayout.addWidget(self.AnasepLine1)
-        self.AnaLayout.addLayout(self.AnaLayout2, 1)
-        self.AnaLayout.addWidget(self.AnasepLine2)
-        self.AnaLayout.addLayout(self.AnaLayout3, 1)
-        self.tabAnalysis.setLayout(self.AnaLayout)
-
         # LEFT SIDE EXPORT SETTINGS
         self.clusterSwitch = QCheckBox()
         self.clusterSwitch.setChecked(0)
         self.clusterSwitch.setText('Export for Cluster')
         self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
         self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
-        self.exportButton = exportButton()
-        self.exportButton.clicked.connect(self.myModel.export)
-        #self.exportButton.clicked.connect(self.myModel.writeToFile())
+        self.saveAndExitButton = saveAndExitButton()
+        self.saveAndExitButton.clicked.connect(self.saveAndExit)
 
         #  PUT LEFT SIDE TOGETHER
         self.mainLayoutLeft.addWidget(self.tabsLeft, 2)
         self.mainLayoutLeft.addWidget(self.clusterSwitch)
-        self.mainLayoutLeft.addWidget(self.exportButton)
+        self.mainLayoutLeft.addWidget(self.saveAndExitButton)
         
         # CREATE WIDGETS | III - 3D Window
         self.label3 = QLabel('3D View')
@@ -366,7 +369,15 @@ class loadGUI(QMainWindow):
         self.mainLayout.setStretchFactor(self.mainLayoutLeft, False)
         self.mainLayout.setStretchFactor(self.mainLayoutRight, True)
         self.centralWidget.setLayout(self.mainLayout)
-
+    
+    def analysisTabChangeEvent(self):
+        try: 
+            self.myModel.freqStart = int(self.tabAnalysis.freqStart.text())
+            self.myModel.freqSteps = int(self.tabAnalysis.freqSteps.text())
+            self.myModel.freqDelta = int(self.tabAnalysis.freqDelta.text())
+            self.myModel.updateModelSetup()
+        except:
+            pass
 
     def showSaveEdit(self):
         self.myModel.calculationObjects[-1].materials = self.tabMaterials.MatList
@@ -376,7 +387,7 @@ class loadGUI(QMainWindow):
         self.myModel.calculationObjects[-1].frequencies = [int(self.freqstart.text())+n*int(self.freqdelta.text()) for n in range(int(self.freqsteps.text()))]
         self.myModel.calculationObjects[-1].analysisType = self.selectorType.currentText()
         self.myModel.calculationObjects[-1].solver = self.selectorSolver.currentText()
-        self.myModel.updateModelInfo(self.vtkWindow)
+        self.myModel.updateModel(self.vtkWindow)
         print(self.myModel.calculationObjects[-1].analysisType)
         saveParameters(self.myModel.calculationObjects[-1], self.myModel.binfilename)
 
@@ -418,6 +429,21 @@ class loadGUI(QMainWindow):
         Update method for 3D vtk window
         """
         self.vtkWindow.updateWindow(self.myModel)
+    
+    def updateTabs(self):
+        self.tabAnalysis.update(self.myModel)
+    
+    def saveAndExit(self):
+        res = 1
+        if self.myModel.hdf5File:
+            res = self.tabAnalysis.data2hdf5(self.myModel)
+            if res == 1:
+                self.myModel.hdf5File.close()
+        if res == 1:
+            self.close()
+            app.quit()
+        else:
+            messageboxOK('Problem','Cannot write data to hdf5 - check your input (probably analysis tab)!')
 
 # main
 if __name__ == '__main__':

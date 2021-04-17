@@ -6,7 +6,7 @@
 import numpy as np
 import os
 from PyQt5.QtWidgets import QApplication
-from standardWidgets import progressWindow
+from standardWidgets import *
 import h5py
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
@@ -92,7 +92,7 @@ def readSetup(myModel, hdf5File, cub5File=0):
         g.attrs['start'] = myModel.freqStart 
         g.attrs['steps'] = myModel.freqSteps 
         g.attrs['delta'] = myModel.freqDelta
-        g.attrs['solver'] = myModel.solver
+        g.attrs['solver'] = myModel.solverType
         g.attrs['revision'] = myModel.revision
         g.attrs['description'] = myModel.description
     else:
@@ -102,19 +102,10 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.freqStart = g.attrs['start'][()]
         myModel.freqSteps = g.attrs['steps'][()]
         myModel.freqDelta = g.attrs['delta'][()]
-        myModel.solver = g.attrs['solver'][:]
+        myModel.solverType = g.attrs['solver'][:]
         myModel.revision = g.attrs['revision'][()]
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
-    # Then point to the file itself if values are changed
-    myModel.analysisID = g.attrs['id']
-    myModel.analysisType = g.attrs['type']
-    myModel.freqStart = g.attrs['start']
-    myModel.freqSteps = g.attrs['steps']
-    myModel.freqDelta = g.attrs['delta']
-    myModel.solver = g.attrs['solver']
-    myModel.revision = g.attrs['revision']
-    myModel.description = g.attrs['description']
 
 # Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
 # def readElements2(calculationObject, ak3tree):

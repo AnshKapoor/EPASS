@@ -88,11 +88,11 @@ class editButton(QPushButton):
         self.id = 0
 
 # Button to export model
-class exportButton(QPushButton):
+class saveAndExitButton(QPushButton):
     def __init__(self):
-        super(exportButton, self).__init__('Export')
+        super(saveAndExitButton, self).__init__('Save and Exit')
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setStatusTip('Export model including created loads.')
+        self.setStatusTip('Saves the model in hdf5 and quits program.')
 
 # Dropdown menu to select a load
 class loadSelector(QComboBox):
@@ -109,17 +109,25 @@ class analysisTypeSelector(QComboBox):
         super(analysisTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Selected a type')
+        self.availableTypes = ['frequency']#['static', 'eigen', 'frequency', 'time']
         self.setFixedWidth(200)
-        [self.addItem(type) for type in ['static', 'eigen', 'frequency', 'time']]
-
+        [self.addItem(type) for type in self.availableTypes]
+    
+    def changeTo(self, analysisType):
+        self.setCurrentIndex(self.availableTypes.index(analysisType))
+    
 # Dropdown menu to select a solver type
 class solverTypeSelector(QComboBox):
     def __init__(self):
         super(solverTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Selected a type')
+        self.availableTypes = ['elpasoC']#['elpaso', 'elpasoC']
         self.setFixedWidth(200)
-        [self.addItem(type) for type in ['elPaSo', 'elPaSoC']]
+        [self.addItem(type) for type in self.availableTypes]
+    
+    def changeTo(self, solverType):
+        self.setCurrentIndex(self.availableTypes.index(solverType))
 
 
 # A standard message box with ok button only
