@@ -13,14 +13,13 @@ class planeWave(load):
     """
     class for plane wave loads. provides methods to calculate pressure/phases acc. to load vector
     """
-    def __init__(self, ak3path, myModel, vtkWindow):
+    def __init__(self, myModel):
         """
         initialise basic load dependent GUI objects
         """
         super(planeWave, self).__init__()
-        self.ak3path = ak3path
         self.myModel = myModel
-        self.removeButton = removeButton(self.ak3path)
+        self.removeButton = removeButton()
         self.editButton = editButton()
         self.type = 'plane_wave'
         #
@@ -40,7 +39,7 @@ class planeWave(load):
         [self.addWidget(wid) for wid in [self.removeButton, self.label, self.ampLabel, self.dirLabel, self.drawCheck, self.editButton]]
         #
         self.initSetupWindow()
-        self.init3DActor(vtkWindow)
+        #self.init3DActor(vtkWindow)
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
@@ -49,8 +48,7 @@ class planeWave(load):
         var = self.showEdit()
         if var == 0: # is the case if the initial setup window is canceled by the user
             self.generatePressure()
-            self.update3DActor()
-
+        #    self.update3DActor()
 
     def clearLayout(self):
         """
@@ -62,19 +60,18 @@ class planeWave(load):
             else:
                 self.removeItem(self.contLayout.takeAt(i))
 
-
     def generatePressure(self):
         """
         Calculates pressure excitation on the selected blocks due to the created plane wave
         """
         c = float(self.c.text())
-        frequencies = self.myModel.calculationObjects[0].frequencies
+        frequencies = self.myModel.frequencies
         self.findRelevantPoints()
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             r_vector = []
              # Get model infos
-            nodes = self.myModel.calculationObjects[0].nodes
+            nodes = self.myModel.nodes
             center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
             loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
             loadNormal = loadNormal/np.linalg.norm(loadNormal)
@@ -92,13 +89,11 @@ class planeWave(load):
                 progWin.setValue(nf)
                 QApplication.processEvents()
 
-
     def getXYdata(self):
         """
         Return x, y data for plotting; for plane wave: constant amplitude
         """
-        return self.myModel.calculationObjects[0].frequencies, len(self.myModel.calculationObjects[0].frequencies)*[float(self.amp.text())]
-
+        return self.myModel.frequencies, len(self.myModel.frequencies)*[float(self.amp.text())]
 
     def init3DActor(self, vtkWindow):
         """
@@ -179,7 +174,6 @@ class planeWave(load):
         #List of Actors for iteration in vtkWindow
         self.actorsList = [self.arrowActorLoad, self.arrowActorSymbol, self.loadActorSymbol]
 
-
     def initSetupWindow(self):
         """
         initialisation of setup popup window for parameter/file path input
@@ -193,9 +187,9 @@ class planeWave(load):
         self.setupWindow.layout.addRow(QLabel('Speed of Sound'), self.c)
         #
         self.blockChecker = []
-        for block in self.myModel.calculationObjects[0].elems:
+        for block in self.myModel.elems:
             self.blockChecker.append(QCheckBox())
-            self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block[1]) + ' (' + str(block[0]) + ')'))
+            self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')'))
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 
@@ -222,7 +216,7 @@ class planeWave(load):
                 self.dirLabel.setText('x ' + str(float(self.dirX.text())) + ' y ' + str(float(self.dirY.text())) + ' z ' + str(float(self.dirZ.text())))
                 c = float(self.c.text()) # It's just a check, variable is not used here
                 self.generatePressure()
-                self.update3DActor()
+                #self.update3DActor()
                 self.switch()
             except: # if input is wrong, show message and reset values
                 messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
@@ -230,7 +224,6 @@ class planeWave(load):
         else:
             self.resetValues()
         return var
-
 
     def update3DActor(self):
         """

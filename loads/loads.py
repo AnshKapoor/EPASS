@@ -38,7 +38,6 @@ class load(QHBoxLayout):
     def __init__(self):
         super(load, self).__init__()
 
-
     def calcLoadNormal(self, elemNormal):
         """
         calculates load normal and angle to element normals acc. to user input
@@ -51,7 +50,6 @@ class load(QHBoxLayout):
         else:
             self.surfaceElementNormals.append(elemNormal)
 
-
     def findRelevantPoints(self):
         """
         Find one point per element at which pressure shall be generated
@@ -59,36 +57,35 @@ class load(QHBoxLayout):
         self.surfacePoints = []
         self.surfaceElements = []
         self.surfaceElementNormals = []
+        self.surfacePointsTest = []
         relevantBlocks = []
-        nodes = self.myModel.calculationObjects[0].nodes
+        nodes = self.myModel.nodes
         for p, blockCheck in enumerate(self.blockChecker):
             blockState = blockCheck.isChecked()
             if blockState==1:
-                relevantBlocks.append(self.myModel.calculationObjects[0].elems[p][1])
-        for elems in self.myModel.calculationObjects[0].elems:
-            if elems[1] in relevantBlocks:
-                for elem in elems[2]:
-                    elemID = elem[0]
-                    node1 = nodes[nodes[:,0]==elem[1]][0]
-                    node2 = nodes[nodes[:,0]==elem[2]][0]
-                    node3 = nodes[nodes[:,0]==elem[3]][0]
-                    node4 = nodes[nodes[:,0]==elem[4]][0]
-                    centerX = 0.25*(node1[1]+node2[1]+node3[1]+node4[1])
-                    centerY = 0.25*(node1[2]+node2[2]+node3[2]+node4[2])
-                    centerZ = 0.25*(node1[3]+node2[3]+node3[3]+node4[3])
-                    self.surfacePoints.append([centerX, centerY, centerZ])
-                    self.surfaceElements.append(elemID)
-                    vec1 = [ node1[1]-centerX, node1[2]-centerY, node1[3]-centerZ ] # from center to node 1
-                    vec2 = [ node2[1]-centerX, node2[2]-centerY, node2[3]-centerZ ] # from center to node 2
-                    vec3 = [ node3[1]-centerX, node3[2]-centerY, node3[3]-centerZ ] # from center to node 3
-                    vec4 = [ node4[1]-centerX, node4[2]-centerY, node4[3]-centerZ ] # from center to node 4
-                    elemNormal = 0.5 * (np.cross(vec1, vec2) + np.cross(vec3, vec4)) # Mean value of two normal vectors
-                    elemNormal = elemNormal / np.linalg.norm(elemNormal)
-                    try:
-                        self.calcLoadNormal(elemNormal)
-                    except:
-                        pass
-
+                relevantBlocks.append(self.myModel.elems[p])
+        for block in relevantBlocks:
+            for elemIdx in range(block.attrs['N']):
+                elemID = block[elemIdx,0]
+                node1 = nodes[nodes[:,0]==block[elemIdx,1],:][0]
+                node2 = nodes[nodes[:,0]==block[elemIdx,2],:][0]
+                node3 = nodes[nodes[:,0]==block[elemIdx,3],:][0]
+                node4 = nodes[nodes[:,0]==block[elemIdx,4],:][0]
+                centerX = 0.25*(node1[1]+node2[1]+node3[1]+node4[1])
+                centerY = 0.25*(node1[2]+node2[2]+node3[2]+node4[2])
+                centerZ = 0.25*(node1[3]+node2[3]+node3[3]+node4[3])
+                self.surfacePoints.append([centerX, centerY, centerZ])
+                self.surfaceElements.append(elemID)
+                vec1 = [ node1[1]-centerX, node1[2]-centerY, node1[3]-centerZ ] # from center to node 1
+                vec2 = [ node2[1]-centerX, node2[2]-centerY, node2[3]-centerZ ] # from center to node 2
+                vec3 = [ node3[1]-centerX, node3[2]-centerY, node3[3]-centerZ ] # from center to node 3
+                vec4 = [ node4[1]-centerX, node4[2]-centerY, node4[3]-centerZ ] # from center to node 4
+                elemNormal = 0.5 * (np.cross(vec1, vec2) + np.cross(vec3, vec4)) # Mean value of two normal vectors
+                elemNormal = elemNormal / np.linalg.norm(elemNormal)
+                try:
+                    self.calcLoadNormal(elemNormal)
+                except:
+                    pass
 
     def nearestNeighbor(self):
         """
@@ -99,7 +96,6 @@ class load(QHBoxLayout):
             # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
             self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
 
-
     def switch(self):
         """
         Method changing the objects changedSwitch in order to indicate 2D and 3D update
@@ -108,7 +104,6 @@ class load(QHBoxLayout):
             self.changeSwitch.setChecked(0)
         else:
             self.changeSwitch.setChecked(1)
-
 
     def writeXMLOld(self, exportAK3, exportbin, name, cluster):
         """

@@ -26,7 +26,7 @@ class graphWindow(FigureCanvas):
         
     def updateWindow(self, myModel): 
         self.clearGraphs()
-        # Ampltudes of loads
+        # Amplitudes of loads
         for load in myModel.loads:
             if load.drawCheck.isChecked(): 
                 [x, y] = load.getXYdata()

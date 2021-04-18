@@ -19,7 +19,7 @@ sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
-from standardFunctionsGeneral import readNodes, readElements, readSetup
+from standardFunctionsGeneral import *
 from standardWidgets import *
 from model import model
 from vtkWindow import vtkWindow
@@ -33,6 +33,7 @@ from tbl import tbl
 #
 from trial_mat2 import trial_mat # Materials Tab
 from analysisTab import analysisTab
+from loadsTab import loadsTab
 
 # Main class called first
 class loadGUI(QMainWindow):
@@ -72,38 +73,6 @@ class loadGUI(QMainWindow):
                                     'Version 0.1 (2019)\n\n' +
                                     'Program to set up an hdf5 input file for elpaso.\n' +
                                     'Supported loads: plane wave, diffuse field, \ndistributed time domain, turbulent boundary layer')
-
-    def addLoad(self):
-        """
-        Add the load selected by self.loadSelector (self.addLoadButton click event)
-        """
-        if self.myModel.name == ' - ':
-            messageboxOK('Addition of load not possible', 'Open a model first!')
-            return
-        if self.loadSelector.currentText() == 'Plane wave':
-            self.myModel.loads.append(planeWave(self.locPath, self.myModel, self.vtkWindow))
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
-        if self.loadSelector.currentText() == 'Diffuse field':
-            self.myModel.loads.append(diffuseField(self.locPath, self.myModel, self.vtkWindow))
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
-        if self.loadSelector.currentText() == 'Distributed time domain load':
-            self.myModel.loads.append(timeVarDat(self.locPath, self.myModel, self.vtkWindow))
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
-        if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
-            self.myModel.loads.append(tbl(self.locPath, self.myModel, self.vtkWindow))
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
-            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
-        # Reset new ids for button in order to identify button on next click correctly and reconnect buttons
-        for loadNo in range(len(self.myModel.loads)):
-            self.myModel.loads[loadNo].removeButton.id = loadNo
-            self.myModel.loads[loadNo].removeButton.disconnect()
-            self.myModel.loads[loadNo].removeButton.clicked.connect(lambda: self.removeLoad('button'))
-        # Refresh layout
-        self.loadInfo.clearLayout()
-        self.loadInfo.updateLayout(self.myModel.loads)
 
     def graphWindowClick(self, event):
         """
@@ -177,25 +146,6 @@ class loadGUI(QMainWindow):
             self.updateTabs()
             self.statusBar().showMessage('Model loaded')
 
-    def removeLoad(self, loadIDToRemove):
-        """
-        Remove a load from list (removeButton click event)
-        """
-        # Layout is cleared
-        self.loadInfo.clearLayout()
-        if loadIDToRemove=='button':
-            loadIDToRemove = self.sender().id
-        self.myModel.loads[loadIDToRemove].drawCheck.setChecked(0)
-        self.vtkWindow.updateLoads(self.myModel.loads)
-        self.vtkWindow.resetView()
-        self.myModel.loads[loadIDToRemove].clearLayout() # Set widgets to None (remove Button etc)
-        self.myModel.loads[loadIDToRemove] = None # Set the pointer to None
-        self.myModel.loads.pop(loadIDToRemove) # Remove the entry in list
-        self.loadInfo.updateLayout(self.myModel.loads)
-        # Reset new ids for button in order to identify button on next click correctly
-        for loadNo in range(len(self.myModel.loads)):
-            self.myModel.loads[loadNo].removeButton.id = loadNo
-        
     def setupGui(self):
         """
         Initialisation of gui (main window content)
@@ -225,89 +175,21 @@ class loadGUI(QMainWindow):
         self.mainLayoutLeft.addWidget(self.sepLine1)
         #
         # INIT DIFFERENT TABS
+        #
         self.tabAnalysis = analysisTab()
         [x.textChanged.connect(self.analysisTabChangeEvent) for x in self.tabAnalysis.changeObjects]
+        self.tabLoads = loadsTab()
+        self.tabLoads.addLoadButton.clicked.connect(self.addLoadEvent)
         self.tabMatCont = trial_mat()            
         self.tabsLeft = QTabWidget()
-        self.tabLoads = QWidget()
         self.tabMaterials = self.tabMatCont#QWidget()
+        self.tabMaterials.titleText = 'Materials'
         #self.tabAnalysis = QWidget()
+        [self.tabsLeft.addTab(tab,tab.titleText) for tab in [self.tabAnalysis, self.tabLoads, self.tabMaterials]]
 
         #self.tabMaterials.tester()
         #self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
-
-        self.tabsLeft.addTab(self.tabAnalysis, self.tabAnalysis.titleText)
-        self.tabsLeft.addTab(self.tabLoads,"Loads")
-        self.tabsLeft.addTab(self.tabMaterials,"Materials")
-
-        # # CREATE WIDGETS | IV - Analysis
-        # self.labelAna = QLabel('frequency range:')
-        # self.labelAna.setFont(self.myFont)
-        # self.freqEdit = QPushButton('...')
-        # self.freqEdit.setStyleSheet("background-color:rgb(255,255,255)")
-        # self.freqEdit.setStatusTip('Edit frequencies')
-        # self.freqEdit.setMaximumWidth(23)
-        # self.freqEdit.setMaximumHeight(23)
-        # self.freqstart = QLineEdit('100')
-        # self.startLabel = QLabel('Start [Hz]:')
-        # self.freqdelta = QLineEdit('10')
-        # self.deltaLabel = QLabel('Delta [Hz]:')
-        # self.freqsteps = QLineEdit('100')
-        # self.stepsLabel = QLabel('Steps:')
-        # self.freqEdit.clicked.connect(self.showSaveEdit)
-        # self.labelType = QLabel('Analysis Type:')
-        # self.selectorType = analysisTypeSelector()
-        # self.labelSolver = QLabel('Solver:')
-        # self.selectorSolver = solverTypeSelector()
-        # self.AnasepLine1 = sepLine()
-        # self.AnasepLine2 = sepLine()
-        # self.freqSaveButton = saveButton()
-        # self.freqSaveButton.clicked.connect(self.showSaveEdit)
-        # # ADD TO LAYOUT
-        # self.AnaLayout = QVBoxLayout()
-        # self.AnaLayout1 = QHBoxLayout()
-        # self.AnaLayout2 = QHBoxLayout()
-        # self.AnaLayout3 = QHBoxLayout()
-        # self.AnaLayout.addWidget(self.labelAna)
-        # self.AnaLayout1.addWidget(self.startLabel)
-        # self.AnaLayout1.addWidget(self.freqstart)
-        # self.AnaLayout1.addWidget(self.deltaLabel)
-        # self.AnaLayout1.addWidget(self.freqdelta)
-        # self.AnaLayout1.addWidget(self.stepsLabel)
-        # self.AnaLayout1.addWidget(self.freqsteps)
-        # self.AnaLayout1.addWidget(self.freqSaveButton)
-
-        # self.AnaLayout2.addWidget(self.labelType)
-        # self.AnaLayout2.addWidget(self.selectorType)
-        # self.AnaLayout2.addWidget(self.labelSolver)
-        # self.AnaLayout2.addWidget(self.selectorSolver)
-        # self.AnaLayout.addLayout(self.AnaLayout1, 2)
-        # self.AnaLayout.addWidget(self.AnasepLine1)
-        # self.AnaLayout.addLayout(self.AnaLayout2, 1)
-        # self.AnaLayout.addWidget(self.AnasepLine2)
-        # self.tabAnalysis.setLayout(self.AnaLayout)
-        # self.AnaLayout.addLayout(self.AnaLayout3, 1)
-
-        # CREATE WIDGETS | II - LOADS
-        self.label2 = QLabel('Loads')
-        self.label2.setFont(self.myFont)
-        self.loadSelector = loadSelector()
-        self.addLoadButton = addButton(self.locPath)
-        self.addLoadButton.clicked.connect(self.addLoad)
-        self.loadInfo = loadInfoBox()
-
-        # ADD TO LAYOUT
-        self.loadUpperLayout = QHBoxLayout()
-        self.loadUpperLayout.addWidget(self.loadSelector)
-        self.loadUpperLayout.addWidget(self.addLoadButton)
-        self.loadUpperLayout.addStretch(1)
-        self.loadLayout = QVBoxLayout()
-        self.loadLayout.addLayout(self.loadUpperLayout)
-        self.loadLayout.addWidget(self.label2)
-        self.loadLayout.addWidget(self.loadInfo)
-        #self.loadLayout.setStretchFactor(self.loadInfo, True)
-        #self.tabLoads.layout = QVBoxLayout(self)
-        self.tabLoads.setLayout(self.loadLayout)
+        
         #
         # CREATE WIDGETS | III - MATERIALS
         self.labelMat = QLabel('Fill me, please :)')
@@ -322,17 +204,17 @@ class loadGUI(QMainWindow):
         #self.tabMaterials.setLayout(self.MatLayout)
 
         # LEFT SIDE EXPORT SETTINGS
-        self.clusterSwitch = QCheckBox()
-        self.clusterSwitch.setChecked(0)
-        self.clusterSwitch.setText('Export for Cluster')
-        self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
-        self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
+        # self.clusterSwitch = QCheckBox()
+        # self.clusterSwitch.setChecked(0)
+        # self.clusterSwitch.setText('Export for Cluster')
+        # self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
+        # self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
         self.saveAndExitButton = saveAndExitButton()
         self.saveAndExitButton.clicked.connect(self.saveAndExit)
 
         #  PUT LEFT SIDE TOGETHER
         self.mainLayoutLeft.addWidget(self.tabsLeft, 2)
-        self.mainLayoutLeft.addWidget(self.clusterSwitch)
+        # self.mainLayoutLeft.addWidget(self.clusterSwitch)
         self.mainLayoutLeft.addWidget(self.saveAndExitButton)
         
         # CREATE WIDGETS | III - 3D Window
@@ -378,19 +260,26 @@ class loadGUI(QMainWindow):
             self.myModel.updateModelSetup()
         except:
             pass
-
-    def showSaveEdit(self):
-        self.myModel.calculationObjects[-1].materials = self.tabMaterials.MatList
-        self.myModel.calculationObjects[-1].freqStart = int(self.freqstart.text())
-        self.myModel.calculationObjects[-1].freqSteps = int(self.freqsteps.text())
-        self.myModel.calculationObjects[-1].freqDelta = int(self.freqdelta.text())
-        self.myModel.calculationObjects[-1].frequencies = [int(self.freqstart.text())+n*int(self.freqdelta.text()) for n in range(int(self.freqsteps.text()))]
-        self.myModel.calculationObjects[-1].analysisType = self.selectorType.currentText()
-        self.myModel.calculationObjects[-1].solver = self.selectorSolver.currentText()
-        self.myModel.updateModel(self.vtkWindow)
-        print(self.myModel.calculationObjects[-1].analysisType)
-        saveParameters(self.myModel.calculationObjects[-1], self.myModel.binfilename)
-
+    
+    def addLoadEvent(self):
+        success = self.tabLoads.addLoad(self.myModel)
+        if success:
+            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update2D)
+            self.myModel.loads[-1].changeSwitch.stateChanged.connect(self.update3D)
+            # Reset new ids for button in order to identify button on next click correctly and reconnect buttons
+            for loadNo in range(len(self.myModel.loads)):
+                self.myModel.loads[loadNo].removeButton.id = loadNo
+                self.myModel.loads[loadNo].removeButton.disconnect()
+                self.myModel.loads[loadNo].removeButton.clicked.connect(lambda: self.removeLoadEvent('button'))
+    
+    def removeLoadEvent(self, loadIDToRemove):
+        self.tabLoads.removeLoad(loadIDToRemove, self.myModel)
+        #self.vtkWindow.updateLoads(self.myModel.loads)
+        #self.vtkWindow.resetView()
+        # Reset new ids for button in order to identify button on next click correctly
+        for loadNo in range(len(self.myModel.loads)):
+            self.myModel.loads[loadNo].removeButton.id = loadNo
+    
     def setupMenu(self):
         """
         Initialisation of the window menu

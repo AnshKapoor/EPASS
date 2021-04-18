@@ -1,4 +1,6 @@
 #
+import os
+#
 from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QGridLayout, QFormLayout, QVBoxLayout, QMainWindow, QWidget, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
@@ -54,10 +56,10 @@ class saveButton(QPushButton):
 
 # Button to add something
 class addButton(QPushButton):
-    def __init__(self, ak3path):
+    def __init__(self):
         super(addButton, self).__init__('')
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setIcon(QIcon(ak3path + '/pics/add_button.png'))
+        self.setIcon(QIcon(os.path.dirname(__file__) + '/../pics/add_button.png'))
         self.setIconSize(QSize(20, 20))
         self.setStatusTip('Add selected load')
         self.setMaximumWidth(23)
@@ -65,10 +67,10 @@ class addButton(QPushButton):
 
 # Button to remove something
 class removeButton(QPushButton):
-    def __init__(self, ak3path):
+    def __init__(self):
         super(removeButton, self).__init__('')
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setIcon(QIcon(ak3path + '/pics/del_button.png'))
+        self.setIcon(QIcon(os.path.dirname(__file__) + '/../pics/del_button.png'))
         self.setIconSize(QSize(20, 20))
         self.setStatusTip('Remove this load')
         self.setMaximumWidth(23)
@@ -95,40 +97,52 @@ class saveAndExitButton(QPushButton):
         self.setStatusTip('Saves the model in hdf5 and quits program.')
 
 # Dropdown menu to select a load
-class loadSelector(QComboBox):
+class loadTypeSelector(QComboBox):
     def __init__(self):
-        super(loadSelector, self).__init__()
+        super(loadTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setStatusTip('Selected a load')
+        self.setStatusTip('Select a load')
+        self.availableTypes = ['Plane wave']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer', 'Point Load']
         self.setFixedWidth(200)
-        [self.addItem(load) for load in ['Plane wave', 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer']]
+        [self.addItem(load) for load in self.availableTypes]
+    
+    def changeTo(self, loadType):
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(loadType))
+        except:
+            pass
 
 # Dropdown menu to select an analysis type
 class analysisTypeSelector(QComboBox):
     def __init__(self):
         super(analysisTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setStatusTip('Selected a type')
+        self.setStatusTip('Select an anylsis type')
         self.availableTypes = ['frequency']#['static', 'eigen', 'frequency', 'time']
         self.setFixedWidth(200)
         [self.addItem(type) for type in self.availableTypes]
     
     def changeTo(self, analysisType):
-        self.setCurrentIndex(self.availableTypes.index(analysisType))
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(analysisType))
+        except:
+            pass
     
 # Dropdown menu to select a solver type
 class solverTypeSelector(QComboBox):
     def __init__(self):
         super(solverTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setStatusTip('Selected a type')
+        self.setStatusTip('Select a routine')
         self.availableTypes = ['elpasoC']#['elpaso', 'elpasoC']
         self.setFixedWidth(200)
         [self.addItem(type) for type in self.availableTypes]
     
     def changeTo(self, solverType):
-        self.setCurrentIndex(self.availableTypes.index(solverType))
-
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(solverType))
+        except:
+            pass
 
 # A standard message box with ok button only
 class messageboxOK(QMessageBox):
