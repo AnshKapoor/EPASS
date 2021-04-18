@@ -321,6 +321,7 @@ class loadGUI(QMainWindow):
     
     def updateTabs(self):
         self.tabAnalysis.update(self.myModel)
+        self.tabLoads.update(self.myModel)
     
     def saveAndExit(self):
         res = 1

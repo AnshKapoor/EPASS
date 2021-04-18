@@ -109,7 +109,6 @@ class load(QHBoxLayout):
         # Exporting the load per element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nE, surfaceElem in enumerate(self.surfaceElements):
-            # Save load itself
             frequencies = self.myModel.frequencies
             dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
             set = elemLoadsGroup.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
@@ -118,9 +117,6 @@ class load(QHBoxLayout):
             set.attrs['ElementId'] = str(surfaceElem) # Assign element load to element
             set.attrs['LoadType'] = self.type
             set.attrs['MethodType'] = 'FEM'
-            loadElDat = [float(surfaceElem),float(str(self.removeButton.id+1)+str(surfaceElem))]
-            #binfile.create_dataset('/loads/loadedElems/le'+str(self.removeButton.id+1) + str(surfaceElem), data=(loadElDat)) ID! Das muss jetzt mit in die mtxFemElemLoad als Attribute.
-            ###
             # Update progress window
             progWin.setValue(nE)
             QApplication.processEvents()

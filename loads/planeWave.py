@@ -39,7 +39,7 @@ class planeWave(load):
         [self.addWidget(wid) for wid in [self.removeButton, self.label, self.ampLabel, self.dirLabel, self.drawCheck, self.editButton]]
         #
         self.initSetupWindow()
-        #self.init3DActor(vtkWindow)
+        self.init3DActor()
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
@@ -48,7 +48,7 @@ class planeWave(load):
         var = self.showEdit()
         if var == 0: # is the case if the initial setup window is canceled by the user
             self.generatePressure()
-        #    self.update3DActor()
+            self.update3DActor()
 
     def clearLayout(self):
         """
@@ -95,12 +95,12 @@ class planeWave(load):
         """
         return self.myModel.frequencies, len(self.myModel.frequencies)*[float(self.amp.text())]
 
-    def init3DActor(self, vtkWindow):
+    def init3DActor(self):
         """
-        initialize vtk objects
+        initialize vtk objects of this load
         """
         # Get model infos
-        nodes = self.myModel.calculationObjects[0].nodes
+        nodes = self.myModel.nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
@@ -216,7 +216,7 @@ class planeWave(load):
                 self.dirLabel.setText('x ' + str(float(self.dirX.text())) + ' y ' + str(float(self.dirY.text())) + ' z ' + str(float(self.dirZ.text())))
                 c = float(self.c.text()) # It's just a check, variable is not used here
                 self.generatePressure()
-                #self.update3DActor()
+                self.update3DActor()
                 self.switch()
             except: # if input is wrong, show message and reset values
                 messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
@@ -230,7 +230,7 @@ class planeWave(load):
         updates the vtk actors
         """
         # Get model infos
-        nodes = self.myModel.calculationObjects[0].nodes
+        nodes = self.myModel.nodes
         center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
@@ -253,8 +253,7 @@ class planeWave(load):
         arrowPointLoad = vtk.vtkPoints()
 
         ### get a lower number of arrows if there are more elements or the element size is small
-        numberOfElem = len((self.myModel.calculationObjects[0].elems[0][2]))
-        arrNoScale = int(numberOfElem/32) #number 32 can be changed
+        arrNoScale = int(len(self.surfacePoints)/100.) # draw every 100th arrow in case there are >100 arrows
         if arrNoScale<1:
             arrNoScale = 1
         [arrowPointLoad.InsertNextPoint([self.surfacePoints[p][0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], self.surfacePoints[p][1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], self.surfacePoints[p][2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p in range(0,len(self.surfacePoints),arrNoScale)]
