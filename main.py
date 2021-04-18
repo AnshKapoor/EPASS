@@ -326,6 +326,7 @@ class loadGUI(QMainWindow):
         res = 1
         if self.myModel.hdf5File:
             res = self.tabAnalysis.data2hdf5(self.myModel)
+            res = self.tabLoads.data2hdf5(self.myModel)
             if res == 1:
                 self.myModel.hdf5File.close()
         if res == 1:

@@ -78,9 +78,16 @@ class loadsTab(QWidget):
     
     def data2hdf5(self, myModel): 
         try:
-            # Write possibly changed values to hdf5 file
-            #g = myModel.hdf5File['Analysis']
-            # g.attrs['id'] = myModel.analysisID 
+            # Write load data to hdf5 file
+            if not 'ElemLoads' in myModel.hdf5File.keys():
+                myModel.hdf5File.create_group('ElemLoads')
+            elemLoadsGroup = myModel.hdf5File['ElemLoads']
+            #
+            for dataSet in elemLoadsGroup.keys():
+                del elemLoadsGroup[dataSet]
+            #
+            [load.data2hdf5(elemLoadsGroup) for load in myModel.loads]
+            #
             return 1
         except:
             return 0
