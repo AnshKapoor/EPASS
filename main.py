@@ -104,7 +104,6 @@ class loadGUI(QMainWindow):
                 self.myModel.name = fileName.split('/')[-1].split('.')[0]
                 self.myModel.path =  '/'.join(fileName.split('/')[:-1])
                 self.myModel.fileEnding = fileName.split('.')[-1]
-                print(fileEnding)
                 if fileEnding == 'cub5':
                     self.openCub5()
                 elif fileEnding == 'hdf5':
