@@ -31,9 +31,9 @@ from diffuseField import diffuseField
 from timeVarDat import timeVarDat
 from tbl import tbl
 #
-from trial_mat2 import trial_mat # Materials Tab
 from analysisTab import analysisTab
 from loadsTab import loadsTab
+from materialsTab import materialsTab
 
 # Main class called first
 class loadGUI(QMainWindow):
@@ -188,11 +188,13 @@ class loadGUI(QMainWindow):
         [x.textChanged.connect(self.analysisTabChangeEvent) for x in self.tabAnalysis.changeObjects]
         self.tabLoads = loadsTab()
         self.tabLoads.addLoadButton.clicked.connect(self.addLoadEvent)
-        self.tabMatCont = trial_mat()            
+        self.tabMaterials = materialsTab()
+        self.tabMaterials.addMaterialButton.clicked.connect(self.addMaterialEvent)
+        #self.tabMatCont = trial_mat()     
+        #self.tabMaterials = self.tabMatCont#QWidget()
+        #self.tabMaterials.titleText = 'Materials'
+        #
         self.tabsLeft = QTabWidget()
-        self.tabMaterials = self.tabMatCont#QWidget()
-        self.tabMaterials.titleText = 'Materials'
-        #self.tabAnalysis = QWidget()
         [self.tabsLeft.addTab(tab,tab.titleText) for tab in [self.tabAnalysis, self.tabLoads, self.tabMaterials]]
 
         #self.tabMaterials.tester()
@@ -200,10 +202,10 @@ class loadGUI(QMainWindow):
         
         #
         # CREATE WIDGETS | III - MATERIALS
-        self.labelMat = QLabel('Fill me, please :)')
-        self.labelMat.setFont(self.myFont)
-        # ADD TO LAYOUT
-        self.MatLayout = QVBoxLayout()
+        # self.labelMat = QLabel('Fill me, please :)')
+        # self.labelMat.setFont(self.myFont)
+        # # ADD TO LAYOUT
+        # self.MatLayout = QVBoxLayout()
 
         #self.MatLayout.addWidget(self.tabMatCont)
         #self.MatLayout.addWidget(self.labelMat)
@@ -288,6 +290,23 @@ class loadGUI(QMainWindow):
         for loadNo in range(len(self.myModel.loads)):
             self.myModel.loads[loadNo].removeButton.id = loadNo
     
+    def addMaterialEvent(self):
+        success = self.tabMaterials.addMaterial(self.myModel)
+        if success:
+            # Reset new ids for button in order to identify button on next click correctly and reconnect buttons
+            for matNo in range(len(self.myModel.materials)):
+                self.myModel.materials[matNo].removeButton.id = matNo
+                self.myModel.materials[matNo].removeButton.disconnect()
+                self.myModel.materials[matNo].removeButton.clicked.connect(lambda: self.removeMaterialEvent('button'))
+    
+    def removeMaterialEvent(self, matIDToRemove):
+        self.tabMaterials.removeMaterial(matIDToRemove, self.myModel)
+        #self.vtkWindow.updateLoads(self.myModel.loads)
+        #self.vtkWindow.resetView()
+        # Reset new ids for button in order to identify button on next click correctly
+        for matNo in range(len(self.myModel.materials)):
+            self.myModel.materials[matNo].removeButton.id = matNo
+            
     def setupMenu(self):
         """
         Initialisation of the window menu

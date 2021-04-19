@@ -96,22 +96,6 @@ class saveAndExitButton(QPushButton):
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Saves the model in hdf5 and quits program.')
 
-# Dropdown menu to select a load
-class loadTypeSelector(QComboBox):
-    def __init__(self):
-        super(loadTypeSelector, self).__init__()
-        self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setStatusTip('Select a load')
-        self.availableTypes = ['Plane wave']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer', 'Point Load']
-        self.setFixedWidth(200)
-        [self.addItem(load) for load in self.availableTypes]
-    
-    def changeTo(self, loadType):
-        try: 
-            self.setCurrentIndex(self.availableTypes.index(loadType))
-        except:
-            pass
-
 # Dropdown menu to select an analysis type
 class analysisTypeSelector(QComboBox):
     def __init__(self):
@@ -141,6 +125,39 @@ class solverTypeSelector(QComboBox):
     def changeTo(self, solverType):
         try: 
             self.setCurrentIndex(self.availableTypes.index(solverType))
+        except:
+            pass
+
+# Dropdown menu to select a load
+class loadTypeSelector(QComboBox):
+    def __init__(self):
+        super(loadTypeSelector, self).__init__()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Select a load')
+        self.availableTypes = ['Plane wave']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer', 'Point Load']
+        self.setFixedWidth(200)
+        [self.addItem(load) for load in self.availableTypes]
+    
+    def changeTo(self, loadType):
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(loadType))
+        except:
+            pass
+            
+
+# Dropdown menu to select a load
+class materialTypeSelector(QComboBox):
+    def __init__(self):
+        super(materialTypeSelector, self).__init__()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Select a material')
+        self.availableTypes = ['Isotropic']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
+        self.setFixedWidth(200)
+        [self.addItem(mat) for mat in self.availableTypes]
+    
+    def changeTo(self, matType):
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(matType))
         except:
             pass
 

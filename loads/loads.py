@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QScrollArea,
 import os
 import numpy as np
 import math
-from lxml import etree
 import h5py
 from standardWidgets import progressWindow
 
