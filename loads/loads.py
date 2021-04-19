@@ -29,6 +29,7 @@ class loadInfoBox(QScrollArea):
 
     # Renew load content in ScrollArea
     def updateLayout(self, loads):
+        self.clearLayout()
         [self.contLayout.addLayout(load) for load in loads]
         self.contLayout.addStretch(1)
         self.update()

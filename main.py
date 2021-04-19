@@ -89,63 +89,72 @@ class loadGUI(QMainWindow):
         """
         Open an hdf5 file (self.loadButton click event)
         """
-        if self.myModel.hdf5File: 
-            self.myModel.hdf5File.close()
-            self.myModel.__init__()
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5 *.cub5)", options=options)
         if fileName:
-            self.vtkWindow.clearWindow()
-            self.myModel.name = fileName.split('/')[-1].split('.')[0]
-            self.myModel.path =  '/'.join(fileName.split('/')[:-1])
-            [self.removeLoad(m) for m in range(len(self.myModel.loads))] # All loads are remove, too
-            #
-            self.myModel.fileEnding = fileName.split('.')[-1]
-            # cub5 file from Trelis/coreform opened
-            if self.myModel.fileEnding == 'cub5':
-                newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
-                reply  = QMessageBox.Yes
-                if os.path.isfile(newFile):
-                    reply = QMessageBox.question(self, 'File existing', 'Overwrite ' + str(newFile) + '?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    self.myModel.hdf5File = h5py.File(newFile, 'w')
-                    atexit.register(self.myModel.hdf5File.close)
-                    # relevant cub5 data is transferred to new hdf5 file
-                    try: 
-                        with h5py.File(fileName,'r') as cub5File:
-                            readNodes(self.myModel, self.myModel.hdf5File, cub5File)
-                            readElements(self.myModel, self.myModel.hdf5File, cub5File)
-                            readSetup(self.myModel, self.myModel.hdf5File, cub5File)
-                        messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
-                    except:
-                        self.myModel.hdf5File.close()
-                        os.remove(newFile)
-                        messageboxOK('Error','cub5 file not transferred')
-                        return 0
-                else:
-                    messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
-                    return 0
-            # existing hdf5 file opened
-            elif self.myModel.fileEnding == 'hdf5':
-                self.myModel.hdf5File = h5py.File(fileName, 'r+')
-                atexit.register(self.myModel.hdf5File.close)
-                readNodes(self.myModel, self.myModel.hdf5File)
-                readElements(self.myModel, self.myModel.hdf5File)
-                readSetup(self.myModel, self.myModel.hdf5File)
-                messageboxOK('Ready','hdf5 file successfully loaded')
+            fileEnding = fileName.split('.')[-1]
+            if fileEnding in ['cub5', 'hdf5']:
+                # cub5 file from Trelis/coreform opened
+                if self.myModel.hdf5File: 
+                    self.myModel.hdf5File.close()
+                    self.tabLoads.removeAllLoads(self.myModel)
+                    self.myModel.reset()
+                self.vtkWindow.clearWindow()
+                self.myModel.name = fileName.split('/')[-1].split('.')[0]
+                self.myModel.path =  '/'.join(fileName.split('/')[:-1])
+                self.myModel.fileEnding = fileName.split('.')[-1]
+                print(fileEnding)
+                if fileEnding == 'cub5':
+                    self.openCub5()
+                elif fileEnding == 'hdf5':
+                    self.openHdf5()
+                # Update 2D / 3D windows
+                self.myModel.updateModel(self.vtkWindow)
+                self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
+                self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
+                self.update2D()
+                self.update3D()
+                # Update tabs
+                self.updateTabs()
+                self.statusBar().showMessage('Model loaded')
             else:
                 self.statusBar().showMessage('Unknown file ending (cub5 and hdf5 supported) - no model loaded!')
-            # Update 2D / 3D windows
-            self.myModel.updateModel(self.vtkWindow)
-            self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
-            self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
-            self.update2D()
-            self.update3D()
-            # Update tabs
-            self.updateTabs()
-            self.statusBar().showMessage('Model loaded')
-
+    
+    def openCub5(self): 
+        fileName = self.myModel.path + '/' + self.myModel.name + '.cub5'
+        newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+        reply  = QMessageBox.Yes
+        if os.path.isfile(newFile):
+            reply = QMessageBox.question(self, 'File existing', 'Overwrite ' + str(newFile) + '?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.myModel.hdf5File = h5py.File(newFile, 'w')
+            atexit.register(self.myModel.hdf5File.close)
+            # relevant cub5 data is transferred to new hdf5 file
+            try: 
+                with h5py.File(fileName,'r') as cub5File:
+                    readNodes(self.myModel, self.myModel.hdf5File, cub5File)
+                    readElements(self.myModel, self.myModel.hdf5File, cub5File)
+                    readSetup(self.myModel, self.myModel.hdf5File, cub5File)
+                messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
+            except:
+                self.myModel.hdf5File.close()
+                os.remove(newFile)
+                messageboxOK('Error','cub5 file not transferred')
+                return 0
+        else:
+            messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
+            return 0
+    
+    def openHdf5(self):
+        fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+        self.myModel.hdf5File = h5py.File(fileName, 'r+')
+        atexit.register(self.myModel.hdf5File.close)
+        readNodes(self.myModel, self.myModel.hdf5File)
+        readElements(self.myModel, self.myModel.hdf5File)
+        readSetup(self.myModel, self.myModel.hdf5File)
+        messageboxOK('Ready','hdf5 file successfully loaded')
+        
     def setupGui(self):
         """
         Initialisation of gui (main window content)

@@ -15,6 +15,11 @@ from standardWidgets import progressWindow, editButton, editWindowBasic
 # Saves a model, objects created by readModels()
 class model: # Saves a model
     def __init__(self):
+        self.reset()
+        self.initModelInfo()
+        self.initLayout()
+    
+    def reset(self): 
         self.fileEnding = ''
         self.name = ' - '
         self.path = ''
@@ -35,9 +40,7 @@ class model: # Saves a model
         self.analysisID = 0
         self.revision = 6
         self.description = 'my problem'
-        self.initModelInfo()
-        self.initLayout()
-
+    
     #def saveAndExit(self):
         #
         #exportAK3 = copy.deepcopy(self.ak3tree)

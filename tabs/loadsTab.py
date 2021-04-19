@@ -52,7 +52,6 @@ class loadsTab(QWidget):
             # if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
                 # myModel.loads.append(tbl(myModel))
             # Refresh layout
-            self.loadInfo.clearLayout()
             self.loadInfo.updateLayout(myModel.loads)
             return 1
         else:
@@ -61,7 +60,7 @@ class loadsTab(QWidget):
     
     def removeLoad(self, loadIDToRemove, myModel):
         """
-        Remove a load from list (removeButton click event)
+        Remove a load from model (removeButton click event)
         """
         # Layout is cleared
         self.loadInfo.clearLayout()
@@ -72,9 +71,22 @@ class loadsTab(QWidget):
         myModel.loads[loadIDToRemove] = None # Set the pointer to None
         myModel.loads.pop(loadIDToRemove) # Remove the entry in list
         self.loadInfo.updateLayout(myModel.loads)
-    
+        
+    def removeAllLoads(self, myModel):
+        """
+        Remove all loads from model
+        """
+        # Layout is cleared
+        self.loadInfo.clearLayout()
+        for n in range(len(myModel.loads)-1,-1,-1):
+            myModel.loads[n].drawCheck.setChecked(0)
+            myModel.loads[n].clearLayout() # Set widgets to None (remove Button etc)
+            myModel.loads[n] = None # Set the pointer to None
+            myModel.loads.pop(n) # Remove the entry in list
+        self.loadInfo.updateLayout(myModel.loads)
+        
     def update(self, myModel):
-        pass
+        self.loadInfo.updateLayout(myModel.loads)
     
     def data2hdf5(self, myModel): 
         try:
