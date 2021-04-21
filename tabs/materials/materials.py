@@ -91,19 +91,9 @@ class material(QHBoxLayout):
         for n, item in enumerate(self.parameterValues):
             item.setText(self.varSave[n])    
     
-    # def data2hdf5(self, elemLoadsGroup):
-        # # Exporting the load per element
-        # progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        # for nE, surfaceElem in enumerate(self.surfaceElements):
-            # frequencies = self.myModel.frequencies
-            # dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
-            # set = elemLoadsGroup.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
-            # set.attrs['FreqCount'] = len(frequencies)
-            # set.attrs['Id'] = str(self.removeButton.id+1) + str(surfaceElem)
-            # set.attrs['ElementId'] = str(surfaceElem) # Assign element load to element
-            # set.attrs['LoadType'] = self.type
-            # set.attrs['MethodType'] = 'FEM'
-            # # Update progress window
-            # progWin.setValue(nE)
-            # QApplication.processEvents()
-        
+    def data2hdf5(self, materialsGroup):
+        # Exporting the material
+        set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
+        for n in range(len(self.parameterNames)): 
+            set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
+                

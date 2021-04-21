@@ -359,13 +359,14 @@ class loadGUI(QMainWindow):
         if self.myModel.hdf5File:
             res = self.tabAnalysis.data2hdf5(self.myModel)
             res = self.tabLoads.data2hdf5(self.myModel)
+            res = self.tabMaterials.data2hdf5(self.myModel)
             if res == 1:
                 self.myModel.hdf5File.close()
         if res == 1:
             self.close()
             app.quit()
         else:
-            messageboxOK('Problem','Cannot write data to hdf5 - check your input (probably analysis tab)!')
+            messageboxOK('Problem','Cannot write data to hdf5 - check your input (probably analysis or materials tab)!')
 
 # main
 if __name__ == '__main__':

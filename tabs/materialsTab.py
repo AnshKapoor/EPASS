@@ -112,6 +112,14 @@ class materialsTab(QWidget):
     def data2hdf5(self, myModel): 
         try:
             # Write material data to hdf5 file
+            if not 'Materials' in myModel.hdf5File.keys():
+                myModel.hdf5File.create_group('Materials')
+            materialsGroup = myModel.hdf5File['Materials']
+            #
+            for dataSet in materialsGroup.keys():
+                del materialsGroup[dataSet]
+            #
+            [material.data2hdf5(materialsGroup) for material in myModel.materials]
             #
             return 1
         except:

@@ -70,7 +70,7 @@ def identifyElemType(elemType):
         return 'notSupported'
 
 def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem):
-    elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint32)
+    elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint64)
     dataSet = group.create_dataset('mtxFemElemGroup' + str(groupID), data=elemData)
     dataSet.attrs['ElementType'] = elemType
     dataSet.attrs['Id'] = groupID
