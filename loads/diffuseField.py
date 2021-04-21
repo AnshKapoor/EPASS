@@ -3,7 +3,7 @@ import vtk
 import numpy as np
 import os
 from lxml import etree
-from standardWidgets import removeButton, editButton, setupWindow, messageboxOK, progressWindow
+from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from loads import load
 import math, cmath, random, time
 np.random.seed(int(time.time()))

@@ -99,17 +99,19 @@ class loadGUI(QMainWindow):
                 if self.myModel.hdf5File: 
                     self.myModel.hdf5File.close()
                     self.tabLoads.removeAllLoads(self.myModel)
+                    self.tabMaterials.removeAllMaterials(self.myModel)
                     self.myModel.reset()
                 self.vtkWindow.clearWindow()
                 self.myModel.name = fileName.split('/')[-1].split('.')[0]
                 self.myModel.path =  '/'.join(fileName.split('/')[:-1])
                 self.myModel.fileEnding = fileName.split('.')[-1]
                 if fileEnding == 'cub5':
-                    self.openCub5()
+                    success = self.openCub5()
                 elif fileEnding == 'hdf5':
-                    self.openHdf5()
+                    success = self.openHdf5()
                 # Update 2D / 3D windows
-                self.myModel.updateModel(self.vtkWindow)
+                if success:
+                    self.myModel.updateModel(self.vtkWindow)
                 self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
                 self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
                 self.update2D()
@@ -136,6 +138,7 @@ class loadGUI(QMainWindow):
                     readElements(self.myModel, self.myModel.hdf5File, cub5File)
                     readSetup(self.myModel, self.myModel.hdf5File, cub5File)
                 messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
+                return 1
             except:
                 self.myModel.hdf5File.close()
                 os.remove(newFile)
@@ -153,6 +156,7 @@ class loadGUI(QMainWindow):
         readElements(self.myModel, self.myModel.hdf5File)
         readSetup(self.myModel, self.myModel.hdf5File)
         messageboxOK('Ready','hdf5 file successfully loaded')
+        return 1
         
     def setupGui(self):
         """

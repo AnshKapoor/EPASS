@@ -6,7 +6,7 @@ import h5py
 import cmath
 import os
 from lxml import etree
-from standardWidgets import ak3LoadButton, removeButton, editButton, setupWindow, messageboxOK, progressWindow
+from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from loads import load, loadInfoBox
 
 

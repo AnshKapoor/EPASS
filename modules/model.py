@@ -15,9 +15,10 @@ from standardWidgets import progressWindow, editButton, editWindowBasic
 # Saves a model, objects created by readModels()
 class model: # Saves a model
     def __init__(self):
-        self.reset()
+        self.name = ' - '
         self.initModelInfo()
         self.initLayout()
+        self.reset()
     
     def reset(self): 
         self.fileEnding = ''
@@ -40,6 +41,10 @@ class model: # Saves a model
         self.analysisID = 0
         self.revision = 6
         self.description = 'my problem'
+        self.nodeInfo.setText('Nodes: - ')
+        self.elementInfo.setText('Blocks: - ')
+        self.frequencyInfo.setText('Frequencies: - \n ')
+        self.blockInfo.setRowCount(len(self.elems))
     
     #def saveAndExit(self):
         #

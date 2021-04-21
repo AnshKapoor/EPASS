@@ -9,7 +9,10 @@ from standardWidgets import *
 ###############################IMPORTING MATERIAL CLASSES###########################
 sys.path.append('./materials')
 from materials import *
-from Structural_Isotropic_dev import Structural_Isotropic
+# Structural linear materials
+from STR_LIN_ELA_ISO_DIR import STR_LIN_ELA_ISO_DIR
+# Acoustic linear materials
+
 # from Structural_Orthotropic_dev import Structural_Orthotropic
 # from Structural_viscoOrthotropic_dev import Structural_viscoOrthotropic
 # from Fluid_dev import Fluid
@@ -55,8 +58,8 @@ class materialsTab(QWidget):
         Add the material selected by self.matSelector (self.addMaterialButton click event)
         """
         if myModel.hdf5File:
-            if self.materialSelector.currentText() == 'Isotropic':
-                myModel.materials.append(Structural_Isotropic('New_Struct', self.getFreeId(myModel.materials), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+            if self.materialSelector.currentText() == 'STR_LIN_ELA_ISO_DIR':
+                myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
             # if self.materialSelector.currentText() == '?':
                 # myModel.materials.append(?)
             # ...
@@ -91,19 +94,18 @@ class materialsTab(QWidget):
                 return str(n)
         return str(len(Idlist)+1)
         
+    def removeAllMaterials(self, myModel):
+        """
+        Remove all materials from model
+        """
+        # Layout is cleared
+        self.matInfo.clearLayout()
+        for n in range(len(myModel.materials)-1,-1,-1):
+            myModel.materials[n].clearLayout() # Set widgets to None (remove Button etc)
+            myModel.materials[n] = None # Set the pointer to None
+            myModel.materials.pop(n) # Remove the entry in list
+        self.matInfo.updateLayout(myModel.materials)
         
-    # def removeAllLoads(self, myModel):
-        # """
-        # Remove all loads from model
-        # """
-        # # Layout is cleared
-        # self.loadInfo.clearLayout()
-        # for n in range(len(myModel.loads)-1,-1,-1):
-            # myModel.loads[n].drawCheck.setChecked(0)
-            # myModel.loads[n].clearLayout() # Set widgets to None (remove Button etc)
-            # myModel.loads[n] = None # Set the pointer to None
-            # myModel.loads.pop(n) # Remove the entry in list
-        # self.loadInfo.updateLayout(myModel.loads)
     def update(self, myModel):
         self.matInfo.updateLayout(myModel.materials)
     

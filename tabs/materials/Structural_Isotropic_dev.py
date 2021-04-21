@@ -9,7 +9,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow, QLabel, QLineEdit
-from standardWidgets import removeButton, editButton, setupWindow, messageboxOK, progressWindow
+from standardWidgets import removeButton, editButton, messageboxOK, progressWindow
 from materials import material
 
 #########################################################
@@ -18,55 +18,21 @@ from materials import material
 ### Material Widget - Structural Isotropic            ###
 #########################################################
 
-class Structural_Isotropic(material):
-    def __init__(self, Name, Id, E, nu, A, I, Ix, Iy, Iz, rho, t, Fi):
+class STR_LIN_ELA_ISO_DIR(material):
+    def __init__(self, Id):
         #
-        super(Structural_Isotropic, self).__init__()
-        self.removeButton = removeButton()
-        self.editButton = editButton()
-        self.type = 'Structural_Isotropic'
-        self.label = QLabel(self.type)
-        #
-        self.name = QLineEdit(Name)
-        #self.name.setFixedWidth(75)
-        self.Id = QLineEdit(str(Id))
-        self.Id.setToolTip("Id of Material")
-        self.Id.setFixedWidth(50)
-        self.E = QLineEdit(str(E))
-        self.E.setToolTip("Youngs Modulus")
-        self.E.setFixedWidth(100)
-        self.nu = QLineEdit(str(nu))
-        self.nu.setToolTip("Poissons ratio")
-        self.nu.setFixedWidth(50)
-        self.A = QLineEdit(str(A))
-        self.A.setToolTip("Cross section(only for beam elements)")
-        self.A.setFixedWidth(50)
-        self.I = QLineEdit(str(I))
-        self.I.setToolTip("Moment of inertia(only for BeamBernoulli and BeamTimoshenko)")
-        self.I.setFixedWidth(50)
-        self.Ix = QLineEdit(str(Ix))
-        self.Ix.setToolTip("Moment of inertia(only for BeamBernoulli and BeamTimoshenko)")
-        self.Ix.setFixedWidth(50)
-        self.Iy = QLineEdit(str(Iy))
-        self.Iy.setToolTip("Moment of inertia(only for BeamBernoulli and BeamTimoshenko)")
-        self.Iy.setFixedWidth(50)
-        self.Iz = QLineEdit(str(Iz))
-        self.Iz.setToolTip("Moment of inertia(only for BeamBernoulli and BeamTimoshenko)")
-        self.Iz.setFixedWidth(50)
-        self.rho = QLineEdit(str(rho))
-        self.rho.setToolTip("Density")
-        self.rho.setFixedWidth(50)
-        self.t = QLineEdit(str(t))
-        self.t.setToolTip("Thickness")
-        self.t.setFixedWidth(50)
-        self.Fi = QLineEdit(str(Fi))
-        self.Fi.setToolTip("Initial force to prestress element")
-        self.Fi.setFixedWidth(50)
-        self.length = 25
-        self.type = QLabel('Isotropic:')
+        self.type = 'STR_LIN_ELA_ISO_DIR'
         self.type.setToolTip('<b>Type of Material</b> <br> Simple elastic material to be used with any structural element - without any damping.')
         #
-        [self.addWidget(mat) for mat in [self.removeButton, self.Id, self.label, self.name, self.editButton]]
+        self.parameterNames =                              ['E',  'nu', 'A', 'Ix', 'Iy', 'Iz', 'rho', 't', 'Fi']
+        self.parameterValues = [QLineEdit(str(x)) for x in [7.e9,  0.3,  0.,   0.,   0.,   0., 2700.,  0.,   0.]]
+        self.parameterTipps = ['Youngs Modulus', 'Poissons ratio', 'Cross section(only for beam elements)',  ... 
+                               'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Moment of inertia(only for BeamBernoulli and BeamTimoshenko)', ...
+                               'Density', 'Thickness', 'Initial force to prestress element']
+        [parameterValue.setToolTip(self.parameterTipps[n]) for parameterValue, n in enumerate(self.parameterValues)]
+        #
+        super(Structural_Isotropic, self).__init__(Id)
+        #
           
     # returns the material parameters and labels to the Parent class-exp_material    
     def getInfo(self):

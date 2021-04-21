@@ -125,7 +125,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.updateLoads(myModel.loads)
         self.stepValueActor.SetInput(str(myModel.frequencies[self.currentFrequencyStep]) + ' Hz')
         self.GetRenderWindow().Render()
-
+    
     def axisChange(self):
         if self.axisSelector.checkState() == 2:
             self.ren.AddActor(self.mainAxes)

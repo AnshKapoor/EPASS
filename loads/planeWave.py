@@ -5,7 +5,7 @@ import numpy as np
 import math
 import os
 from lxml import etree
-from standardWidgets import removeButton, editButton, setupWindow, messageboxOK, progressWindow
+from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from loads import load
 
 
@@ -178,7 +178,7 @@ class planeWave(load):
         """
         initialisation of setup popup window for parameter/file path input
         """
-        self.setupWindow = setupWindow(self.label.text())
+        self.setupWindow = setupLoadWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Amplitude'), self.amp)
         self.setupWindow.layout.addRow(QLabel('Direction X'), self.dirX)

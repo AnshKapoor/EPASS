@@ -6,7 +6,7 @@ import numpy as np
 import math
 import os
 from lxml import etree
-from standardWidgets import ak3LoadButton, removeButton, editButton, setupWindow, messageboxOK, progressWindow
+from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from loads import load
 import time
 np.random.seed(int(time.time()))

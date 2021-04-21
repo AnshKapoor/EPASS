@@ -151,7 +151,7 @@ class materialTypeSelector(QComboBox):
         super(materialTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a material')
-        self.availableTypes = ['Isotropic']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
+        self.availableTypes = ['STR_LIN_ELA_ISO_DIR']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
         self.setFixedWidth(200)
         [self.addItem(mat) for mat in self.availableTypes]
     
@@ -179,7 +179,7 @@ class progressWindow(QProgressDialog):
         self.show()
 
 # Basic setup window
-class setupWindow(QDialog):
+class setupLoadWindow(QDialog):
     def __init__(self, waveType):
         super(QDialog, self).__init__()
         self.setWindowTitle('Edit load')
@@ -206,7 +206,30 @@ class setupWindow(QDialog):
         self.mainLayout.addWidget(self.formGroupBoxBlocks)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
+
+# Basic setup window
+class setupMaterialWindow(QDialog):
+    def __init__(self, subtitle):
+        super(QDialog, self).__init__()
+        self.setWindowTitle('Edit material')
         #
+        self.setAutoFillBackground(True) # color
+        p = self.palette() # color
+        p.setColor(self.backgroundRole(), Qt.white) # color
+        self.setPalette(p) # color
+        #
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        # setup
+        self.formGroupBox = QGroupBox(subtitle)
+        self.layout = QFormLayout()
+        self.formGroupBox.setLayout(self.layout)
+        #
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(self.formGroupBox)
+        self.mainLayout.addWidget(self.buttonBox)
+        self.setLayout(self.mainLayout)
 
 class editWindowBasic(QDialog):
     def __init__(self, Type):
