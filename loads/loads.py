@@ -67,19 +67,23 @@ class load(QHBoxLayout):
         for block in relevantBlocks:
             for elemIdx in range(block.attrs['N']):
                 elemID = block[elemIdx,0]
-                node1 = nodes[nodes[:,0]==block[elemIdx,1],:][0]
-                node2 = nodes[nodes[:,0]==block[elemIdx,2],:][0]
-                node3 = nodes[nodes[:,0]==block[elemIdx,3],:][0]
-                node4 = nodes[nodes[:,0]==block[elemIdx,4],:][0]
-                centerX = 0.25*(node1[1]+node2[1]+node3[1]+node4[1])
-                centerY = 0.25*(node1[2]+node2[2]+node3[2]+node4[2])
-                centerZ = 0.25*(node1[3]+node2[3]+node3[3]+node4[3])
+                idx = (nodes[:]['Ids']==block[elemIdx,1])
+                node1 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
+                idx = (nodes[:]['Ids']==block[elemIdx,2])
+                node2 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
+                idx = (nodes[:]['Ids']==block[elemIdx,3])
+                node3 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
+                idx = (nodes[:]['Ids']==block[elemIdx,4])
+                node4 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
+                centerX = 0.25*(node1[0]+node2[0]+node3[0]+node4[0])
+                centerY = 0.25*(node1[1]+node2[1]+node3[1]+node4[1])
+                centerZ = 0.25*(node1[2]+node2[2]+node3[2]+node4[2])
                 self.surfacePoints.append([centerX, centerY, centerZ])
                 self.surfaceElements.append(elemID)
-                vec1 = [ node1[1]-centerX, node1[2]-centerY, node1[3]-centerZ ] # from center to node 1
-                vec2 = [ node2[1]-centerX, node2[2]-centerY, node2[3]-centerZ ] # from center to node 2
-                vec3 = [ node3[1]-centerX, node3[2]-centerY, node3[3]-centerZ ] # from center to node 3
-                vec4 = [ node4[1]-centerX, node4[2]-centerY, node4[3]-centerZ ] # from center to node 4
+                vec1 = [ node1[0]-centerX, node1[1]-centerY, node1[2]-centerZ ] # from center to node 1
+                vec2 = [ node2[0]-centerX, node2[1]-centerY, node2[2]-centerZ ] # from center to node 2
+                vec3 = [ node3[0]-centerX, node3[1]-centerY, node3[2]-centerZ ] # from center to node 3
+                vec4 = [ node4[0]-centerX, node4[1]-centerY, node4[2]-centerZ ] # from center to node 4
                 elemNormal = 0.5 * (np.cross(vec1, vec2) + np.cross(vec3, vec4)) # Mean value of two normal vectors
                 elemNormal = elemNormal / np.linalg.norm(elemNormal)
                 try:
@@ -112,9 +116,9 @@ class load(QHBoxLayout):
             frequencies = self.myModel.frequencies
             dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
             set = elemLoadsGroup.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
-            set.attrs['FreqCount'] = len(frequencies)
-            set.attrs['Id'] = str(self.removeButton.id+1) + str(surfaceElem)
-            set.attrs['ElementId'] = str(surfaceElem) # Assign element load to element
+            set.attrs['FreqCount'] = np.uint64(len(frequencies))
+            set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
+            set.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
             set.attrs['LoadType'] = self.type
             set.attrs['MethodType'] = 'FEM'
             # Update progress window

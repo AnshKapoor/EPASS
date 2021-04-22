@@ -72,7 +72,7 @@ class planeWave(load):
             r_vector = []
              # Get model infos
             nodes = self.myModel.nodes
-            center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+            center = [0.5*(max(nodes[:]['xCoords']) + min(nodes[:]['xCoords'])), 0.5*(max(nodes[:]['yCoords']) + min(nodes[:]['yCoords'])), 0.5*(max(nodes[:]['zCoords']) + min(nodes[:]['zCoords']))]
             loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
             loadNormal = loadNormal/np.linalg.norm(loadNormal)
             # calculate distances in direction of the plane wave
@@ -101,10 +101,10 @@ class planeWave(load):
         """
         # Get model infos
         nodes = self.myModel.nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        center = [0.5*(max(nodes[:]['xCoords']) + min(nodes[:]['xCoords'])), 0.5*(max(nodes[:]['yCoords']) + min(nodes[:]['yCoords'])), 0.5*(max(nodes[:]['zCoords']) + min(nodes[:]['zCoords']))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         # Symbol for plane wave
         # Calculate random directions in the plane
         direction1 = np.cross(loadNormal, [loadNormal[0]+0.11*loadNormal[1], loadNormal[1]+0.22*loadNormal[2], loadNormal[2]+0.33*loadNormal[0]])
@@ -231,10 +231,10 @@ class planeWave(load):
         """
         # Get model infos
         nodes = self.myModel.nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        center = [0.5*(max(nodes[:]['xCoords']) + min(nodes[:]['xCoords'])), 0.5*(max(nodes[:]['yCoords']) + min(nodes[:]['yCoords'])), 0.5*(max(nodes[:]['zCoords']) + min(nodes[:]['zCoords']))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         # Symbol for plane wave
         # Calculate random directions in the plane
         direction1 = np.cross(loadNormal, [loadNormal[0]+0.11*loadNormal[1], loadNormal[1]+0.22*loadNormal[2], loadNormal[2]+0.33*loadNormal[0]])

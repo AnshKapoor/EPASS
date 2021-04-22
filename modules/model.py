@@ -32,14 +32,14 @@ class model: # Saves a model
         self.elementSets = []
         self.loads = []
         self.materials = []
-        self.freqStart = 10
-        self.freqSteps = 10
-        self.freqDelta = 10
+        self.freqStart = np.float64(10.)
+        self.freqSteps = np.uint64(10)
+        self.freqDelta = np.float64(10.)
         self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)]) # freqs are saved here readFreqs()
         self.analysisType = 'frequency' # stores the analysis type used to determine proper postprocessing and visualising
         self.solverType = 'elpasoC'
-        self.analysisID = 0
-        self.revision = 6
+        self.analysisID = np.uint64(0)
+        self.revision = np.uint64(6)
         self.description = 'my problem'
         self.nodeInfo.setText('Nodes: - ')
         self.elementInfo.setText('Blocks: - ')
@@ -116,7 +116,7 @@ class model: # Saves a model
         self.layout.addWidget(self.blockInfo)
         
     def updateModelSetup(self):
-        self.nodeInfo.setText('Nodes: ' + str(self.nodes[:,1:].shape[0]))
+        self.nodeInfo.setText('Nodes: ' + str(self.nodes[:]['Ids'].shape[0]))
         self.elementInfo.setText('Blocks: ' + str(len(self.elems)))
         self.blockInfo.setRowCount(len(self.elems))
         self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)])
@@ -133,7 +133,7 @@ class model: # Saves a model
             self.updateModelSetup()
             # VTK Points
             self.vtkPoints = vtk.vtkPoints()
-            self.vtkPoints.SetData(numpy_support.numpy_to_vtk(self.nodes[:,1:])) # Attention - vtk points simply count from 0
+            self.vtkPoints.SetData(numpy_support.numpy_to_vtk(np.array([self.nodes[:]['xCoords'], self.nodes[:]['yCoords'], self.nodes[:]['zCoords']]).T)) # Attention - vtk points simply count from 0
             # Loop over all blocks
             vtkWindow.grids = []
             vtkWindow.mappers = []
@@ -150,7 +150,7 @@ class model: # Saves a model
                 # Loop over all elements in block m; elem is a list with elements ids and connected nodes
                 for elemCount in range(block.shape[0]):
                     quad_ = vtk.vtkQuad()
-                    [quad_.GetPointIds().SetId(p, int(np.where(self.nodes[:,0] == block[elemCount,p+1])[0])) for p in range(4)] # Get correct 4 node positions and insert node (nodes can have any id in elpaso)
+                    [quad_.GetPointIds().SetId(p, int(np.where(self.nodes[:]['Ids'] == block[elemCount,p+1])[0])) for p in range(4)] # Get correct 4 node positions and insert node (nodes can have any id in elpaso)
                     newGrid.InsertNextCell(quad_.GetCellType(), quad_.GetPointIds())
                 # Infotable
                 items = [QTableWidgetItem(), QTableWidgetItem(block.attrs['ElementType'][:]), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(str(block.shape[0]))]

@@ -79,9 +79,9 @@ class analysisTab(QWidget):
             g = myModel.hdf5File['Analysis']
             # g.attrs['id'] = myModel.analysisID 
             # g.attrs['type'] = myModel.analysisType 
-            g.attrs['start'] = int(self.freqStart.text())
-            g.attrs['steps'] = int(self.freqSteps.text())
-            g.attrs['delta'] = int(self.freqDelta.text())
+            g.attrs['start'] = np.float64(self.freqStart.text())
+            g.attrs['steps'] = np.uint64(self.freqSteps.text())
+            g.attrs['delta'] = np.float64(self.freqDelta.text())
             # g.attrs['solver'] = myModel.solverType
             # g.attrs['revision'] = myModel.revision
             g.attrs['description'] = self.description.text()

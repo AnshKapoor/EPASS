@@ -14,21 +14,20 @@ def readNodes(myModel, hdf5File, cub5File=0):
     if cub5File: 
         # Nodes 
         nodeIDs = cub5File['Mesh/Nodes/Node IDs']
-        nodeData = np.zeros((len(nodeIDs),4))
         g = hdf5File.create_group('Nodes')
-        g.create_dataset('mtxFemNodes', data=nodeData)
-        dataSet = g['mtxFemNodes']
-        dataSet[:,0] = cub5File['Mesh/Nodes/Node IDs'][()]
-        dataSet[:,1] = cub5File['Mesh/Nodes/X Coords'][()]
-        dataSet[:,2] = cub5File['Mesh/Nodes/Y Coords'][()]
-        dataSet[:,3] = cub5File['Mesh/Nodes/Z Coords'][()]
+        comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
+        dataSet = g.create_dataset('mtxFemNodes', (len(nodeIDs),), comp_type)
+        dataSet[:,'Ids'] = np.array(cub5File['Mesh/Nodes/Node IDs'][()], dtype=np.uint64)
+        dataSet[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][()]
+        dataSet[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][()]
+        dataSet[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][()]
         # Nodesets 
         g = hdf5File.create_group('Nodesets')
         if 'Nodesets' in cub5File['Simulation Model'].keys(): # If nodesets exist in cub5 file by coreform, then read them
             for nodeset in cub5File['Simulation Model/Nodesets'].keys():
                 nodesetID = cub5File['Simulation Model/Nodesets/' + nodeset].attrs['nodeset_id'][()][0]
-                g.create_dataset('nodeset' + str(nodesetID), data=cub5File['Simulation Model/Nodesets/' + nodeset + '/member ids'][()])
-                g['nodeset' + str(nodesetID)].attrs['Id'] = nodesetID
+                g.create_dataset('vecNodeset' + str(nodesetID), data=cub5File['Simulation Model/Nodesets/' + nodeset + '/member ids'][()])
+                g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
     # Standard ops/assignments
     myModel.nodes = hdf5File['Nodes/mtxFemNodes']
     for nodeset in hdf5File['Nodesets'].keys():
@@ -55,8 +54,8 @@ def readElements(myModel, hdf5File, cub5File=0):
         if 'Sidesets' in cub5File['Simulation Model'].keys(): # If sidesets exist in cub5 file by coreform, then read them as element sets
             for elemset in cub5File['Simulation Model/Sidesets'].keys():
                 elemsetID = cub5File['Simulation Model/Sidesets/' + elemset].attrs['sideset_id'][()][0]
-                g.create_dataset('elemset' + str(elemsetID), data=cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][()])
-                g['elemset' + str(elemsetID)].attrs['Id'] = elemsetID
+                g.create_dataset('vecElemset' + str(elemsetID), data=cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][()])
+                g['vecElemset' + str(elemsetID)].attrs['Id'] = np.uint64(elemsetID)
     else: 
         for block in hdf5File['Elements'].keys():
             myModel.elems.append(hdf5File['Elements/' + block])
@@ -73,10 +72,10 @@ def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem
     elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint64)
     dataSet = group.create_dataset('mtxFemElemGroup' + str(groupID), data=elemData)
     dataSet.attrs['ElementType'] = elemType
-    dataSet.attrs['Id'] = groupID
-    dataSet.attrs['MaterialType'] = 1
+    dataSet.attrs['Id'] = np.uint64(groupID)
+    dataSet.attrs['MaterialId'] = np.uint64(1)
     dataSet.attrs['MethodType'] = 'FEM'
-    dataSet.attrs['N'] = totalElems
+    dataSet.attrs['N'] = np.uint64(totalElems)
     dataSet.attrs['Name'] = 'Block_' + str(groupID)
     dataSet.attrs['Orientation'] = 'global'
     dataSet.attrs['OrientationFile'] = ''
@@ -87,13 +86,13 @@ def readSetup(myModel, hdf5File, cub5File=0):
     if cub5File: 
         # Write standard values to hdf5 file
         g = hdf5File.create_group('Analysis')
-        g.attrs['id'] = myModel.analysisID 
+        g.attrs['id'] = np.uint64(myModel.analysisID)
         g.attrs['type'] = myModel.analysisType 
-        g.attrs['start'] = myModel.freqStart 
-        g.attrs['steps'] = myModel.freqSteps 
-        g.attrs['delta'] = myModel.freqDelta
+        g.attrs['start'] = np.float64(myModel.freqStart)
+        g.attrs['steps'] = np.uint64(myModel.freqSteps)
+        g.attrs['delta'] = np.float64(myModel.freqDelta)
         g.attrs['solver'] = myModel.solverType
-        g.attrs['revision'] = myModel.revision
+        g.attrs['revision'] = np.uint64(myModel.revision)
         g.attrs['description'] = myModel.description
     else:
         g = hdf5File['Analysis']

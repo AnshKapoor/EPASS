@@ -94,6 +94,8 @@ class material(QHBoxLayout):
     def data2hdf5(self, materialsGroup):
         # Exporting the material
         set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
+        set.attrs['Id'] = np.uint64(self.Id.text())
+        set.attrs['MaterialType'] = self.type
         for n in range(len(self.parameterNames)): 
             set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
                 
