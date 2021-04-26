@@ -33,10 +33,11 @@ class loadInfoBox(QScrollArea):
         self.contLayout.addStretch(1)
         self.update()
 
-# General load class
-class load(QHBoxLayout):
+# General elemLoad class
+class elemLoad(QHBoxLayout):
     def __init__(self):
-        super(load, self).__init__()
+        super(elemLoad, self).__init__()
+        self.superType = 'elemLoad'
 
     def calcLoadNormal(self, elemNormal):
         """
@@ -90,6 +91,8 @@ class load(QHBoxLayout):
                     self.calcLoadNormal(elemNormal)
                 except:
                     pass
+        relevantBlocks = []
+        nodes = 0
 
     def nearestNeighbor(self):
         """
@@ -124,4 +127,55 @@ class load(QHBoxLayout):
             # Update progress window
             progWin.setValue(nE)
             QApplication.processEvents()
-        
+
+# General elemLoad class
+class nodeLoad(QHBoxLayout):
+    def __init__(self):
+        super(nodeLoad, self).__init__()
+        self.superType = 'nodeLoad'
+    
+    def findRelevantPoints(self):
+        """
+        Extracts node points from selected nodesets
+        """
+        self.nodePoints = []
+        relevantNodesets = []
+        nodes = self.myModel.nodes
+        for p, nodesetCheck in enumerate(self.nodesetChecker):
+            nodesetState = nodesetCheck.isChecked()
+            if nodesetState==1:
+                relevantNodesets.append(self.myModel.nodeSets[p])
+        for nodeset in relevantNodesets:
+            for nodeIdx in range(len(nodeset[:])):
+                nodeID = nodeset[nodeIdx]
+                idx = (nodes[:]['Ids']==nodeID)
+                self.nodePoints.append([nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]])
+            self.nodePoints = np.array(self.nodePoints)
+        relevantNodesets = []
+        nodes = 0
+    
+    def switch(self):
+        """
+        Method changing the objects changedSwitch in order to indicate 2D and 3D update
+        """
+        if self.changeSwitch.isChecked():
+            self.changeSwitch.setChecked(0)
+        else:
+            self.changeSwitch.setChecked(1)
+                
+    def data2hdf5(self, elemLoadsGroup):
+        pass
+        # # Exporting the load per element
+        # progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
+        # for nE, surfaceElem in enumerate(self.surfaceElements):
+            # frequencies = self.myModel.frequencies
+            # dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
+            # set = elemLoadsGroup.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
+            # set.attrs['FreqCount'] = np.uint64(len(frequencies))
+            # set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
+            # set.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
+            # set.attrs['LoadType'] = self.type
+            # set.attrs['MethodType'] = 'FEM'
+            # # Update progress window
+            # progWin.setValue(nE)
+            # QApplication.processEvents()

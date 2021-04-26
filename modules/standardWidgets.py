@@ -134,7 +134,7 @@ class loadTypeSelector(QComboBox):
         super(loadTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a load')
-        self.availableTypes = ['Plane wave']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer', 'Point Load']
+        self.availableTypes = ['Plane wave', 'Point force']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer']
         self.setFixedWidth(200)
         [self.addItem(load) for load in self.availableTypes]
     
@@ -177,6 +177,35 @@ class progressWindow(QProgressDialog):
         super(QProgressDialog, self).__init__(title, "Cancel", 0, length)
         self.setWindowModality(Qt.WindowModal)
         self.show()
+
+# Basic setup window
+class setupNodeLoadWindow(QDialog):
+    def __init__(self, subTitle):
+        super(QDialog, self).__init__()
+        self.setWindowTitle('Edit load')
+        #
+        self.setAutoFillBackground(True) # color
+        p = self.palette() # color
+        p.setColor(self.backgroundRole(), Qt.white) # color
+        self.setPalette(p) # color
+        #
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        # setup
+        self.formGroupBox = QGroupBox(subTitle)
+        self.layout = QFormLayout()
+        self.formGroupBox.setLayout(self.layout)
+        # Nodeset selection
+        self.formGroupBoxNodesets = QGroupBox('Nodesets')
+        self.nodesetLayout = QFormLayout()
+        self.formGroupBoxNodesets.setLayout(self.nodesetLayout)
+        #
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(self.formGroupBox)
+        self.mainLayout.addWidget(self.formGroupBoxNodesets)
+        self.mainLayout.addWidget(self.buttonBox)
+        self.setLayout(self.mainLayout)
 
 # Basic setup window
 class setupLoadWindow(QDialog):

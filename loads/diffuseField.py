@@ -4,14 +4,14 @@ import numpy as np
 import os
 from lxml import etree
 from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
-from loads import load
+from loads import elemLoad
 import math, cmath, random, time
 np.random.seed(int(time.time()))
 pi = math.pi
 randomize = True
 
 
-class diffuseField(load):
+class diffuseField(elemLoad):
     """
     class for diffuse field load. provides methods to calculate pressure/phases acc. to load vector and size
     """

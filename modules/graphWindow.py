@@ -29,8 +29,8 @@ class graphWindow(FigureCanvas):
         # Amplitudes of loads
         for load in myModel.loads:
             if load.drawCheck.isChecked(): 
-                [x, y] = load.getXYdata()
-                self.plot(x, y)
+                [x, y, color] = load.getXYdata()
+                self.plot(x, y, color)
         # Vertical line at current Frequency
         self.plot([self.currentFrequency, self.currentFrequency], self.axes.get_ylim(), 'k', '--')
         # Set appropriate x/y limits

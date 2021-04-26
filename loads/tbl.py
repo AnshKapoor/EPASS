@@ -7,12 +7,12 @@ import math
 import os
 from lxml import etree
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
-from loads import load
+from loads import elemLoad
 import time
 np.random.seed(int(time.time()))
 
 # tbl load
-class tbl(load):
+class tbl(elemLoad):
     def __init__(self, ak3path, myModel, vtkWindow):
         super(tbl, self).__init__()
         self.ak3path = ak3path

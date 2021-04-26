@@ -7,10 +7,10 @@ import cmath
 import os
 from lxml import etree
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
-from loads import load, loadInfoBox
+from loads import elemLoad, loadInfoBox
 
 
-class timeVarDat(load):
+class timeVarDat(elemLoad):
     """
     class for distributed time domain loads. Provides methods for loading, saving and processing data.
     """

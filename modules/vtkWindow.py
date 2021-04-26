@@ -85,32 +85,34 @@ class vtkWindow(QVTKRenderWindowInteractor):
                     self.ren.RemoveActor(act)
                 elif state==1:
                     self.ren.AddActor(act)
-                    for p, blockCheck in enumerate(load.blockChecker):
-                        blockState = blockCheck.isChecked()
-                        if blockState==1:
-                            blocksToDraw.append(p)
+                    if load.superType == 'elemLoad':
+                        for p, blockCheck in enumerate(load.blockChecker):
+                            blockState = blockCheck.isChecked()
+                            if blockState==1:
+                                blocksToDraw.append(p)
             # Color blocks
-            blockCounter = 0
-            for block in range(len(load.blockChecker)):
-                if block in blocksToDraw:
-                    noOfCells = self.grids[block].GetNumberOfCells()
-                    for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
-                        self.grids[block].GetCellData().RemoveArray(arNo)
-                    phaseArray = numpy_to_vtk(load.surfacePhases[self.currentFrequencyStep, blockCounter:(blockCounter+noOfCells)])
-                    phaseArray.SetName('Phase')
-                    self.grids[block].GetCellData().AddArray(phaseArray)
-                    self.mappers[block].SetLookupTable(self.lut)
-                    self.mappers[block].ScalarVisibilityOn()
-                    self.mappers[block].SetScalarModeToUseCellFieldData()
-                    self.mappers[block].SelectColorArray('Phase')
-                    self.mappers[block].SetScalarRange((0., 2*math.pi))
-                    if blockCounter == 0:
-                        self.ren.AddActor2D(self.scalarBar)
-                    blockCounter = blockCounter + noOfCells
-                else:
-                    self.mappers[block].ScalarVisibilityOff()
-                    for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
-                        self.grids[block].GetCellData().RemoveArray(arNo)
+            if load.superType == 'elemLoad':
+                blockCounter = 0
+                for block in range(len(load.blockChecker)):
+                    if block in blocksToDraw:
+                        noOfCells = self.grids[block].GetNumberOfCells()
+                        for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
+                            self.grids[block].GetCellData().RemoveArray(arNo)
+                        phaseArray = numpy_to_vtk(load.surfacePhases[self.currentFrequencyStep, blockCounter:(blockCounter+noOfCells)])
+                        phaseArray.SetName('Phase')
+                        self.grids[block].GetCellData().AddArray(phaseArray)
+                        self.mappers[block].SetLookupTable(self.lut)
+                        self.mappers[block].ScalarVisibilityOn()
+                        self.mappers[block].SetScalarModeToUseCellFieldData()
+                        self.mappers[block].SelectColorArray('Phase')
+                        self.mappers[block].SetScalarRange((0., 2*math.pi))
+                        if blockCounter == 0:
+                            self.ren.AddActor2D(self.scalarBar)
+                        blockCounter = blockCounter + noOfCells
+                    else:
+                        self.mappers[block].ScalarVisibilityOff()
+                        for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
+                            self.grids[block].GetCellData().RemoveArray(arNo)
 
     def updateWindow(self, myModel):
         for blockIdx in range(myModel.blockInfo.rowCount()):

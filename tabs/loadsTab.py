@@ -12,6 +12,7 @@ from planeWave import planeWave
 from diffuseField import diffuseField
 from timeVarDat import timeVarDat
 from tbl import tbl
+from pointForce import pointForce
 
 class loadsTab(QWidget):
     def __init__(self, parent = None):
@@ -45,6 +46,8 @@ class loadsTab(QWidget):
         if myModel.hdf5File:
             if self.loadSelector.currentText() == 'Plane wave':
                 myModel.loads.append(planeWave(myModel))
+            if self.loadSelector.currentText() == 'Point force':
+                myModel.loads.append(pointForce(myModel))
             # if self.loadSelector.currentText() == 'Diffuse field':
                 # myModel.loads.append(diffuseField(myModel))
             # if self.loadSelector.currentText() == 'Distributed time domain load':

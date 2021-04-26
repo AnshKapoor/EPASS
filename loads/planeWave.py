@@ -4,12 +4,10 @@ import vtk
 import numpy as np
 import math
 import os
-from lxml import etree
 from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
-from loads import load
+from loads import elemLoad
 
-
-class planeWave(load):
+class planeWave(elemLoad):
     """
     class for plane wave loads. provides methods to calculate pressure/phases acc. to load vector
     """
@@ -93,7 +91,7 @@ class planeWave(load):
         """
         Return x, y data for plotting; for plane wave: constant amplitude
         """
-        return self.myModel.frequencies, len(self.myModel.frequencies)*[float(self.amp.text())]
+        return self.myModel.frequencies, len(self.myModel.frequencies)*[float(self.amp.text())], 'tab:orange'
 
     def init3DActor(self):
         """
@@ -253,8 +251,11 @@ class planeWave(load):
         arrowPointLoad = vtk.vtkPoints()
 
         ### get a lower number of arrows if there are more elements or the element size is small
-        arrNoScale = int(len(self.surfacePoints)/100.) # draw every 100th arrow in case there are >100 arrows
-        if arrNoScale<1:
+        try: 
+            arrNoScale = int(len(self.surfacePoints)/100.) # draw every 100th arrow in case there are >100 arrows
+            if arrNoScale<1:
+                arrNoScale = 1
+        except: 
             arrNoScale = 1
         [arrowPointLoad.InsertNextPoint([self.surfacePoints[p][0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], self.surfacePoints[p][1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], self.surfacePoints[p][2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p in range(0,len(self.surfacePoints),arrNoScale)]
         #[arrowPointLoad.InsertNextPoint([point[0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], point[1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], point[2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p, point in enumerate(self.surfacePoints)]

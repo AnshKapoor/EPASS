@@ -27,6 +27,7 @@ from graphWindow import graphWindow
 from loads import loadInfoBox
 #
 from planeWave import planeWave
+from pointForce import pointForce
 from diffuseField import diffuseField
 from timeVarDat import timeVarDat
 from tbl import tbl
