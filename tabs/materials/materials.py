@@ -99,4 +99,4 @@ class material(QHBoxLayout):
         set.attrs['Name'] = self.name.text()
         for n in range(len(self.parameterNames)): 
             set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
-                
+            

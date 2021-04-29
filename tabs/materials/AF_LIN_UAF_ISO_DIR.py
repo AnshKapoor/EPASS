@@ -1,0 +1,35 @@
+#########################################################
+###                   Material-Tab                    ###
+#########################################################
+
+# Python 2.7.6
+
+#########################################################
+### Module Import                                     ###
+import sys
+import os
+from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow, QLabel, QLineEdit
+from standardWidgets import removeButton, editButton, messageboxOK, progressWindow
+from materials import material
+
+#########################################################
+
+#########################################################
+### Material Widget for AF_LIN_UAF_ISO_DIR           ###
+#########################################################
+
+class AF_LIN_UAF_ISO_DIR(material):
+    def __init__(self, Id):
+        #
+        self.type = 'AF_LIN_UAF_ISO_DIR'
+        self.toolTip = '<b>Acoustic fluid (undamped) material</b> <br>Basic material model for Helmholtz domain without damping.'
+        #
+        self.parameterNames =                              ['c' , 'rho', 't']
+        self.parameterValues = [QLineEdit(str(x)) for x in [343.,  1.21,  0.]]
+        self.parameterTipps = ['Speed of sound', 'Density', 'Thickness']
+        [parameterValue.setToolTip(self.parameterTipps[n]) for n, parameterValue in enumerate(self.parameterValues)]
+        #
+        super(AF_LIN_UAF_ISO_DIR, self).__init__(Id)
+        #
+
+
