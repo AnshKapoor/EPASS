@@ -97,11 +97,22 @@ class loadsTab(QWidget):
             if not 'ElemLoads' in myModel.hdf5File.keys():
                 myModel.hdf5File.create_group('ElemLoads')
             elemLoadsGroup = myModel.hdf5File['ElemLoads']
-            #
             for dataSet in elemLoadsGroup.keys():
                 del elemLoadsGroup[dataSet]
             #
-            [load.data2hdf5(elemLoadsGroup) for load in myModel.loads]
+            if not 'NodeLoads' in myModel.hdf5File.keys():
+                myModel.hdf5File.create_group('NodeLoads')
+            nodeLoadsGroup = myModel.hdf5File['NodeLoads']
+            for dataSet in nodeLoadsGroup.keys():
+                del nodeLoadsGroup[dataSet]
+            #
+            for load in myModel.loads:
+                if load.superType == 'elemLoad':
+                    load.data2hdf5(elemLoadsGroup)
+                elif load.superType == 'nodeLoad':
+                    load.data2hdf5(nodeLoadsGroup)
+                else: 
+                    pass
             #
             return 1
         except:

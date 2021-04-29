@@ -96,6 +96,7 @@ class material(QHBoxLayout):
         set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
         set.attrs['Id'] = np.uint64(self.Id.text())
         set.attrs['MaterialType'] = self.type
+        set.attrs['Name'] = self.name.text()
         for n in range(len(self.parameterNames)): 
             set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
                 

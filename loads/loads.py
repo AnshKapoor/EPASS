@@ -118,7 +118,7 @@ class elemLoad(QHBoxLayout):
         for nE, surfaceElem in enumerate(self.surfaceElements):
             frequencies = self.myModel.frequencies
             dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
-            set = elemLoadsGroup.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
+            set = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
             set.attrs['FreqCount'] = np.uint64(len(frequencies))
             set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
             set.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
@@ -139,6 +139,7 @@ class nodeLoad(QHBoxLayout):
         Extracts node points from selected nodesets
         """
         self.nodePoints = []
+        self.nodePointsIds = []
         relevantNodesets = []
         nodes = self.myModel.nodes
         for p, nodesetCheck in enumerate(self.nodesetChecker):
@@ -147,8 +148,8 @@ class nodeLoad(QHBoxLayout):
                 relevantNodesets.append(self.myModel.nodeSets[p])
         for nodeset in relevantNodesets:
             for nodeIdx in range(len(nodeset[:])):
-                nodeID = nodeset[nodeIdx]
-                idx = (nodes[:]['Ids']==nodeID)
+                self.nodePointsIds.append(nodeset[nodeIdx][0])
+                idx = (nodes[:]['Ids']==self.nodePointsIds[-1])
                 self.nodePoints.append([nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]])
             self.nodePoints = np.array(self.nodePoints)
         relevantNodesets = []
@@ -163,19 +164,18 @@ class nodeLoad(QHBoxLayout):
         else:
             self.changeSwitch.setChecked(1)
                 
-    def data2hdf5(self, elemLoadsGroup):
-        pass
-        # # Exporting the load per element
-        # progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        # for nE, surfaceElem in enumerate(self.surfaceElements):
-            # frequencies = self.myModel.frequencies
-            # dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
-            # set = elemLoadsGroup.create_dataset('/ElemLoads/mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
-            # set.attrs['FreqCount'] = np.uint64(len(frequencies))
-            # set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
-            # set.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
-            # set.attrs['LoadType'] = self.type
-            # set.attrs['MethodType'] = 'FEM'
-            # # Update progress window
-            # progWin.setValue(nE)
-            # QApplication.processEvents()
+    def data2hdf5(self, nodeLoadsGroup):
+        # Exporting the load per node
+        progWin = progressWindow(len(self.nodePointsIds)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
+        for nN, nodeId in enumerate(self.nodePointsIds):
+            frequencies = self.myModel.frequencies
+            dataArray = [[frequencies[nf], float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text()), 0.] for nf in range(len(frequencies))]
+            set = nodeLoadsGroup.create_dataset('mtxFemNodeLoad'+str(self.removeButton.id+1) + '_' + str(int(nodeId)), data=(dataArray))
+            set.attrs['FreqCount'] = np.uint64(len(frequencies))
+            set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(nodeId))
+            set.attrs['NodeId'] = np.uint64(nodeId) # Assign element load to element
+            set.attrs['LoadType'] = self.type
+            set.attrs['MethodType'] = 'FEM'
+            # Update progress window
+            progWin.setValue(nN)
+            QApplication.processEvents()

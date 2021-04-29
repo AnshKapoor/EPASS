@@ -303,15 +303,15 @@ class loadGUI(QMainWindow):
                 self.myModel.materials[matNo].removeButton.id = matNo
                 self.myModel.materials[matNo].removeButton.disconnect()
                 self.myModel.materials[matNo].removeButton.clicked.connect(lambda: self.removeMaterialEvent('button'))
+            self.myModel.updateBlockMaterialSelector()
     
     def removeMaterialEvent(self, matIDToRemove):
         self.tabMaterials.removeMaterial(matIDToRemove, self.myModel)
-        #self.vtkWindow.updateLoads(self.myModel.loads)
-        #self.vtkWindow.resetView()
         # Reset new ids for button in order to identify button on next click correctly
         for matNo in range(len(self.myModel.materials)):
             self.myModel.materials[matNo].removeButton.id = matNo
-            
+        self.myModel.updateBlockMaterialSelector()
+        
     def setupMenu(self):
         """
         Initialisation of the window menu
@@ -356,14 +356,15 @@ class loadGUI(QMainWindow):
         self.tabLoads.update(self.myModel)
     
     def saveAndExit(self):
-        res = 1
+        res = 0
         if self.myModel.hdf5File:
-            res = self.tabAnalysis.data2hdf5(self.myModel)
-            res = self.tabLoads.data2hdf5(self.myModel)
-            res = self.tabMaterials.data2hdf5(self.myModel)
-            if res == 1:
+            res = res + self.tabAnalysis.data2hdf5(self.myModel)
+            res = res + self.tabLoads.data2hdf5(self.myModel)
+            res = res + self.tabMaterials.data2hdf5(self.myModel)
+            res = res + self.myModel.data2hdf5()
+            if res == 4:
                 self.myModel.hdf5File.close()
-        if res == 1:
+        if res == 4:
             self.close()
             app.quit()
         else:
