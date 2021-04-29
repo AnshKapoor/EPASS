@@ -8,6 +8,7 @@ import os
 from PyQt5.QtWidgets import QApplication
 from standardWidgets import *
 import h5py
+import vtk
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
 def readNodes(myModel, hdf5File, cub5File=0):
@@ -65,8 +66,16 @@ def readElements(myModel, hdf5File, cub5File=0):
 def identifyElemType(elemType): 
     if elemType[0] == 22: # Shell9
         return 'QUAD_9', 'PlShell9', 10;
+    elif elemType[0] == 43: # Hex27
+        return 'HEX_NODE_27', 'Fluid27', 28;
     else:
         return 'notSupported'
+
+def getVTKElem(elpasoElemType):
+    if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9']:
+        return vtk.vtkQuad(), 4
+    elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
+        return vtk.vtkHexahedron(), 8
 
 def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem):
     elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint64)

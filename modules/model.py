@@ -8,9 +8,9 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 import copy
-from lxml import etree
 import h5py
 from standardWidgets import progressWindow, editButton, editWindowBasic
+from standardFunctionsGeneral import getVTKElem
 
 # Saves a model, objects created by readModels()
 class model: # Saves a model
@@ -78,8 +78,12 @@ class model: # Saves a model
     
     def updateBlockMaterialSelector(self):
         for n in range(len(self.blockMaterialSelectors)):
-            self.blockMaterialSelectors[n].clear()
+            oldSelection = self.blockMaterialSelectors[n].currentText()
+            [self.blockMaterialSelectors[n].removeItem(p) for p in range(self.blockMaterialSelectors[n].count()-1,-1,-1)]
             [self.blockMaterialSelectors[n].addItem(mat.Id.text()) for mat in self.materials]
+            allNewItems = [self.blockMaterialSelectors[n].itemText(p) for p in range(self.blockMaterialSelectors[n].count())]
+            if oldSelection in allNewItems: 
+                self.blockMaterialSelectors[n].setCurrentIndex(allNewItems.index(oldSelection))
     
     def updateModelSetup(self):
         self.nodeInfo.setText('Nodes: ' + str(self.nodes[:]['Ids'].shape[0]))
@@ -117,9 +121,9 @@ class model: # Saves a model
                 newGrid.SetPoints(self.vtkPoints)
                 # Loop over all elements in block m; elem is a list with elements ids and connected nodes
                 for elemCount in range(block.shape[0]):
-                    quad_ = vtk.vtkQuad()
-                    [quad_.GetPointIds().SetId(p, int(np.where(self.nodes[:]['Ids'] == block[elemCount,p+1])[0])) for p in range(4)] # Get correct 4 node positions and insert node (nodes can have any id in elpaso)
-                    newGrid.InsertNextCell(quad_.GetCellType(), quad_.GetPointIds())
+                    newElem, nnodes = getVTKElem(block.attrs['ElementType'])
+                    [newElem.GetPointIds().SetId(p, int(np.where(self.nodes[:]['Ids'] == block[elemCount,p+1])[0])) for p in range(nnodes)] # Get correct n node positions and insert node (nodes can have any id in elpaso)
+                    newGrid.InsertNextCell(newElem.GetCellType(), newElem.GetPointIds())
                 # Infotable
                 items = [QTableWidgetItem(), QTableWidgetItem(block.attrs['ElementType'][:]), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(str(block.shape[0]))]
                 for n, item in enumerate(items):
@@ -160,7 +164,8 @@ class model: # Saves a model
     def data2hdf5(self): 
         try:
             for n, block in enumerate(self.hdf5File['Elements'].keys()):
-                self.hdf5File['Elements/' + block].attrs['MaterialId'] = np.int64(self.blockMaterialSelectors[n].currentText())
+                if self.blockMaterialSelectors[n].currentText() is not '':
+                    self.hdf5File['Elements/' + block].attrs['MaterialId'] = np.int64(self.blockMaterialSelectors[n].currentText())
             return 1
         except:
             return 0
