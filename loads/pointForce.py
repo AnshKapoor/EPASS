@@ -64,7 +64,6 @@ class pointForce(nodeLoad):
         initialize vtk objects of this load
         """
         # Get model infos
-        nodes = self.myModel.nodes
         arrowSource = vtk.vtkArrowSource()
         # Arrows for load application
         self.arrowDataLoad = vtk.vtkPolyData()

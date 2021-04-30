@@ -88,25 +88,25 @@ class constraintsTab(QWidget):
     def data2hdf5(self, myModel): 
         try:
             # Write load data to hdf5 file
-#            if not 'ElemLoads' in myModel.hdf5File.keys():
-#                myModel.hdf5File.create_group('ElemLoads')
-#            elemLoadsGroup = myModel.hdf5File['ElemLoads']
-#            for dataSet in elemLoadsGroup.keys():
-#                del elemLoadsGroup[dataSet]
-#            #
-#            if not 'NodeLoads' in myModel.hdf5File.keys():
-#                myModel.hdf5File.create_group('NodeLoads')
-#            nodeLoadsGroup = myModel.hdf5File['NodeLoads']
-#            for dataSet in nodeLoadsGroup.keys():
-#                del nodeLoadsGroup[dataSet]
-#            #
-#            for load in myModel.loads:
-#                if load.superType == 'elemLoad':
-#                    load.data2hdf5(elemLoadsGroup)
-#                elif load.superType == 'nodeLoad':
-#                    load.data2hdf5(nodeLoadsGroup)
-#                else: 
-#                    pass
+            if not 'ElemConstraints' in myModel.hdf5File.keys():
+                myModel.hdf5File.create_group('ElemConstraints')
+            elemConstraintsGroup = myModel.hdf5File['ElemConstraints']
+            for dataSet in elemConstraintsGroup.keys():
+                del elemConstraintsGroup[dataSet]
+            #
+            if not 'NodeConstraints' in myModel.hdf5File.keys():
+                myModel.hdf5File.create_group('NodeConstraints')
+            nodeConstraintsGroup = myModel.hdf5File['NodeConstraints']
+            for dataSet in nodeConstraintsGroup.keys():
+                del nodeConstraintsGroup[dataSet]
+            #
+            for constraint in myModel.constraints:
+                if constraint.superType == 'elemConstraint':
+                    constraint.data2hdf5(elemConstraintsGroup)
+                elif constraint.superType == 'nodeConstraint':
+                    constraint.data2hdf5(nodeConstraintsGroup)
+                else: 
+                    pass
 #            #
             return 1
         except:

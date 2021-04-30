@@ -1,10 +1,4 @@
 #########################################################
-###                   Material-Tab                    ###
-#########################################################
-
-# Python 2.7.6
-
-#########################################################
 ### Module Import                                     ###
 from PyQt5.QtWidgets import QLineEdit
 from materials import material
@@ -12,12 +6,13 @@ from materials import material
 #########################################################
 
 #########################################################
-### Material Widget for STR_LIN_ELA_ISO_DIR           ###
+### Material Widget for STR_LIN_VIS_ISO_DIR           ###
 #########################################################
 
 class STR_LIN_VIS_ISO_DIR(material):
     def __init__(self, Id):
         #
+        self.typeLabel = 'STRUCT linear visco iso'
         self.type = 'STR_LIN_VIS_ISO_DIR'
         self.toolTip = '<b>Structural linear visco-elastic isotropic</b> <br>Material model according to Hookes law with damping loss factor.'
         #

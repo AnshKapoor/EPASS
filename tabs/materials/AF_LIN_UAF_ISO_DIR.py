@@ -1,10 +1,4 @@
 #########################################################
-###                   Material-Tab                    ###
-#########################################################
-
-# Python 2.7.6
-
-#########################################################
 ### Module Import                                     ###
 from PyQt5.QtWidgets import QLineEdit
 from materials import material
@@ -18,6 +12,7 @@ from materials import material
 class AF_LIN_UAF_ISO_DIR(material):
     def __init__(self, Id):
         #
+        self.typeLabel = 'ACOUS undamped fluid iso'
         self.type = 'AF_LIN_UAF_ISO_DIR'
         self.toolTip = '<b>Acoustic fluid (undamped) material</b> <br>Basic material model for Helmholtz domain without damping.'
         #

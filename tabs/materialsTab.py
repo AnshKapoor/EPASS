@@ -58,15 +58,15 @@ class materialsTab(QWidget):
         Add the material selected by self.matSelector (self.addMaterialButton click event)
         """
         if myModel.hdf5File:
-            if self.materialSelector.currentText() == 'STR_LIN_ELA_ISO_DIR':
+            if self.materialSelector.currentText() == 'STRUCT linear elastic iso': 
                 myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STR_LIN_VIS_ISO_DIR':
+            if self.materialSelector.currentText() == 'STRUCT linear visco iso':
                 myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'AF_LIN_UAF_ISO_DIR':
+            if self.materialSelector.currentText() == 'ACOUS undamped fluid iso':
                 myModel.materials.append(AF_LIN_UAF_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'AF_LIN_DAF_ISO_DIR':
+            if self.materialSelector.currentText() == 'ACOUS damped fluid iso':
                 myModel.materials.append(AF_LIN_DAF_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'AF_LIN_EQF_ISO_DIR':
+            if self.materialSelector.currentText() == 'ACOUS equivalent fluid iso':
                 myModel.materials.append(AF_LIN_EQF_ISO_DIR(self.getFreeId(myModel.materials)))
             # if self.materialSelector.currentText() == '?':
                 # myModel.materials.append(?)

@@ -1,6 +1,7 @@
 #
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy, QLabel, QLineEdit, QCheckBox
-from standardWidgets import removeButton, editButton, setupNodeConstraintWindow
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy, QLabel, QLineEdit, QCheckBox, QApplication
+from standardWidgets import removeButton, editButton, setupNodeConstraintWindow, messageboxOK, progressWindow
+import numpy as np
 
 # ScrollArea containing loads in bottom left part of program
 class constraintInfoBox(QScrollArea):
@@ -34,16 +35,16 @@ class nodeConstraint(QHBoxLayout):
     def __init__(self, Id, myModel):
         super(nodeConstraint, self).__init__()
         self.myModel = myModel
+        self.superType = 'nodeConstraint'
         #
         self.removeButton = removeButton()
         self.Id = QLineEdit(str(Id))
         self.Id.setToolTip("Id of contraint")
         self.Id.setFixedWidth(50)
-        self.label = QLabel(self.type)
+        self.label = QLabel(self.typeLabel)
         self.label.setToolTip(self.toolTip)
         self.name = QLineEdit('name')
         self.editButton = editButton()
-        self.editButton.clicked.connect(self.showEdit)
         #
         self.drawCheck = QCheckBox('Draw')
         self.drawCheck.setStatusTip('Show constraint in 3D Window')
@@ -55,6 +56,12 @@ class nodeConstraint(QHBoxLayout):
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
+        #
+        self.editButton.clicked.connect(self.showEdit)
+        var = self.showEdit()
+        if var == 0: # is the case if the initial setup window is canceled by the user
+            pass
+            #self.update3DActor()
     
     def initLayout(self): 
         [self.addWidget(wid) for wid in [self.removeButton, self.Id, self.label, self.name, self.editButton]]
@@ -74,14 +81,15 @@ class nodeConstraint(QHBoxLayout):
         initialisation of setup popup window for parameter/file path input
         """
         self.setupWindow = setupNodeConstraintWindow('Constraint setup')
+        self.subCheckButtons = []
         # ADD TO LAYOUT
         for n in range(len(self.parameterNames)):
-            subCheckButton = QCheckBox()
+            self.subCheckButtons.append(QCheckBox())
             subWidget = QWidget()
             subLayout = QHBoxLayout(subWidget)
             label = QLabel(self.parameterNames[n])
             label.setFixedWidth(50)
-            [subLayout.addWidget(wid) for wid in [subCheckButton, label, self.parameterValues[n]]]
+            [subLayout.addWidget(wid) for wid in [self.subCheckButtons[-1], label, self.parameterValues[n]]]
             self.setupWindow.layout.addWidget(subWidget)
         #
         self.nodesetChecker = []
@@ -98,6 +106,17 @@ class nodeConstraint(QHBoxLayout):
         self.varSave = [x.text() for x in self.parameterValues]
         var = self.setupWindow.exec_()
         if var == 0: # reset values
+            self.resetValues()
+        elif var == 1: # set new values
+            try:
+                # Extract nodes of selected nodesets
+                self.findRelevantPoints()
+                #self.update3DActor()
+                self.switch()
+            except: # if input is wrong, show message and reset values
+                messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
+                self.resetValues()
+        else:
             self.resetValues()
         return var
         
@@ -117,31 +136,27 @@ class nodeConstraint(QHBoxLayout):
         else:
             self.changeSwitch.setChecked(1)
    
+    def findRelevantPoints(self):
+        """
+        Extracts node points from selected nodesets
+        """
+        self.nodePoints = []
+        self.nodePointsIds = []
+        relevantNodesets = []
+        nodes = self.myModel.nodes
+        for p, nodesetCheck in enumerate(self.nodesetChecker):
+            nodesetState = nodesetCheck.isChecked()
+            if nodesetState==1:
+                relevantNodesets.append(self.myModel.nodeSets[p])
+        for nodeset in relevantNodesets:
+            for nodeIdx in range(len(nodeset[:])):
+                self.nodePointsIds.append(nodeset[nodeIdx][0])
+                idx = (nodes[:]['Ids']==self.nodePointsIds[-1])
+                self.nodePoints.append([nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]])
+            self.nodePoints = np.array(self.nodePoints)
+        relevantNodesets = []
+        nodes = 0
+   
     def data2hdf5(self, constraintsGroup):
-        pass
-#        # Exporting the material
-#        set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
-#        set.attrs['Id'] = np.uint64(self.Id.text())
-#        set.attrs['MaterialType'] = self.type
-#        set.attrs['Name'] = self.name.text()
-#        for n in range(len(self.parameterNames)): 
-#            if self.parameterValues[n].text() == 'freq-dependent':
-#                dataList = []
-#                table = self.frequencyDependentEdits[n].table
-#                for m in range(table.rowCount()):
-#                    if table.item(m,0) is not None and table.item(m,1) is not None:
-#                        if table.item(m,0).text() and table.item(m,1).text(): 
-#                            try:
-#                                dataList.append([np.float64(table.item(m,0).text()), np.float64(table.item(m,1).text())])
-#                            except:
-#                                pass
-#                fData = np.array(dataList)
-#                fDataSet = materialsGroup.create_dataset('material' + self.Id.text() + '_' + self.parameterNames[n], data=fData)
-#                fDataSet.attrs['type'] = 'freq-dependent'
-#                fDataSet.attrs['parameter'] = self.parameterNames[n]
-#                fDataSet.attrs['colHeader'] = ['frequency', self.parameterNames[n]]
-#                fDataSet.attrs['N'] = np.int64(len(dataList))
-#                set.attrs[self.parameterNames[n]] = 'material' + self.Id.text() + '_' + self.parameterNames[n]
-#            else:
-#                set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
+        pass # To be defined in child!
             

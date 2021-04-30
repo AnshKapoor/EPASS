@@ -1,10 +1,4 @@
 #########################################################
-###                   Material-Tab                    ###
-#########################################################
-
-# Python 2.7.6
-
-#########################################################
 ### Module Import                                     ###
 from PyQt5.QtWidgets import QLineEdit
 from materials import material
@@ -13,12 +7,13 @@ import numpy as np
 #########################################################
 
 #########################################################
-### Material Widget for AF_LIN_UAF_ISO_DIR           ###
+### Material Widget for AF_LIN_DAF_ISO_DIR           ###
 #########################################################
 
 class AF_LIN_DAF_ISO_DIR(material):
     def __init__(self, Id):
         #
+        self.typeLabel = 'ACOUS damped fluid iso'
         self.type = 'AF_LIN_DAF_ISO_DIR'
         self.toolTip = '<b>Acoustic fluid damped material</b> <br>Basic material model for Helmholtz domain with constant damping.'
         #

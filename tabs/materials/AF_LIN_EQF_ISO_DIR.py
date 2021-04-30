@@ -1,10 +1,4 @@
 #########################################################
-###                   Material-Tab                    ###
-#########################################################
-
-# Python 2.7.6
-
-#########################################################
 ### Module Import                                     ###
 from PyQt5.QtWidgets import QLineEdit
 from materials import material
@@ -12,12 +6,13 @@ from materials import material
 #########################################################
 
 #########################################################
-### Material Widget for AF_LIN_UAF_ISO_DIR           ###
+### Material Widget for AF_LIN_EQF_ISO_DIR           ###
 #########################################################
 
 class AF_LIN_EQF_ISO_DIR(material):
     def __init__(self, Id):
         #
+        self.typeLabel = 'ACOUS equivalent fluid iso'
         self.type = 'AF_LIN_EQF_ISO_DIR'
         self.toolTip = '<b>Equivalent fluid material</b> <br>Material model for Helmholtz domain with complex and frequency-dependent parameters.'
         #
