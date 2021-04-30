@@ -91,10 +91,9 @@ class material(QHBoxLayout):
         table = self.frequencyDependentEdits[self.sender().id].table
         entries = False
         for m in range(table.rowCount()):
-            for n in range(table.columnCount()):
-                if table.item(m,n) is not None:
-                    if table.item(m,n).text(): 
-                        entries = True
+            if table.item(m,0) is not None and table.item(m,1) is not None:
+                if table.item(m,0).text() and table.item(m,1).text(): 
+                    entries = True
         if entries: # Table is filled
             self.parameterValues[self.sender().id].setEnabled(False)
             self.parameterValues[self.sender().id].setText('freq-dependent')

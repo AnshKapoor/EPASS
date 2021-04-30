@@ -5,11 +5,13 @@ from standardWidgets import addButton, messageboxOK, materialTypeSelector
 ###############################IMPORTING MATERIAL CLASSES###########################
 sys.path.append('./materials')
 from materials import matInfoBox
-# Single materials
+# Structural linear materials
 from STR_LIN_ELA_ISO_DIR import STR_LIN_ELA_ISO_DIR
-from AF_LIN_UAF_ISO_DIR import AF_LIN_UAF_ISO_DIR
 from STR_LIN_VIS_ISO_DIR import STR_LIN_VIS_ISO_DIR
 # Acoustic linear materials
+from AF_LIN_UAF_ISO_DIR import AF_LIN_UAF_ISO_DIR
+from AF_LIN_DAF_ISO_DIR import AF_LIN_DAF_ISO_DIR
+from AF_LIN_EQF_ISO_DIR import AF_LIN_EQF_ISO_DIR
 
 # from Structural_Orthotropic_dev import Structural_Orthotropic
 # from Structural_viscoOrthotropic_dev import Structural_viscoOrthotropic
@@ -58,10 +60,14 @@ class materialsTab(QWidget):
         if myModel.hdf5File:
             if self.materialSelector.currentText() == 'STR_LIN_ELA_ISO_DIR':
                 myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'AF_LIN_UAF_ISO_DIR':
-                myModel.materials.append(AF_LIN_UAF_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STR_LIN_VIS_ISO_DIR':
                 myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'AF_LIN_UAF_ISO_DIR':
+                myModel.materials.append(AF_LIN_UAF_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'AF_LIN_DAF_ISO_DIR':
+                myModel.materials.append(AF_LIN_DAF_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'AF_LIN_EQF_ISO_DIR':
+                myModel.materials.append(AF_LIN_EQF_ISO_DIR(self.getFreeId(myModel.materials)))
             # if self.materialSelector.currentText() == '?':
                 # myModel.materials.append(?)
             # ...

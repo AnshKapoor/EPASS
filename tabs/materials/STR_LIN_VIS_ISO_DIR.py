@@ -6,10 +6,7 @@
 
 #########################################################
 ### Module Import                                     ###
-import sys
-import os
-from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow, QLabel, QLineEdit
-from standardWidgets import removeButton, editButton, messageboxOK, progressWindow
+from PyQt5.QtWidgets import QLineEdit
 from materials import material
 
 #########################################################
