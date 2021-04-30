@@ -125,5 +125,23 @@ class material(QHBoxLayout):
         set.attrs['MaterialType'] = self.type
         set.attrs['Name'] = self.name.text()
         for n in range(len(self.parameterNames)): 
-            set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
+            if self.parameterValues[n].text() == 'freq-dependent':
+                dataList = []
+                table = self.frequencyDependentEdits[n].table
+                for m in range(table.rowCount()):
+                    if table.item(m,0) is not None and table.item(m,1) is not None:
+                        if table.item(m,0).text() and table.item(m,1).text(): 
+                            try:
+                                dataList.append([np.float64(table.item(m,0).text()), np.float64(table.item(m,1).text())])
+                            except:
+                                pass
+                fData = np.array(dataList)
+                fDataSet = materialsGroup.create_dataset('material' + self.Id.text() + '_' + self.parameterNames[n], data=fData)
+                fDataSet.attrs['type'] = 'freq-dependent'
+                fDataSet.attrs['parameter'] = self.parameterNames[n]
+                fDataSet.attrs['colHeader'] = ['frequency', self.parameterNames[n]]
+                fDataSet.attrs['N'] = np.int64(len(dataList))
+                set.attrs[self.parameterNames[n]] = 'material' + self.Id.text() + '_' + self.parameterNames[n]
+            else:
+                set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
             
