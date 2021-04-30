@@ -30,6 +30,7 @@ class model: # Saves a model
         self.elementSets = []
         self.loads = []
         self.materials = []
+        self.constraints = []
         self.freqStart = np.float64(10.)
         self.freqSteps = np.uint64(10)
         self.freqDelta = np.float64(10.)
@@ -123,7 +124,7 @@ class model: # Saves a model
                     [newElem.GetPointIds().SetId(p, int(np.where(self.nodes[:]['Ids'] == block[elemCount,p+1])[0])) for p in range(nnodes)] # Get correct n node positions and insert node (nodes can have any id in elpaso)
                     newGrid.InsertNextCell(newElem.GetCellType(), newElem.GetPointIds())
                 # Infotable
-                items = [QTableWidgetItem(), QTableWidgetItem(block.attrs['ElementType'][:]), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(str(block.shape[0]))]
+                items = [QTableWidgetItem(), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(block.attrs['ElementType'][:]), QTableWidgetItem(str(block.shape[0]))]
                 for n, item in enumerate(items):
                     if n==0: # Checkbox
                         item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)

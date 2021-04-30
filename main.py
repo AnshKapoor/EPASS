@@ -19,6 +19,7 @@ sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
+sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/constraints')
 #
 from standardFunctionsGeneral import readNodes, readElements, readSetup
 from standardWidgets import ak3LoadButton, sepLine, saveAndExitButton, messageboxOK
@@ -30,6 +31,7 @@ from graphWindow import graphWindow
 from analysisTab import analysisTab
 from loadsTab import loadsTab
 from materialsTab import materialsTab
+from constraintsTab import constraintsTab
 
 # Main class called first
 class loadGUI(QMainWindow):
@@ -190,12 +192,14 @@ class loadGUI(QMainWindow):
         self.tabLoads.addLoadButton.clicked.connect(self.addLoadEvent)
         self.tabMaterials = materialsTab()
         self.tabMaterials.addMaterialButton.clicked.connect(self.addMaterialEvent)
+        self.tabConstraints = constraintsTab()
+        self.tabConstraints.addConstraintButton.clicked.connect(self.addConstraintEvent)
         #self.tabMatCont = trial_mat()     
         #self.tabMaterials = self.tabMatCont#QWidget()
         #self.tabMaterials.titleText = 'Materials'
         #
         self.tabsLeft = QTabWidget()
-        [self.tabsLeft.addTab(tab,tab.titleText) for tab in [self.tabAnalysis, self.tabLoads, self.tabMaterials]]
+        [self.tabsLeft.addTab(tab,tab.titleText) for tab in [self.tabAnalysis, self.tabLoads, self.tabMaterials, self.tabConstraints]]
 
         #self.tabMaterials.tester()
         #self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
@@ -289,6 +293,25 @@ class loadGUI(QMainWindow):
         # Reset new ids for button in order to identify button on next click correctly
         for loadNo in range(len(self.myModel.loads)):
             self.myModel.loads[loadNo].removeButton.id = loadNo
+            
+    def addConstraintEvent(self):
+        success = self.tabConstraints.addConstraint(self.myModel)
+        if success:
+            self.myModel.constraints[-1].changeSwitch.stateChanged.connect(self.update2D)
+            self.myModel.constraints[-1].changeSwitch.stateChanged.connect(self.update3D)
+            # Reset new ids for button in order to identify button on next click correctly and reconnect buttons
+            for constraintNo in range(len(self.myModel.constraints)):
+                self.myModel.constraints[constraintNo].removeButton.id = constraintNo
+                self.myModel.constraints[constraintNo].removeButton.disconnect()
+                self.myModel.constraints[constraintNo].removeButton.clicked.connect(lambda: self.removeConstraintEvent('button'))
+    
+    def removeConstraintEvent(self, constraintIDToRemove):
+        self.tabConstraints.removeConstraint(constraintIDToRemove, self.myModel)
+        #self.vtkWindow.updateLoads(self.myModel.loads)
+        #self.vtkWindow.resetView()
+        # Reset new ids for button in order to identify button on next click correctly
+        for constraintNo in range(len(self.myModel.constraints)):
+            self.myModel.constraints[constraintNo].removeButton.id = constraintNo
     
     def addMaterialEvent(self):
         success = self.tabMaterials.addMaterial(self.myModel)

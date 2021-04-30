@@ -144,7 +144,7 @@ class loadTypeSelector(QComboBox):
         except:
             pass
             
-# Dropdown menu to select a load
+# Dropdown menu to select a material
 class materialTypeSelector(QComboBox):
     def __init__(self):
         super(materialTypeSelector, self).__init__()
@@ -157,6 +157,22 @@ class materialTypeSelector(QComboBox):
     def changeTo(self, matType):
         try: 
             self.setCurrentIndex(self.availableTypes.index(matType))
+        except:
+            pass
+
+# Dropdown menu to select a load
+class constraintTypeSelector(QComboBox):
+    def __init__(self):
+        super(constraintTypeSelector, self).__init__()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Select a constraint')
+        self.availableTypes = ['BC | Structure | Fieldvalue']
+        self.setFixedWidth(200)
+        [self.addItem(load) for load in self.availableTypes]
+    
+    def changeTo(self, constraintType):
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(constraintType))
         except:
             pass
 
@@ -256,6 +272,35 @@ class setupMaterialWindow(QDialog):
         #
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addWidget(self.formGroupBox)
+        self.mainLayout.addWidget(self.buttonBox)
+        self.setLayout(self.mainLayout)
+
+# Basic setup window
+class setupNodeConstraintWindow(QDialog):
+    def __init__(self, waveType):
+        super(QDialog, self).__init__()
+        self.setWindowTitle('Edit constraint')
+        #
+        self.setAutoFillBackground(True) # color
+        p = self.palette() # color
+        p.setColor(self.backgroundRole(), Qt.white) # color
+        self.setPalette(p) # color
+        #
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        # setup
+        self.formGroupBox = QGroupBox(waveType)
+        self.layout = QFormLayout()
+        self.formGroupBox.setLayout(self.layout)
+        # Nodeset selection
+        self.formGroupBoxNodesets = QGroupBox('Nodesets')
+        self.nodesetLayout = QFormLayout()
+        self.formGroupBoxNodesets.setLayout(self.nodesetLayout)
+        #
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(self.formGroupBox)
+        self.mainLayout.addWidget(self.formGroupBoxNodesets)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
 
