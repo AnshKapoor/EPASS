@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineE
 import vtk
 import numpy as np
 import math
-import os
 from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from loads import elemLoad
 

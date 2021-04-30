@@ -1,17 +1,14 @@
 import sys
-import os
-from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow,QButtonGroup
-from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from standardWidgets import *
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout
+from PyQt5.QtGui import QFont
+from standardWidgets import addButton, messageboxOK, materialTypeSelector
 ###############################IMPORTING MATERIAL CLASSES###########################
 sys.path.append('./materials')
-from materials import *
-# Structural linear materials
+from materials import matInfoBox
+# Single materials
 from STR_LIN_ELA_ISO_DIR import STR_LIN_ELA_ISO_DIR
 from AF_LIN_UAF_ISO_DIR import AF_LIN_UAF_ISO_DIR
+from STR_LIN_VIS_ISO_DIR import STR_LIN_VIS_ISO_DIR
 # Acoustic linear materials
 
 # from Structural_Orthotropic_dev import Structural_Orthotropic
@@ -63,6 +60,8 @@ class materialsTab(QWidget):
                 myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'AF_LIN_UAF_ISO_DIR':
                 myModel.materials.append(AF_LIN_UAF_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'STR_LIN_VIS_ISO_DIR':
+                myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
             # if self.materialSelector.currentText() == '?':
                 # myModel.materials.append(?)
             # ...

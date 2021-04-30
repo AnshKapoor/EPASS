@@ -1,17 +1,12 @@
-import sys
-import os
-from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow,QButtonGroup
-from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from standardWidgets import *
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout
+from PyQt5.QtGui import QFont
+from standardWidgets import loadTypeSelector, addButton, messageboxOK
 from loads import loadInfoBox
 
 from planeWave import planeWave
-from diffuseField import diffuseField
-from timeVarDat import timeVarDat
-from tbl import tbl
+#from diffuseField import diffuseField
+#from timeVarDat import timeVarDat
+#from tbl import tbl
 from pointForce import pointForce
 
 class loadsTab(QWidget):

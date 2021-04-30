@@ -1,10 +1,7 @@
 #
-from PyQt5.QtWidgets import QApplication, QPushButton, QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy, QLabel, QLineEdit
-import os
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy, QLabel, QLineEdit
 import numpy as np
-import math
-import h5py
-from standardWidgets import progressWindow, removeButton, editButton, setupMaterialWindow
+from standardWidgets import removeButton, editButton, setupMaterialWindow, setupTable
 
 # ScrollArea containing loads in bottom left part of program
 class matInfoBox(QScrollArea):
@@ -47,6 +44,7 @@ class material(QHBoxLayout):
         self.name = QLineEdit('name')
         self.editButton = editButton()
         self.editButton.clicked.connect(self.showEdit)
+        self.frequencyDependentEdits = [[] for n in range(len(self.parameterNames))]
         #
         self.initLayout()
         self.initSetupWindow()
@@ -70,10 +68,39 @@ class material(QHBoxLayout):
         """
         self.setupWindow = setupMaterialWindow('Material setup')
         # ADD TO LAYOUT
-        [self.setupWindow.layout.addRow(QLabel(self.parameterNames[n]), self.parameterValues[n]) for n in range(len(self.parameterNames))]
+        for n in range(len(self.parameterNames)):
+            if self.allowFrequencyDependentValues[n]:
+                self.frequencyDependentEdits[n] = setupTable(['Frequency', self.parameterNames[n]])
+                subEditButton = editButton()
+                subEditButton.id = n
+                subEditButton.clicked.connect(self.frequencyDependentEditEvent)
+            else:
+                subEditButton = QLabel('')
+                subEditButton.setFixedWidth(23)
+            subWidget = QWidget()
+            subLayout = QHBoxLayout(subWidget)
+            label = QLabel(self.parameterNames[n])
+            label.setFixedWidth(50)
+            [subLayout.addWidget(wid) for wid in [label, self.parameterValues[n], subEditButton]]
+            self.setupWindow.layout.addWidget(subWidget)
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
-        
+    
+    def frequencyDependentEditEvent(self):
+        self.frequencyDependentEdits[self.sender().id].exec_()
+        table = self.frequencyDependentEdits[self.sender().id].table
+        entries = False
+        for m in range(table.rowCount()):
+            for n in range(table.columnCount()):
+                if table.item(m,n) is not None:
+                    if table.item(m,n).text(): 
+                        entries = True
+        if entries: # Table is filled
+            self.parameterValues[self.sender().id].setEnabled(False)
+            self.parameterValues[self.sender().id].setText('freq-dependent')
+        else: # Table is empty
+            self.parameterValues[self.sender().id].setEnabled(True)
+    
     def showEdit(self):
         """
         allows user to set parameters

@@ -1,7 +1,7 @@
 #
 import os
 #
-from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QGridLayout, QFormLayout, QVBoxLayout, QMainWindow, QWidget, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog
+from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
 
@@ -144,14 +144,13 @@ class loadTypeSelector(QComboBox):
         except:
             pass
             
-
 # Dropdown menu to select a load
 class materialTypeSelector(QComboBox):
     def __init__(self):
         super(materialTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a material')
-        self.availableTypes = ['STR_LIN_ELA_ISO_DIR', 'AF_LIN_UAF_ISO_DIR']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
+        self.availableTypes = ['STR_LIN_ELA_ISO_DIR', 'AF_LIN_UAF_ISO_DIR', 'STR_LIN_VIS_ISO_DIR']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
         self.setFixedWidth(200)
         [self.addItem(mat) for mat in self.availableTypes]
     
@@ -252,13 +251,50 @@ class setupMaterialWindow(QDialog):
         self.buttonBox.rejected.connect(self.reject)
         # setup
         self.formGroupBox = QGroupBox(subtitle)
-        self.layout = QFormLayout()
+        self.layout = QVBoxLayout()
         self.formGroupBox.setLayout(self.layout)
         #
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addWidget(self.formGroupBox)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
+
+class setupTable(QDialog):
+    def __init__(self, header):
+        QDialog.__init__(self)
+        self.setWindowTitle('Input frequency dependent data')
+        #
+        self.setAutoFillBackground(True) # color
+        p = self.palette() # color
+        p.setColor(self.backgroundRole(), Qt.white) # color
+        self.setPalette(p) # color
+        #
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        #
+        self.table = QTableWidget()
+        self.table.setColumnCount(len(header))
+        self.table.setRowCount(10)
+        self.table.setHorizontalHeaderLabels(header)
+        #self.setData()
+        #self.resizeColumnsToContents()
+        #self.resizeRowsToContents()
+        #
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(self.table)
+        self.mainLayout.addWidget(self.buttonBox)
+        self.setLayout(self.mainLayout)
+ 
+    # def setData(self): 
+        # horHeaders = []
+        # for n, key in enumerate(sorted(self.data.keys())):
+            # horHeaders.append(key)
+            # for m, item in enumerate(self.data[key]):
+                # newitem = QTableWidgetItem(item)
+                # self.setItem(m, n, newitem)
+        # self.setHorizontalHeaderLabels(horHeaders)
+
 
 class editWindowBasic(QDialog):
     def __init__(self, Type):

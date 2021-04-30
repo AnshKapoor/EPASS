@@ -1,12 +1,10 @@
 import json
-from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog
+from PyQt5.QtWidgets import QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog
 import vtk
 import numpy as np
 import h5py
 import cmath
-import os
-from lxml import etree
-from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
+from standardWidgets import ak3LoadButton, removeButton, editButton, messageboxOK, 
 from loads import elemLoad, loadInfoBox
 
 

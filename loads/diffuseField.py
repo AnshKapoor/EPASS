@@ -1,9 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit
 import vtk
 import numpy as np
-import os
-from lxml import etree
-from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
+from standardWidgets import removeButton, editButton, messageboxOK, progressWindow
 from loads import elemLoad
 import math, cmath, random, time
 np.random.seed(int(time.time()))
@@ -171,11 +169,11 @@ class diffuseField(elemLoad):
         initialize vtk objects
         """
         # Get model infos
-        nodes = self.myModel.calculationObjects[0].nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        #nodes = self.myModel.calculationObjects[0].nodes
+        #center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        #scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
         #
         arrowSource = vtk.vtkArrowSource()
         self.arrowDataLoad = vtk.vtkPolyData()

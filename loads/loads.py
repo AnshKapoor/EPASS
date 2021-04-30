@@ -1,9 +1,7 @@
 #
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy
-import os
 import numpy as np
 import math
-import h5py
 from standardWidgets import progressWindow
 
 # ScrollArea containing loads in bottom left part of program

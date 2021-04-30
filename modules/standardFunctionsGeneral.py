@@ -4,10 +4,6 @@
 #############################################################
 #
 import numpy as np
-import os
-from PyQt5.QtWidgets import QApplication
-from standardWidgets import *
-import h5py
 import vtk
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
@@ -43,7 +39,7 @@ def readElements(myModel, hdf5File, cub5File=0):
             elemType = cub5File['Simulation Model/Blocks/' + block].attrs['element_type'][()]
             coreformKey, elemType, M = identifyElemType(elemType)
             N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
-            if elemType is not 'notSupported':
+            if elemType != 'notSupported':
                 dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
                 dataSet[:,0] = cub5File['Simulation Model/Blocks/' + block + '/member ids'][:].T
                 elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs']

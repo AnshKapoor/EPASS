@@ -3,7 +3,7 @@ import math
 import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtk.util.numpy_support import numpy_to_vtk
-from PyQt5.QtWidgets import QSizePolicy, QHBoxLayout, QCheckBox, QPushButton
+from PyQt5.QtWidgets import QSizePolicy, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import Qt
 from standardWidgets import resetButton
 

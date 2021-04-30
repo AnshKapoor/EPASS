@@ -2,14 +2,12 @@
 ### Common standard classes for entire python framework ###
 ###########################################################
 
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView, QApplication, QPushButton, QComboBox
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox
 from PyQt5.QtCore import Qt
 import vtk
 from vtk.util import numpy_support
 import numpy as np
-import copy
-import h5py
-from standardWidgets import progressWindow, editButton, editWindowBasic
+from standardWidgets import progressWindow
 from standardFunctionsGeneral import getVTKElem
 
 # Saves a model, objects created by readModels()
@@ -98,7 +96,7 @@ class model: # Saves a model
     def updateModel(self, vtkWindow):
         # UPDATE WIDGETS
         self.title.setText('Name: ' + self.name)
-        if self.name is not ' - ':
+        if self.name != ' - ':
             # Update Infobox
             self.updateModelSetup()
             # VTK Points

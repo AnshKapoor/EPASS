@@ -1,11 +1,6 @@
-import sys
-import os
-from PyQt5.QtWidgets import QApplication, QPushButton, QMainWindow,QButtonGroup
-from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from standardWidgets import *
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QLineEdit
+from PyQt5.QtGui import QFont
+from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine
 import numpy as np
 
 class analysisTab(QWidget):

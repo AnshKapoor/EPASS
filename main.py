@@ -11,26 +11,21 @@ import atexit
 import numpy as np
 import h5py
 #
-from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QCheckBox, QHBoxLayout, QPushButton, QLineEdit, QVBoxLayout, QLabel, QInputDialog, QFileDialog, QMainWindow, QAction, QTabWidget
-from PyQt5.QtCore import Qt, QCoreApplication
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QMainWindow, QAction, QTabWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 #
 sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
 sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
-from standardFunctionsGeneral import *
-from standardWidgets import *
+#
+from standardFunctionsGeneral import readNodes, readElements, readSetup
+from standardWidgets import ak3LoadButton, sepLine, saveAndExitButton, messageboxOK
+#
 from model import model
 from vtkWindow import vtkWindow
 from graphWindow import graphWindow
-from loads import loadInfoBox
-#
-from planeWave import planeWave
-from pointForce import pointForce
-from diffuseField import diffuseField
-from timeVarDat import timeVarDat
-from tbl import tbl
 #
 from analysisTab import analysisTab
 from loadsTab import loadsTab
@@ -69,7 +64,7 @@ class loadGUI(QMainWindow):
         """
         Message box with information on the program
         """
-        msg = messageboxOK('About', 'elPaSo Model Setup\n' +
+        messageboxOK('About', 'elPaSo Model Setup\n' +
                                     'Institute for Acoustics, Braunschweig\n' +
                                     'Version 0.1 (2019)\n\n' +
                                     'Program to set up an hdf5 input file for elpaso.\n' +

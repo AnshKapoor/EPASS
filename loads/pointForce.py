@@ -1,12 +1,8 @@
 #
-from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QLabel, QWidgetItem, QCheckBox, QLineEdit
 import vtk
-import numpy as np
-import math
-import os
-from standardWidgets import removeButton, editButton, setupNodeLoadWindow, messageboxOK, progressWindow
+from standardWidgets import removeButton, editButton, setupNodeLoadWindow, messageboxOK
 from loads import nodeLoad
-
 
 class pointForce(nodeLoad):
     """

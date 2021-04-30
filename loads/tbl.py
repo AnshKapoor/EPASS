@@ -6,7 +6,7 @@ import numpy as np
 import math
 import os
 from lxml import etree
-from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
+from standardWidgets import ak3LoadButton, removeButton, editButton, messageboxOK, progressWindow
 from loads import elemLoad
 import time
 np.random.seed(int(time.time()))
@@ -107,12 +107,12 @@ class tbl(elemLoad):
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
             self.surfaceAmps = np.zeros((len(frequencies),len(self.surfacePoints)))
             if self.dataPoints==[]:
-                msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
+                messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
             else:
                 self.nearestNeighbor()
                 # Get model infos
-                nodes = self.myModel.calculationObjects[0].nodes
-                center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+                #nodes = self.myModel.calculationObjects[0].nodes
+                #center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
                 flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
                 flowDir = flowDir/np.linalg.norm(flowDir)
                 # Calculate distances in direction of the flow
