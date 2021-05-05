@@ -59,28 +59,6 @@ def readElements(myModel, hdf5File, cub5File=0):
     for elemset in hdf5File['Elementsets'].keys():
         myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
 
-def identifyElemType(elemType): 
-    if elemType[0] == 22: # Quadrilateral with 9 nodes
-        return 'QUAD_9', 'PlShell9', 10;
-    elif elemType[0] == 43: # Hexahedron with 27 nodes
-        return 'HEX_NODE_27', 'Fluid27', 28; 
-    else:
-        return 'notSupported', [], 0;
-
-def identifyAlternativeElemTypes(elemType):
-    if elemType in ['PlShell9', 'PlShell9pre', 'DSG9','Disc9','Fluid2d9']: 
-        return ['PlShell9', 'PlShell9pre', 'DSG9','Disc9','Fluid2d9'];
-    elif elemType in ['Fluid27','Brick27']:
-        return ['Fluid27','Brick27'];
-    else:
-        return [];
-
-def getVTKElem(elpasoElemType):
-    if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9']:
-        return vtk.vtkQuad(), 4
-    elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
-        return vtk.vtkHexahedron(), 8
-
 def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem):
     elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint64)
     dataSet = group.create_dataset('mtxFemElemGroup' + str(groupID), data=elemData)
@@ -93,6 +71,36 @@ def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem
     dataSet.attrs['Orientation'] = 'global'
     dataSet.attrs['OrientationFile'] = ''
     return dataSet
+
+def identifyElemType(elemType): 
+    if elemType[0] == 22: # Quadrilateral with 9 nodes
+        return 'QUAD_9', 'PlShell9', 10;
+    elif elemType[0] == 43: # Hexahedron with 27 nodes
+        return 'HEX_NODE_27', 'Fluid27', 28; 
+    else:
+        return 'notSupported', [], 0;
+
+def identifyAlternativeElemTypes(elemType):
+    if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']: 
+        return ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9'];
+    elif elemType in ['Fluid27','Brick27']:
+        return ['Fluid27','Brick27'];
+    else:
+        return [];
+
+def getPossibleInterfacePartner(elemType):
+    if elemType in ['PlShell9', 'PlShell9pre','DSG9']:
+        return ['Fluid27']
+    elif elemType in ['Fluid27']:
+        return ['PlShell9', 'PlShell9pre','DSG9']
+    else:
+        return []
+
+def getVTKElem(elpasoElemType):
+    if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9','PlShell9pre','Disc9','Fluid2d9']:
+        return vtk.vtkQuad(), 4
+    elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
+        return vtk.vtkHexahedron(), 8
 
 # Read setup from hdf5 file
 def readSetup(myModel, hdf5File, cub5File=0):
@@ -119,133 +127,7 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
-# Read Elements block-wise from ak3, ID and nodes are available in calculationObject.elems after this call
-# def readElements2(calculationObject, ak3tree):
-    # #YET TO BE CHANGED FOR BINARY FILE#
-    # for elementGroup in ak3tree.findall('Elements'):
-        # no_of_nodes = 0
-        # info = []
-        # elem_type = 'none'
-        # elems_dom = None
-        # if not elems_dom:
-            # elems_dom = elementGroup.find('DSG4')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('DSG4')
-                # elem_type = 'DSG4'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 4:
-                    # no_of_nodes = 4
-                # info.append('                              '+str(elem_count)+' DSG4 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('DSG9')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('DSG9')
-                # elem_type = 'DSG9'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 9:
-                    # no_of_nodes = 9
-                # info.append('                              '+str(elem_count)+' DSG9 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Disc9')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Disc9')
-                # elem_type = 'Disc9'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 9:
-                    # no_of_nodes = 9
-                # info.append('                              '+str(elem_count)+' Disc9 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Kirch4')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Kirch4')
-                # elem_type = 'Kirch4'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 4:
-                    # no_of_nodes = 4
-                # info.append('                              '+str(elem_count)+' Kirch4 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('PlShell4')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('PlShell4')
-                # elem_type = 'PlShell4'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 4:
-                    # no_of_nodes = 4
-                # info.append('                              '+str(elem_count)+' PlShell4 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('PlShell9')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('PlShell9')
-                # elem_type = 'PlShell9'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 9:
-                    # no_of_nodes = 9
-                # info.append('                              '+str(elem_count)+' PlShell9 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Fluid27')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Fluid27')
-                # elem_type = 'Fluid27'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 27:
-                    # no_of_nodes = 27
-                # info.append('                              '+str(elem_count)+' Fluid27 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Fluid8')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Fluid8')
-                # elem_type = 'Fluid8'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 8:
-                    # no_of_nodes = 8
-                # info.append('                              '+str(elem_count)+' Fluid8 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Brick27')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Brick27')
-                # elem_type = 'Brick27'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 27:
-                    # no_of_nodes = 27
-                # info.append('                              '+str(elem_count)+' Brick27 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Brick20')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Brick20')
-                # elem_type = 'Brick20'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 20:
-                    # no_of_nodes = 20
-                # info.append('                              '+str(elem_count)+' Brick20 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Brick8')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Brick8')
-                # elem_type = 'Brick8'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 8:
-                    # no_of_nodes = 8
-                # info.append('                              '+str(elem_count)+' Brick8 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elems_dom = elementGroup.find('Tetra10')
-            # if elems_dom is not None:
-                # elems_dom = elementGroup.findall('Tetra10')
-                # elem_type = 'Tetra10'
-                # elem_count = int(elementGroup.get('N')) # count elements
-                # if no_of_nodes <= 10:
-                    # no_of_nodes = 10
-                # info.append('                              '+str(elem_count)+' Tetra10 elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is None:
-            # elem_count = int(elementGroup.get('N')) # count elements
-            # info.append('                              '+str(elem_count)+' ignored elements (block '+str(elementGroup.get('GroupId'))+')')
-        # if elems_dom is not None:
-            # currElems = np.zeros((elem_count,no_of_nodes+1), dtype=np.int) # prepare matrix for elems
-            # currElems[:,0] = [int(oneElem.find('Id').text) for oneElem in elems_dom] # get all elements' IDs
-            # progWin = progressWindow(elem_count-1, 'Reading elements of block ' + elementGroup.get('GroupId'))
-            # for i in range(len(elems_dom)):
-                # oneElem = elems_dom[i]
-                # currElems[i,0:no_of_nodes+1] = [int(oneNode.text) for oneNode in oneElem.findall('N')] # get all element information    change 0 to 1 for normal stuff! (so except for christophers ak3->hdf5 project)
-                # progWin.setValue(i+1)
-                # QApplication.processEvents()
-            # calculationObject.elems.append([elem_type, elementGroup.get('GroupId'), currElems])
-    # return info
+def searchInterfaceElems(nodes, elems, blockCombinations):
+    for blockCombi in blockCombinations: 
+        print(blockCombi)
+    return 1

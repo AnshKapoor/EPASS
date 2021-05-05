@@ -2,13 +2,13 @@
 ### Common standard classes for entire python framework ###
 ###########################################################
 
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox, QCheckBox, QButtonGroup, QRadioButton
 from PyQt5.QtCore import Qt
 import vtk
 from vtk.util import numpy_support
 import numpy as np
-from standardWidgets import progressWindow
-from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes
+from standardWidgets import progressWindow, addButton, addInterfaceWindow, messageboxOK
+from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, getPossibleInterfacePartner
 
 # Saves a model, objects created by readModels()
 class model: # Saves a model
@@ -61,6 +61,9 @@ class model: # Saves a model
         self.blockInfo.setFixedWidth(322)
         self.blockInfo.setFixedHeight(200)
         
+        self.interFaceElemAddButton = addButton()
+        self.interFaceElemAddButton.clicked.connect(self.interfaceElemDialog)
+        
         self.blockMaterialSelectors = []
         self.blockElementTypeSelectors = []
 
@@ -72,9 +75,16 @@ class model: # Saves a model
         self.sublayout1.addWidget(self.elementInfo)
         self.sublayout1.addWidget(self.frequencyInfo)
         self.sublayout1.addStretch(1)
+        self.sublayout2 = QVBoxLayout()
+        self.sublayout2.addWidget(self.blockInfo)
+        self.sublayout3 = QHBoxLayout()
+        [self.sublayout3.addWidget(wid) for wid in [QLabel('Add interface elements'), self.interFaceElemAddButton]]
+        self.sublayout3.addStretch(1)
+        self.sublayout2.addLayout(self.sublayout3)
+        self.sublayout2.addStretch(1)
         self.layout = QHBoxLayout()
         self.layout.addLayout(self.sublayout1)
-        self.layout.addWidget(self.blockInfo)
+        self.layout.addLayout(self.sublayout2)
     
     def updateBlockMaterialSelector(self):
         for n in range(len(self.blockMaterialSelectors)):
@@ -101,6 +111,8 @@ class model: # Saves a model
         if self.name != ' - ':
             # Update Infobox
             self.updateModelSetup()
+            self.interfaceDialogWindow = addInterfaceWindow()
+            self.interfaceblockChecker = []
             # VTK Points
             self.vtkPoints = vtk.vtkPoints()
             self.vtkPoints.SetData(numpy_support.numpy_to_vtk(np.array([self.nodes[:]['xCoords'], self.nodes[:]['yCoords'], self.nodes[:]['zCoords']]).T)) # Attention - vtk points simply count from 0
@@ -114,10 +126,15 @@ class model: # Saves a model
             progWin = progressWindow(len(self.elems)-1, 'Updating window')
             #
             for m, block in enumerate(self.elems):
-                # Material selector
+                # Material and element selector
                 self.blockElementTypeSelectors.append(QComboBox())
+                self.blockElementTypeSelectors[-1].setStyleSheet("background-color:rgb(255,255,255)")
                 [self.blockElementTypeSelectors[-1].addItem(elementType) for elementType in identifyAlternativeElemTypes(block.attrs['ElementType'])]
                 self.blockMaterialSelectors.append(QComboBox())
+                self.blockMaterialSelectors[-1].setStyleSheet("background-color:rgb(255,255,255)")
+                # Block selection for interface dialog
+                self.interfaceblockChecker.append(QCheckBox())
+                self.interfaceDialogWindow.blockLayout.addRow(self.interfaceblockChecker[-1], QLabel('Block ' + str(block.attrs['Id'])))
                 # VTK Elements
                 newGrid = vtk.vtkUnstructuredGrid()
                 newGrid.SetPoints(self.vtkPoints)
@@ -138,6 +155,7 @@ class model: # Saves a model
                     self.blockInfo.setItem(m, n, item)
                 self.blockInfo.setCellWidget(m, 3, self.blockElementTypeSelectors[-1])
                 self.blockInfo.setCellWidget(m, 4, self.blockMaterialSelectors[-1])
+                #
                 vtkWindow.grids.append(newGrid)
                 # Each block gets a vtk actor and mapper
                 vtkWindow.mappers.append(vtk.vtkDataSetMapper())
@@ -164,6 +182,27 @@ class model: # Saves a model
         else:
             self.cluster = 0
     
+    def interfaceElemDialog(self):
+        var = self.interfaceDialogWindow.exec_()
+        if var == 0: # cancel
+            pass
+        elif var == 1: # interface requested
+            relevantBlockCombinations = []
+            for m, checkButton1 in enumerate(self.interfaceblockChecker):
+                if checkButton1.isChecked(): # Block selected?
+                    for n, checkButton2 in enumerate(self.interfaceblockChecker):
+                        if checkButton2.isChecked():  # Block selected?
+                            if m!=n:
+                                elemType1 = self.blockElementTypeSelectors[m].currentText()
+                                elemType2 = self.blockElementTypeSelectors[n].currentText()
+                                if elemType1 in getPossibleInterfacePartner(elemType2):
+                                    relevantBlockCombinations.append(sorted([m,n]))# Compatible element types?
+            success = searchInterfaceElems(self.nodes, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
+            if success: 
+                pass
+            else:
+                messageboxOK('Error', 'Setting up interface not possible!')
+        
     def data2hdf5(self): 
         try:
             for n, block in enumerate(self.hdf5File['Elements'].keys()):

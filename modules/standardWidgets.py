@@ -1,7 +1,7 @@
 #
 import os
 #
-from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget
+from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QHBoxLayout, QLabel, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
 
@@ -61,7 +61,6 @@ class addButton(QPushButton):
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setIcon(QIcon(os.path.dirname(__file__) + '/../pics/add_button.png'))
         self.setIconSize(QSize(20, 20))
-        self.setStatusTip('Add selected load')
         self.setMaximumWidth(23)
         self.setMaximumHeight(23)
 
@@ -72,7 +71,6 @@ class removeButton(QPushButton):
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setIcon(QIcon(os.path.dirname(__file__) + '/../pics/del_button.png'))
         self.setIconSize(QSize(20, 20))
-        self.setStatusTip('Remove this load')
         self.setMaximumWidth(23)
         self.setMaximumHeight(23)
         self.id = 0
@@ -84,7 +82,6 @@ class editButton(QPushButton):
         self.setStyleSheet("background-color:rgb(255,255,255)")
         #self.setIcon(QIcon(ak3path + '/pics/del_button.png'))
         #self.setIconSize(QSize(20, 20))
-        self.setStatusTip('Edit this load')
         self.setMaximumWidth(23)
         self.setMaximumHeight(23)
         self.id = 0
@@ -192,6 +189,30 @@ class progressWindow(QProgressDialog):
         super(QProgressDialog, self).__init__(title, "Cancel", 0, length)
         self.setWindowModality(Qt.WindowModal)
         self.show()
+
+# Basic setup window
+class addInterfaceWindow(QDialog):
+    def __init__(self):
+        super(QDialog, self).__init__()
+        self.setWindowTitle('Create an interface')
+        #
+        self.setAutoFillBackground(True) # color
+        p = self.palette() # color
+        p.setColor(self.backgroundRole(), Qt.white) # color
+        self.setPalette(p) # color
+        #
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        # Block 1 selection
+        self.formGroupBoxBlocks = QGroupBox('Block')
+        self.blockLayout = QFormLayout()
+        self.formGroupBoxBlocks.setLayout(self.blockLayout)
+        #
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(self.formGroupBoxBlocks)
+        self.mainLayout.addWidget(self.buttonBox)
+        self.setLayout(self.mainLayout)
 
 # Basic setup window
 class setupNodeLoadWindow(QDialog):
