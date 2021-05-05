@@ -39,7 +39,7 @@ def readElements(myModel, hdf5File, cub5File=0):
             elemType = cub5File['Simulation Model/Blocks/' + block].attrs['element_type'][()]
             coreformKey, elemType, M = identifyElemType(elemType)
             N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
-            if elemType != 'notSupported':
+            if coreformKey != 'notSupported':
                 dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
                 dataSet[:,0] = cub5File['Simulation Model/Blocks/' + block + '/member ids'][:].T
                 elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs']
@@ -60,12 +60,20 @@ def readElements(myModel, hdf5File, cub5File=0):
         myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
 
 def identifyElemType(elemType): 
-    if elemType[0] == 22: # Shell9
+    if elemType[0] == 22: # Quadrilateral with 9 nodes
         return 'QUAD_9', 'PlShell9', 10;
-    elif elemType[0] == 43: # Hex27
-        return 'HEX_NODE_27', 'Fluid27', 28;
+    elif elemType[0] == 43: # Hexahedron with 27 nodes
+        return 'HEX_NODE_27', 'Fluid27', 28; 
     else:
-        return 'notSupported'
+        return 'notSupported', [], 0;
+
+def identifyAlternativeElemTypes(elemType):
+    if elemType in ['PlShell9', 'PlShell9pre', 'DSG9','Disc9','Fluid2d9']: 
+        return ['PlShell9', 'PlShell9pre', 'DSG9','Disc9','Fluid2d9'];
+    elif elemType in ['Fluid27','Brick27']:
+        return ['Fluid27','Brick27'];
+    else:
+        return [];
 
 def getVTKElem(elpasoElemType):
     if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9']:

@@ -8,7 +8,7 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 from standardWidgets import progressWindow
-from standardFunctionsGeneral import getVTKElem
+from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes
 
 # Saves a model, objects created by readModels()
 class model: # Saves a model
@@ -55,13 +55,14 @@ class model: # Saves a model
 
         self.blockInfo = QTableWidget(1,5)
         self.blockInfo.verticalHeader().setVisible(False)
-        self.blockInfo.setHorizontalHeaderLabels(['', 'Block ID', 'Element type', '#Elements', 'Material'])
-        [self.blockInfo.setColumnWidth(n, 75) for n in range(5)]
+        self.blockInfo.setHorizontalHeaderLabels(['', 'Block ID', '#Elems', 'Element type', 'Material'])
+        [self.blockInfo.setColumnWidth(n, width) for n, width in enumerate([75,65,65,95,75])]
         self.blockInfo.setColumnWidth(0, 20)
         self.blockInfo.setFixedWidth(322)
         self.blockInfo.setFixedHeight(200)
         
         self.blockMaterialSelectors = []
+        self.blockElementTypeSelectors = []
 
     def initLayout(self):
         # ADD TO LAYOUT
@@ -114,6 +115,8 @@ class model: # Saves a model
             #
             for m, block in enumerate(self.elems):
                 # Material selector
+                self.blockElementTypeSelectors.append(QComboBox())
+                [self.blockElementTypeSelectors[-1].addItem(elementType) for elementType in identifyAlternativeElemTypes(block.attrs['ElementType'])]
                 self.blockMaterialSelectors.append(QComboBox())
                 # VTK Elements
                 newGrid = vtk.vtkUnstructuredGrid()
@@ -124,7 +127,7 @@ class model: # Saves a model
                     [newElem.GetPointIds().SetId(p, int(np.where(self.nodes[:]['Ids'] == block[elemCount,p+1])[0])) for p in range(nnodes)] # Get correct n node positions and insert node (nodes can have any id in elpaso)
                     newGrid.InsertNextCell(newElem.GetCellType(), newElem.GetPointIds())
                 # Infotable
-                items = [QTableWidgetItem(), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(block.attrs['ElementType'][:]), QTableWidgetItem(str(block.shape[0]))]
+                items = [QTableWidgetItem(), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(str(block.shape[0]))]
                 for n, item in enumerate(items):
                     if n==0: # Checkbox
                         item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
@@ -133,6 +136,7 @@ class model: # Saves a model
                         item.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
                     item.setTextAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
                     self.blockInfo.setItem(m, n, item)
+                self.blockInfo.setCellWidget(m, 3, self.blockElementTypeSelectors[-1])
                 self.blockInfo.setCellWidget(m, 4, self.blockMaterialSelectors[-1])
                 vtkWindow.grids.append(newGrid)
                 # Each block gets a vtk actor and mapper
@@ -163,8 +167,10 @@ class model: # Saves a model
     def data2hdf5(self): 
         try:
             for n, block in enumerate(self.hdf5File['Elements'].keys()):
-                if self.blockMaterialSelectors[n].currentText() is not '':
+                if self.blockMaterialSelectors[n].currentText() != '':
                     self.hdf5File['Elements/' + block].attrs['MaterialId'] = np.int64(self.blockMaterialSelectors[n].currentText())
+                if self.blockElementTypeSelectors[n].currentText() != '':
+                    self.hdf5File['Elements/' + block].attrs['ElementType'] = self.blockElementTypeSelectors[n].currentText()
             return 1
         except:
             return 0

@@ -68,9 +68,8 @@ class loadGUI(QMainWindow):
         """
         messageboxOK('About', 'elPaSo Model Setup\n' +
                                     'Institute for Acoustics, Braunschweig\n' +
-                                    'Version 0.1 (2019)\n\n' +
-                                    'Program to set up an hdf5 input file for elpaso.\n' +
-                                    'Supported loads: plane wave, diffuse field, \ndistributed time domain, turbulent boundary layer')
+                                    'Version 1.0 (2021)\n\n' +
+                                    'Program to set up an hdf5 input file for elpaso.\n')
 
     def graphWindowClick(self, event):
         """
