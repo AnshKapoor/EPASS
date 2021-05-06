@@ -3,8 +3,10 @@
 ### without additional modules
 #############################################################
 #
+from PyQt5.QtWidgets import QApplication
 import numpy as np
 import vtk
+from standardWidgets import progressWindow
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
 def readNodes(myModel, hdf5File, cub5File=0):
@@ -18,6 +20,7 @@ def readNodes(myModel, hdf5File, cub5File=0):
         dataSet[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][()]
         dataSet[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][()]
         dataSet[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][()]
+        myModel.nodesInv = dict([[ID, n] for n, ID in enumerate(dataSet[:,'Ids'])])
         # Nodesets 
         g = hdf5File.create_group('Nodesets')
         if 'Nodesets' in cub5File['Simulation Model'].keys(): # If nodesets exist in cub5 file by coreform, then read them
@@ -96,11 +99,24 @@ def getPossibleInterfacePartner(elemType):
     else:
         return []
 
+def getNodeIdxOfFaces(elemType):
+    if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']:
+        return np.array([[0,1,2,3,4,5,6,7,8]]) # Face 0
+    elif elemType in ['Fluid27','Brick27']:
+        return np.array([[0,1,5,4,8,13,16,12,25],
+                         [2,3,7,6,19,15,18,14,26],
+                         [0,3,2,1,11,10,9,8,21],
+                         [1,2,6,5,9,14,17,13,24],
+                         [4,5,6,7,16,17,18,19,22],
+                         [0,4,7,3,12,19,15,11,23]]) # Face 0,1,2,3,4,5
+    else:
+        return []
+
 def getVTKElem(elpasoElemType):
     if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9','PlShell9pre','Disc9','Fluid2d9']:
-        return vtk.vtkQuad(), 4
+        return vtk.vtkQuad(), 9, 4
     elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
-        return vtk.vtkHexahedron(), 8
+        return vtk.vtkHexahedron(), 12, 8
 
 # Read setup from hdf5 file
 def readSetup(myModel, hdf5File, cub5File=0):
@@ -127,7 +143,57 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
-def searchInterfaceElems(nodes, elems, blockCombinations):
+def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations):
     for blockCombi in blockCombinations: 
-        print(blockCombi)
+        # change number of faces
+        nodeIdxOfFaces1 = getNodeIdxOfFaces(elems[blockCombi[0]].attrs['ElementType'])
+        nodeIdxOfFaces2 = getNodeIdxOfFaces(elems[blockCombi[1]].attrs['ElementType'])
+        # Get sizes
+        noOfElems1 = len(elems[blockCombi[0]])
+        noOfElems2 = len(elems[blockCombi[1]])
+        noOfFaces1 = nodeIdxOfFaces1.shape[0]
+        noOfFaces2 = nodeIdxOfFaces2.shape[0]
+        noOfTotalFaces1 = noOfElems1 * noOfFaces1
+        noOfTotalFaces2 = noOfElems2 * noOfFaces2
+        # Init arrays containing all coordinates
+        elemAndFaceIDs1 = []
+        elemAndFaceIDs2 = []
+        xCoords1 = np.zeros((noOfTotalFaces1,4))
+        yCoords1 = np.zeros((noOfTotalFaces1,4))
+        zCoords1 = np.zeros((noOfTotalFaces1,4))
+        xCoords2 = np.zeros((noOfTotalFaces2,4))
+        yCoords2 = np.zeros((noOfTotalFaces2,4))
+        zCoords2 = np.zeros((noOfTotalFaces2,4))
+        # Loops to collect coordinates in block 1
+        progWin = progressWindow(len(elems[blockCombi[0]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[0]].attrs['Id']))
+        for m, elem1 in enumerate(elems[blockCombi[0]]):
+            for faceNo1 in range(noOfFaces1): 
+                nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[faceNo1,:4]+1]] # indices of nodes belonging to the face
+                xCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['xCoords'])
+                yCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['yCoords'])
+                zCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['zCoords'])
+                elemAndFaceIDs1.append([m, faceNo1])
+            progWin.setValue(m)
+            QApplication.processEvents()
+        # Loops to collect coordinates in block 2
+        progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[1]].attrs['Id']))
+        for m, elem2 in enumerate(elems[blockCombi[1]]): 
+            for faceNo2 in range(noOfFaces2):
+                nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[faceNo2,:4]+1]] # indices of nodes belonging to the face
+                xCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['xCoords'])
+                yCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['yCoords'])
+                zCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['zCoords'])
+                elemAndFaceIDs2.append([m, faceNo2])
+            progWin.setValue(m)
+            QApplication.processEvents()
+        # Find interface elements for coincident nodes using saved coordinates
+        progWin = progressWindow(noOfTotalFaces1-1, 'Searching interfaces between block' + str(elems[blockCombi[0]].attrs['Id']) + ' and ' + str(elems[blockCombi[1]].attrs['Id']))
+        for m in range(noOfTotalFaces1):
+            xIdx = ((xCoords2[:,0] == xCoords1[m,0]) & (xCoords2[:,1] == xCoords1[m,1]) & (xCoords2[:,2] == xCoords1[m,2]) & (xCoords2[:,3] == xCoords1[m,3]))
+            yIdx = ((yCoords2[:,0] == yCoords1[m,0]) & (yCoords2[:,1] == yCoords1[m,1]) & (yCoords2[:,2] == yCoords1[m,2]) & (yCoords2[:,3] == yCoords1[m,3]))
+            zIdx = ((zCoords2[:,0] == zCoords1[m,0]) & (zCoords2[:,1] == zCoords1[m,1]) & (zCoords2[:,2] == zCoords1[m,2]) & (zCoords2[:,3] == zCoords1[m,3]))
+            idx = (xIdx & yIdx & zIdx).nonzero()[0][0]
+            print('Elem ' + str(elemAndFaceIDs1[m][0]) + '(face' + str(elemAndFaceIDs1[m][1]) + ') fits elem ' + str(elemAndFaceIDs2[idx][0]) + '(face' + str(elemAndFaceIDs2[idx][1]) + ')')
+            progWin.setValue(m)
+            QApplication.processEvents()
     return 1

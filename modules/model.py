@@ -138,11 +138,15 @@ class model: # Saves a model
                 # VTK Elements
                 newGrid = vtk.vtkUnstructuredGrid()
                 newGrid.SetPoints(self.vtkPoints)
-                # Loop over all elements in block m; elem is a list with elements ids and connected nodes
+                #
+                vtkCells = vtk.vtkCellArray()
+                newElem, newElemTypeId, nnodes = getVTKElem(block.attrs['ElementType'])
+                cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
+                cells[:,0] = nnodes
                 for elemCount in range(block.shape[0]):
-                    newElem, nnodes = getVTKElem(block.attrs['ElementType'])
-                    [newElem.GetPointIds().SetId(p, int(np.where(self.nodes[:]['Ids'] == block[elemCount,p+1])[0])) for p in range(nnodes)] # Get correct n node positions and insert node (nodes can have any id in elpaso)
-                    newGrid.InsertNextCell(newElem.GetCellType(), newElem.GetPointIds())
+                    cells[elemCount,1:] = [self.nodesInv[ID] for ID in block[elemCount,1:(nnodes+1)]]
+                vtkCells.SetCells(block.shape[0], numpy_support.numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
+                newGrid.SetCells(newElemTypeId, vtkCells)
                 # Infotable
                 items = [QTableWidgetItem(), QTableWidgetItem(str(block.attrs['Id'][()])), QTableWidgetItem(str(block.shape[0]))]
                 for n, item in enumerate(items):
@@ -196,8 +200,8 @@ class model: # Saves a model
                                 elemType1 = self.blockElementTypeSelectors[m].currentText()
                                 elemType2 = self.blockElementTypeSelectors[n].currentText()
                                 if elemType1 in getPossibleInterfacePartner(elemType2):
-                                    relevantBlockCombinations.append(sorted([m,n]))# Compatible element types?
-            success = searchInterfaceElems(self.nodes, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
+                                    relevantBlockCombinations.append(sorted([m,n])) # Compatible element types? 
+            success = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
             if success: 
                 pass
             else:
