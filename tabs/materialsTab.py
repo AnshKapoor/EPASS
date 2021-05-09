@@ -5,6 +5,7 @@ from standardWidgets import addButton, messageboxOK, materialTypeSelector
 ###############################IMPORTING MATERIAL CLASSES###########################
 sys.path.append('./materials')
 from materials import matInfoBox
+import numpy as np
 # Structural linear materials
 from STR_LIN_ELA_ISO_DIR import STR_LIN_ELA_ISO_DIR
 from STR_LIN_VIS_ISO_DIR import STR_LIN_VIS_ISO_DIR
@@ -127,6 +128,7 @@ class materialsTab(QWidget):
             for dataSet in materialsGroup.keys():
                 del materialsGroup[dataSet]
             #
+            materialsGroup.attrs['N'] = np.int64(len(myModel.materials))
             [material.data2hdf5(materialsGroup) for material in myModel.materials]
             #
             return 1
