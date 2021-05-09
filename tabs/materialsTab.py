@@ -128,8 +128,16 @@ class materialsTab(QWidget):
             for dataSet in materialsGroup.keys():
                 del materialsGroup[dataSet]
             #
+            # Write f-dependent material data to hdf5 file
+            if not 'Parameters' in myModel.hdf5File.keys():
+                myModel.hdf5File.create_group('Parameters')
+            parametersGroup = myModel.hdf5File['Parameters']
+            #
+            for dataSet in parametersGroup.keys():
+                del parametersGroup[dataSet]
+            #
             materialsGroup.attrs['N'] = np.int64(len(myModel.materials))
-            [material.data2hdf5(materialsGroup) for material in myModel.materials]
+            [material.data2hdf5(materialsGroup,parametersGroup) for material in myModel.materials]
             #
             return 1
         except:

@@ -118,12 +118,12 @@ class material(QHBoxLayout):
         for n, item in enumerate(self.parameterValues):
             item.setText(self.varSave[n])    
     
-    def data2hdf5(self, materialsGroup):
+    def data2hdf5(self, materialsGroup, parametersGroup):
         # Exporting the material
-        set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
-        set.attrs['Id'] = np.uint64(self.Id.text())
-        set.attrs['MaterialType'] = self.type
-        set.attrs['Name'] = self.name.text()
+        dataSet = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
+        dataSet.attrs['Id'] = np.uint64(self.Id.text())
+        dataSet.attrs['MaterialType'] = self.type
+        dataSet.attrs['Name'] = self.name.text()
         for n in range(len(self.parameterNames)): 
             if self.parameterValues[n].text() == 'freq-dependent':
                 dataList = []
@@ -136,12 +136,12 @@ class material(QHBoxLayout):
                             except:
                                 pass
                 fData = np.array(dataList)
-                fDataSet = materialsGroup.create_dataset('material' + self.Id.text() + '_' + self.parameterNames[n], data=fData)
+                fDataSet = parametersGroup.create_dataset('material' + self.Id.text() + '_' + self.parameterNames[n], data=fData)
                 fDataSet.attrs['type'] = 'freq-dependent'
                 fDataSet.attrs['parameter'] = self.parameterNames[n]
                 fDataSet.attrs['colHeader'] = ['frequency', self.parameterNames[n]]
                 fDataSet.attrs['N'] = np.int64(len(dataList))
-                set.attrs[self.parameterNames[n]] = 'material' + self.Id.text() + '_' + self.parameterNames[n]
+                dataSet.attrs[self.parameterNames[n]] = '/Parameters/material' + self.Id.text() + '_' + self.parameterNames[n]
             else:
-                set.attrs[self.parameterNames[n]] = float(self.parameterValues[n].text())
+                dataSet.attrs[self.parameterNames[n]] = str(float(self.parameterValues[n].text()))
             
