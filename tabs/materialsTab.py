@@ -9,6 +9,8 @@ import numpy as np
 # Structural linear materials
 from STR_LIN_ELA_ISO_DIR import STR_LIN_ELA_ISO_DIR
 from STR_LIN_VIS_ISO_DIR import STR_LIN_VIS_ISO_DIR
+from STR_LIN_MAS_ISO_DIR import STR_LIN_MAS_ISO_DIR
+from STR_LIN_SPR_ORT_DIR import STR_LIN_SPR_ORT_DIR
 # Acoustic linear materials
 from AF_LIN_UAF_ISO_DIR import AF_LIN_UAF_ISO_DIR
 from AF_LIN_DAF_ISO_DIR import AF_LIN_DAF_ISO_DIR
@@ -63,6 +65,10 @@ class materialsTab(QWidget):
                 myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear visco iso':
                 myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'STRUCT linear pointmass':
+                myModel.materials.append(STR_LIN_MAS_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'STRUCT linear spring':
+                myModel.materials.append(STR_LIN_SPR_ORT_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'ACOUS undamped fluid iso':
                 myModel.materials.append(AF_LIN_UAF_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'ACOUS damped fluid iso':
