@@ -26,7 +26,7 @@ class AF_LIN_DAF_ISO_DIR(material):
         super(AF_LIN_DAF_ISO_DIR, self).__init__(Id)
         #
 
-    def data2hdf5(self, materialsGroup): # Overriding method as parameter calculations are conducted and equivalent fluid material is used
+    def data2hdf5(self, materialsGroup, parametersGroup): # Overriding method as parameter calculations are conducted and equivalent fluid material is used
         # Exporting the material
         set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
         set.attrs['Id'] = np.uint64(self.Id.text())

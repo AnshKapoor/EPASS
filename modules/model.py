@@ -27,6 +27,7 @@ class model: # Saves a model
         self.nodes = 0
         self.nodeSets = []
         self.elems = []
+        self.interfaceElems = []
         self.elementSets = []
         self.loads = []
         self.materials = []
@@ -62,7 +63,6 @@ class model: # Saves a model
         self.blockInfo.setFixedHeight(200)
         
         self.interFaceElemAddButton = addButton()
-        self.interFaceElemAddButton.clicked.connect(self.interfaceElemDialog)
         
         self.blockMaterialSelectors = []
         self.blockElementTypeSelectors = []
@@ -169,6 +169,7 @@ class model: # Saves a model
                 vtkWindow.actors[-1].GetProperty().SetAmbient(0.9)
                 vtkWindow.actors[-1].GetProperty().SetDiffuse(0.1)
                 vtkWindow.actors[-1].GetProperty().SetSpecular(0.)
+                vtkWindow.actors[-1].GetProperty().SetOpacity(0.85)
                 # Each block gets another vtk actor and mapper for the edges of the grid
                 vtkWindow.edgeMappers.append(vtk.vtkDataSetMapper())
                 vtkWindow.edgeMappers[-1].SetInputData(vtkWindow.grids[-1])
@@ -186,7 +187,7 @@ class model: # Saves a model
         else:
             self.cluster = 0
     
-    def interfaceElemDialog(self):
+    def interfaceElemDialog(self, vtkWindow):
         var = self.interfaceDialogWindow.exec_()
         if var == 0: # cancel
             pass
@@ -201,20 +202,117 @@ class model: # Saves a model
                                 elemType2 = self.blockElementTypeSelectors[n].currentText()
                                 if elemType1 in getPossibleInterfacePartner(elemType2):
                                     relevantBlockCombinations.append(sorted([m,n])) # Compatible element types? 
-            success = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
-            if success: 
-                pass
+            if relevantBlockCombinations:
+                foundInterFaceElements = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
+                if foundInterFaceElements: 
+                    # Add information to info block
+                    noOfInterfaceElems = len(foundInterFaceElements)
+                    self.blockInfo.insertRow(self.blockInfo.rowCount())
+                    currentRow = self.blockInfo.rowCount()-1
+                    items = [QTableWidgetItem(), QTableWidgetItem(' '), QTableWidgetItem('interface'), QTableWidgetItem(' '), QTableWidgetItem(' ')]
+                    for n, item in enumerate(items):
+                        if n==0: # Checkbox
+                            item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                            item.setCheckState(Qt.Checked)
+                        else: # Text/Info
+                            item.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
+                        item.setTextAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
+                        self.blockInfo.setItem(currentRow, n, item)
+                    # Create actors for 3D window
+                    # VTK Elements
+                    newGrid = vtk.vtkUnstructuredGrid()
+                    newGrid.SetPoints(self.vtkPoints)
+                    #
+                    vtkCells = vtk.vtkCellArray()
+                    newElem, newElemTypeId, nnodes = getVTKElem(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
+                    cells = np.zeros((noOfInterfaceElems,nnodes+1), dtype=np.int64)
+                    cells[:,0] = nnodes
+                    for elemCount in range(noOfInterfaceElems):
+                        cells[elemCount,1:] = [self.nodesInv[nodeID] for nodeID in foundInterFaceElements[elemCount].structuralNodes[:4]]
+                    vtkCells.SetCells(noOfInterfaceElems, numpy_support.numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
+                    newGrid.SetCells(newElemTypeId, vtkCells)
+                    #
+                    vtkWindow.grids.append(newGrid)
+                    # Each block gets a vtk actor and mapper
+                    vtkWindow.mappers.append(vtk.vtkDataSetMapper())
+                    vtkWindow.mappers[-1].SetInputData(vtkWindow.grids[-1])
+                    vtkWindow.actors.append(vtk.vtkActor())
+                    vtkWindow.actors[-1].SetMapper(vtkWindow.mappers[-1])
+                    vtkWindow.actors[-1].GetProperty().SetColor(0.1,0.1,0.7)
+                    vtkWindow.actors[-1].GetProperty().SetAmbient(0.9)
+                    vtkWindow.actors[-1].GetProperty().SetDiffuse(0.1)
+                    vtkWindow.actors[-1].GetProperty().SetSpecular(0.)
+                    # Each block gets another vtk actor and mapper for the edges of the grid
+                    vtkWindow.edgeMappers.append(vtk.vtkDataSetMapper())
+                    vtkWindow.edgeMappers[-1].SetInputData(vtkWindow.grids[-1])
+                    vtkWindow.edgeActors.append(vtk.vtkActor())
+                    vtkWindow.edgeActors[-1].SetMapper(vtkWindow.edgeMappers[-1])
+                    vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
+                    vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2)
+                    vtkWindow.edgeActors[-1].GetProperty().SetColor(0.1,0.1,0.1)
+                    #
+                    self.interfaceElems.append(foundInterFaceElements)
+                    messageboxOK('Success', str(noOfInterfaceElems) + ' interface elements found. \n Select appropriate materials before export!')
+                else:
+                    messageboxOK('Error', 'No interfaces found.')
             else:
-                messageboxOK('Error', 'Setting up interface not possible!')
+                messageboxOK('Error', 'Select more than one block and select compatible block.')
         
     def data2hdf5(self): 
         try:
+            # Update blocks and receive maximum ID
+            maxElemId = 0
             for n, block in enumerate(self.hdf5File['Elements'].keys()):
+                currentMaxId = self.hdf5File['Elements/' + block][:,0].max()
+                if currentMaxId > maxElemId:
+                    maxElemId = currentMaxId
                 if self.blockMaterialSelectors[n].currentText() != '':
                     self.hdf5File['Elements/' + block].attrs['MaterialId'] = np.int64(self.blockMaterialSelectors[n].currentText())
                 if self.blockElementTypeSelectors[n].currentText() != '':
                     self.hdf5File['Elements/' + block].attrs['ElementType'] = self.blockElementTypeSelectors[n].currentText()
+            # Export interfaces
+            if not 'InterfaceElements' in self.hdf5File.keys():
+                self.hdf5File.create_group('InterfaceElements')
+            interfaceGroup = self.hdf5File['InterfaceElements']
+            #
+            for dataSet in interfaceGroup.keys():
+                del interfaceGroup[dataSet]
+            #
+            counter = 0
+            for interfaceBlock in self.interfaceElems:
+                for interFaceElem in interfaceBlock:
+                    interFaceElem.Id = np.uint64(maxElemId+1)
+                    maxElemId = maxElemId+1
+                    dataSet = interfaceGroup.create_dataset('InterfaceElement' + str(interFaceElem.Id), data=[])
+                    dataSet.attrs['Id'] = np.uint64(interFaceElem.Id)
+                    #
+                    structMatId = np.uint64(self.blockMaterialSelectors[interFaceElem.structBlockIdx].currentText())
+                    structMatIdx = self.blockMaterialSelectors[interFaceElem.structBlockIdx].currentIndex()
+                    dataSet.attrs['matS'] = structMatId
+                    #
+                    fluidMatId = np.uint64(self.blockMaterialSelectors[interFaceElem.fluidBlockIdx].currentText())
+                    fluidMatIdx = self.blockMaterialSelectors[interFaceElem.fluidBlockIdx].currentIndex()
+                    dataSet.attrs['matF'] = fluidMatId
+                    #
+                    dataSet.attrs['ori'] = interFaceElem.ori
+                    #
+                    if self.materials[structMatIdx].type[:7] == 'STR_LIN': 
+                        if self.materials[fluidMatIdx].type[:10] == 'AF_LIN_UAF': 
+                            interFaceElem.type = 'InterfaceMindlin'
+                            dataSet.attrs['type'] = 'InterfaceMindlin'
+                        elif self.materials[fluidMatIdx].type[:10] in ['AF_LIN_DAF', 'AF_LIN_EQF']: 
+                            interFaceElem.type = 'InterfaceMindlinEquiporo'
+                            dataSet.attrs['type'] = 'InterfaceMindlinEquiporo'
+                        else:
+                            return 0
+                    else:
+                        return 0
+                    # 
+                    dataSet.attrs['NS'] = interFaceElem.structuralNodes
+                    dataSet.attrs['NF'] = interFaceElem.fluidNodes
+                    #
+                    counter = counter + 1
+            interfaceGroup.attrs['N'] = np.uint64(counter)
             return 1
         except:
             return 0
-

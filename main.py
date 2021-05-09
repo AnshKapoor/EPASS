@@ -109,6 +109,7 @@ class loadGUI(QMainWindow):
                 # Update 2D / 3D windows
                 if success:
                     self.myModel.updateModel(self.vtkWindow)
+                    self.myModel.interFaceElemAddButton.clicked.connect(self.interfaceElemDialogEvent)
                 self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
                 self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
                 self.update2D()
@@ -328,6 +329,9 @@ class loadGUI(QMainWindow):
         for matNo in range(len(self.myModel.materials)):
             self.myModel.materials[matNo].removeButton.id = matNo
         self.myModel.updateBlockMaterialSelector()
+    
+    def interfaceElemDialogEvent(self):
+        self.myModel.interfaceElemDialog(self.vtkWindow)
         
     def setupMenu(self):
         """
