@@ -161,3 +161,4 @@ class pointForce(nodeLoad):
         [arrowVectorsLoad.InsertNextTuple([-0.3*scaleFactor*float(self.dirX.text())/self.amp, -0.3*scaleFactor*float(self.dirY.text())/self.amp, -0.3*scaleFactor*float(self.dirZ.text())/self.amp]) for p in range(0,len(self.nodePoints),arrNoScale)]
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
+    

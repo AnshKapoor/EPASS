@@ -166,14 +166,19 @@ class nodeLoad(QHBoxLayout):
         # Exporting the load per node
         progWin = progressWindow(len(self.nodePointsIds)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nN, nodeId in enumerate(self.nodePointsIds):
-            frequencies = self.myModel.frequencies
-            dataArray = [[frequencies[nf], float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text()), 0.] for nf in range(len(frequencies))]
-            set = nodeLoadsGroup.create_dataset('mtxFemNodeLoad'+str(self.removeButton.id+1) + '_' + str(int(nodeId)), data=(dataArray))
-            set.attrs['FreqCount'] = np.uint64(len(frequencies))
-            set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(nodeId))
-            set.attrs['NodeId'] = np.uint64(nodeId) # Assign element load to element
-            set.attrs['LoadType'] = self.type
-            set.attrs['MethodType'] = 'FEM'
+            #frequencies = self.myModel.frequencies
+            #dataArray = [[frequencies[nf], float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text()), 0.] for nf in range(len(frequencies))]
+            #set = nodeLoadsGroup.create_dataset('mtxFemNodeLoad'+str(self.removeButton.id+1) + '_' + str(int(nodeId)), data=(dataArray))
+            dataSet = nodeLoadsGroup.create_dataset('mtxFemNodeLoad'+str(self.removeButton.id+1) + '_' + str(int(nodeId)), data=[])
+            #set.attrs['FreqCount'] = np.uint64(len(frequencies))
+            dataSet.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(nodeId))
+            dataSet.attrs['NodeId'] = np.uint64(nodeId) # Assign element load to element
+            dataSet.attrs['LoadType'] = self.type
+            dataSet.attrs['MethodType'] = 'FEM'
+            #
+            dataSet.attrs['Fx'] = float(self.dirX.text())
+            dataSet.attrs['Fy'] = float(self.dirY.text())
+            dataSet.attrs['Fz'] = float(self.dirZ.text())
             # Update progress window
             progWin.setValue(nN)
             QApplication.processEvents()
