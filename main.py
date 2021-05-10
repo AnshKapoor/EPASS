@@ -192,6 +192,7 @@ class loadGUI(QMainWindow):
         self.tabLoads.addLoadButton.clicked.connect(self.addLoadEvent)
         self.tabMaterials = materialsTab()
         self.tabMaterials.addMaterialButton.clicked.connect(self.addMaterialEvent)
+        self.tabMaterials.importMaterialButton.clicked.connect(self.importMaterialsEvent)
         self.tabConstraints = constraintsTab()
         self.tabConstraints.addConstraintButton.clicked.connect(self.addConstraintEvent)
         #
@@ -291,18 +292,25 @@ class loadGUI(QMainWindow):
     def addMaterialEvent(self):
         success = self.tabMaterials.addMaterial(self.myModel)
         if success:
-            # Reset new ids for button in order to identify button on next click correctly and reconnect buttons
-            for matNo in range(len(self.myModel.materials)):
-                self.myModel.materials[matNo].removeButton.id = matNo
-                self.myModel.materials[matNo].removeButton.disconnect()
-                self.myModel.materials[matNo].removeButton.clicked.connect(lambda: self.removeMaterialEvent('button'))
-            self.myModel.updateBlockMaterialSelector()
+            self.updateMaterials()
     
+    def importMaterialsEvent(self):
+        success = self.tabMaterials.importMaterial(self.myModel)
+        if success:
+            self.updateMaterials()
+   
     def removeMaterialEvent(self, matIDToRemove):
         self.tabMaterials.removeMaterial(matIDToRemove, self.myModel)
         # Reset new ids for button in order to identify button on next click correctly
         for matNo in range(len(self.myModel.materials)):
             self.myModel.materials[matNo].removeButton.id = matNo
+        self.myModel.updateBlockMaterialSelector()
+   
+    def updateMaterials(self):# Reset new ids for button in order to identify button on next click correctly and reconnect buttons
+        for matNo in range(len(self.myModel.materials)):
+            self.myModel.materials[matNo].removeButton.id = matNo
+            self.myModel.materials[matNo].removeButton.disconnect()
+            self.myModel.materials[matNo].removeButton.clicked.connect(lambda: self.removeMaterialEvent('button'))
         self.myModel.updateBlockMaterialSelector()
     
     def interfaceElemDialogEvent(self):

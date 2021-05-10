@@ -1,5 +1,5 @@
-import sys
-from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout
+import sys, os
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLineEdit, QTableWidgetItem
 from PyQt5.QtGui import QFont
 from standardWidgets import addButton, messageboxOK, materialTypeSelector
 ###############################IMPORTING MATERIAL CLASSES###########################
@@ -43,11 +43,14 @@ class materialsTab(QWidget):
         self.typeLabel = QLabel('Material Type')
         self.materialSelector = materialTypeSelector()
         self.addMaterialButton = addButton()
+        self.importMaterialButton = addButton()
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.typeLabel)
         self.subLayouts[-1].addWidget(self.materialSelector)
         self.subLayouts[-1].addWidget(self.addMaterialButton)
         self.subLayouts[-1].addStretch()
+        self.subLayouts[-1].addWidget(QLabel('Import materials'))
+        self.subLayouts[-1].addWidget(self.importMaterialButton)
         #
         self.matInfo = matInfoBox()
         self.subLayouts.append(QHBoxLayout())
@@ -82,7 +85,67 @@ class materialsTab(QWidget):
             self.matInfo.updateLayout(myModel.materials)
             return 1
         else:
-            messageboxOK('Addition of load not possible', 'Open a model first!')
+            messageboxOK('Addition of material not possible', 'Open a model first!')
+            return 0
+    
+    def importMaterial(self, myModel):
+        """
+        Imports materials from ascii file
+        """
+        if myModel.hdf5File:
+            messageboxOK('File required', 'Please select an ascii file containing the material data.<br><br>File format: One blankspace-separated line per material<br>Material type in the first column followed by id and the parameter values.')
+            options = QFileDialog.Options()
+            options |= QFileDialog.DontUseNativeDialog
+            fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","ascii file (*.dat *.txt)", options=options)
+            if fileName:
+                f = open(fileName, 'r')
+                for line in f:
+                    myData = line.split()
+                    if myData[0] == 'STR_LIN_ELA_ISO_DIR':
+                        newMat = STR_LIN_ELA_ISO_DIR(myData[1])
+                    elif myData[0] == 'STR_LIN_VIS_ISO_DIR':
+                        newMat = STR_LIN_VIS_ISO_DIR(myData[1])
+                    elif myData[0] == 'STR_LIN_MAS_ISO_DIR':
+                        newMat = STR_LIN_MAS_ISO_DIR(myData[1])
+                    elif myData[0] == 'STR_LIN_SPR_ORT_DIR':
+                        newMat = STR_LIN_SPR_ORT_DIR(myData[1])
+                    elif myData[0] == 'AF_LIN_UAF_ISO_DIR':
+                        newMat = AF_LIN_UAF_ISO_DIR(myData[1])
+                    elif myData[0] == 'AF_LIN_DAF_ISO_DIR':
+                        newMat = AF_LIN_DAF_ISO_DIR(myData[1])
+                    elif myData[0] == 'AF_LIN_EQF_ISO_DIR':
+                        newMat = AF_LIN_EQF_ISO_DIR(myData[1])
+                    else:
+                        newMat = STR_LIN_ELA_ISO_DIR(0)
+                        myData = []
+                    if len(myData) == len(newMat.parameterNames)+2:
+                        for n, entry in enumerate(myData[2:]): 
+                            try: # Check if number
+                                float(entry)
+                                newMat.parameterValues[n].setText(entry)
+                            except: # else search for given string as filename
+                                requestedFdependentFileName = os.path.split(fileName)[0] + '\\' + entry
+                                if os.path.isfile(requestedFdependentFileName) and newMat.allowFrequencyDependentValues[n]: 
+                                    f = open(requestedFdependentFileName, 'r')
+                                    table = newMat.frequencyDependentEdits[n].table 
+                                    maxRows = table.rowCount()
+                                    lineCounter = 0
+                                    for line in f:
+                                        if lineCounter > maxRows-1: 
+                                            table.insertRow(table.rowCount())
+                                        table.setItem(lineCounter, 0, QTableWidgetItem(line.split()[0]))
+                                        table.setItem(lineCounter, 1, QTableWidgetItem(line.split()[1]))
+                                        lineCounter = lineCounter + 1
+                                    newMat.parameterValues[n].setText('freq-dependent')
+                                    newMat.parameterValues[n].setEnabled(False)
+                        myModel.materials.append(newMat)
+            else:
+                return 0
+            # Refresh layout
+            self.matInfo.updateLayout(myModel.materials)
+            return 1
+        else:
+            messageboxOK('Addition of material not possible', 'Open a model first!')
             return 0
             
     def removeMaterial(self, loadIDToRemove, myModel):
