@@ -2,7 +2,7 @@
 ### Common standard classes for entire python framework ###
 ###########################################################
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox, QCheckBox
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox, QCheckBox, QFileDialog
 from PyQt5.QtCore import Qt
 import vtk
 from vtk.util import numpy_support
@@ -286,6 +286,20 @@ class model(QWidget): # Saves a model
                 if self.blockElementTypeSelectors[n].currentText() != '':
                     self.hdf5File['Elements/' + block].attrs['ElementType'] = self.blockElementTypeSelectors[n].currentText()
                 self.hdf5File['Elements/' + block].attrs['Orientation'] = self.blockOrientationSelectors[n].currentText()
+                if self.blockOrientationSelectors[n].currentText() == 'user-def':
+                    messageboxOK('File required', 'A user-defined material orientation for block ' + str(self.hdf5File['Elements/' + block].attrs['Id']) + ' selected. <br>Please select an ascii file containing the orientation.')
+                    options = QFileDialog.Options()
+                    options |= QFileDialog.DontUseNativeDialog
+                    fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","ascii file (*.dat)", options=options)
+                    if fileName:
+                        myData = []
+                        f = open(fileName, 'r')
+                        for line in f:
+                            myData.append([float(x) for x in line.split()])
+                            self.hdf5File['Elements/' + block].attrs['OrientationFile'] = '/Parameters/orient' + str(self.hdf5File['Elements/' + block].attrs['Id'])
+                        self.hdf5File['Parameters'].create_dataset('orient' + str(self.hdf5File['Elements/' + block].attrs['Id']), data=np.array(myData, dtype=np.float64))
+                    else:
+                        return 0
             # Export interfaces
             if not 'InterfaceElements' in self.hdf5File.keys():
                 self.hdf5File.create_group('InterfaceElements')

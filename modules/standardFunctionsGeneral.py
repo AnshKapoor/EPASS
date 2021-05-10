@@ -97,7 +97,7 @@ def identifyAlternativeElemTypes(elemType):
 
 def identifyOrientationTypes(elemType):
     if elemType in ['Brick27']: 
-        return ['global','user-dev'];
+        return ['global','user-def'];
     else:
         return ['global'];
     

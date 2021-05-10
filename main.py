@@ -194,35 +194,10 @@ class loadGUI(QMainWindow):
         self.tabMaterials.addMaterialButton.clicked.connect(self.addMaterialEvent)
         self.tabConstraints = constraintsTab()
         self.tabConstraints.addConstraintButton.clicked.connect(self.addConstraintEvent)
-        #self.tabMatCont = trial_mat()     
-        #self.tabMaterials = self.tabMatCont#QWidget()
-        #self.tabMaterials.titleText = 'Materials'
         #
         self.tabsLeft = QTabWidget()
         [self.tabsLeft.addTab(tab,tab.titleText) for tab in [self.tabAnalysis, self.tabLoads, self.tabMaterials, self.tabConstraints]]
-
-        #self.tabMaterials.tester()
-        #self.tabMaterials.saveMat.clicked.connect(self.showSaveEdit)
-        
         #
-        # CREATE WIDGETS | III - MATERIALS
-        # self.labelMat = QLabel('Fill me, please :)')
-        # self.labelMat.setFont(self.myFont)
-        # # ADD TO LAYOUT
-        # self.MatLayout = QVBoxLayout()
-
-        #self.MatLayout.addWidget(self.tabMatCont)
-        #self.MatLayout.addWidget(self.labelMat)
-        #self.MatLayout.setStretchFactor(self.loadInfo, True)
-        #self.tabMaterials.layout = QVBoxLayout(self)
-        #self.tabMaterials.setLayout(self.MatLayout)
-
-        # LEFT SIDE EXPORT SETTINGS
-        # self.clusterSwitch = QCheckBox()
-        # self.clusterSwitch.setChecked(0)
-        # self.clusterSwitch.setText('Export for Cluster')
-        # self.clusterSwitch.setToolTip('Changes file path to convention readable by the cluster  ')
-        # self.clusterSwitch.stateChanged.connect(self.myModel.toggleCluster)
         self.saveAndExitButton = saveAndExitButton()
         self.saveAndExitButton.clicked.connect(self.saveAndExit)
 
