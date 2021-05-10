@@ -78,12 +78,11 @@ class material(QHBoxLayout):
             else:
                 subEditButton = QLabel('')
                 subEditButton.setFixedWidth(23)
-            subWidget = QWidget()
-            subLayout = QHBoxLayout(subWidget)
+            subLayout = QHBoxLayout()
             label = QLabel(self.parameterNames[n])
             label.setFixedWidth(50)
             [subLayout.addWidget(wid) for wid in [label, self.parameterValues[n], subEditButton]]
-            self.setupWindow.layout.addWidget(subWidget)
+            self.setupWindow.layout.addLayout(subLayout)
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
     

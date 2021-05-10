@@ -1,0 +1,31 @@
+#########################################################
+### Module Import                                     ###
+from PyQt5.QtWidgets import QLineEdit
+from materials import material
+
+#########################################################
+
+#########################################################
+### Material Widget for STR_LIN_VIS_ORT_LAM           ###
+#########################################################
+
+class STR_LIN_VIS_ORT_LAM(material):
+    def __init__(self, Id):
+        #
+        self.typeLabel = 'STRUCT linear visco ort pre'
+        self.type = 'STR_LIN_VIS_ORT_LAM'
+        self.toolTip = '<b>Structural prestressed linear visco-elastic orthotropic</b> <br>Material model according to Hookes law with damping loss factor<br>including prestressing and separate input for membrane and bending moduli.'
+        #
+        self.parameterNames =                              ['Ex' ,'Ey','Ez','ExMem','EyMem', 'eta', 'Gxy', 'Gxz', 'Gyz', 'GxyMem', 'nuxy', 'nuxz', 'nuyz', 'nuxyMem', 'rho',  't', 'preX', 'preY']
+        self.parameterValues = [QLineEdit(str(x)) for x in [ 7.e9,7.e9,  7.e9, 7.e9,   7.e9, 0.001, 2.7e9, 2.7e9, 2.7e9,    2.7e9,    0.3,    0.3,    0.3,       0.3, 2700.,   0.,     0.,     0.]]
+        self.allowFrequencyDependentValues =               [False,False,False,False, False,  True, False, False, False,    False,  False,  False,  False,     False, False,False,  False,  False]
+        self.parameterTipps = ['Youngs modulus in x (bending)', 'Youngs modulus in y (bending)', 'Youngs modulus in z (bending)', 'Youngs modulus in x (membrane)', 'Youngs modulus in y (membrane)','Damping loss factor', 
+                               'Shear modulus in xy (bending)', 'Shear modulus in xz (bending)', 'Shear modulus in yz (bending)', 'Shear modulus in xy (membrane)',
+                               'Poissons ratio xy (bending)', 'Poissons ratio xz (bending)', 'Poissons ratio yz (bending)', 'Poissons ratio xy (membrane)',
+                               'Density', 'Thickness', 'prestress in x', 'prestress in y']
+        [parameterValue.setToolTip(self.parameterTipps[n]) for n, parameterValue in enumerate(self.parameterValues)]
+        #
+        super(STR_LIN_VIS_ORT_LAM, self).__init__(Id)
+        #
+
+

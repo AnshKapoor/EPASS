@@ -19,10 +19,9 @@ class STR_LIN_ELA_ISO_DIR(material):
         self.parameterNames =                              ['E',     'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho',   't', 'Fi']
         self.parameterValues = [QLineEdit(str(x)) for x in [7.e9,     0.3,   0.,    0.,    0.,    0., 2700.,    0.,   0.]]
         self.allowFrequencyDependentValues =               [False , False,False, False, False, False, False, False, False]
-        self.parameterTipps = ['Youngs Modulus', 'Poissons ratio', 'Cross section(only for beam elements)',
+        self.parameterTipps = ['Youngs Modulus', 'Poissons ratio', 'Cross section area (only for beam elements)',
                               'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 
-                              'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 
-                              'Density', 'Thickness', 'Initial force to prestress element']
+                              'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Density', 'Thickness', 'Initial force to prestress element']
         [parameterValue.setToolTip(self.parameterTipps[n]) for n, parameterValue in enumerate(self.parameterValues)]
         #
         super(STR_LIN_ELA_ISO_DIR, self).__init__(Id)

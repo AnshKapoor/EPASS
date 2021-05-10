@@ -19,7 +19,9 @@ class STR_LIN_SPR_ORT_DIR(material):
         self.parameterNames =                              ['Cx','Cy','Cz','Crx','Cry','Crz','type','eta']
         self.parameterValues = [QLineEdit(str(x)) for x in [  0.,  0.,  0.,   0.,   0.,   0.,     1,   0.]]
         self.allowFrequencyDependentValues =               [False,False,False,False,False,False,False,False]
-        self.parameterTipps = ['translational stiffness in x','translational stiffness in y','translational stiffness in z','rotational stiffness in x','rotational stiffness in y','rotational stiffness in z','Damping Type <br>1 - scales with eta <br>2 - scales with omega*eta)', 'Damping loss factor']
+        self.parameterTipps = ['translational stiffness in x','translational stiffness in y','translational stiffness in z',
+                               'rotational stiffness in x','rotational stiffness in y','rotational stiffness in z',
+                               'Damping Type <br>1 - scales with eta <br>2 - scales with omega*eta)', 'Damping loss factor']
         [parameterValue.setToolTip(self.parameterTipps[n]) for n, parameterValue in enumerate(self.parameterValues)]
         #
         super(STR_LIN_SPR_ORT_DIR, self).__init__(Id)
