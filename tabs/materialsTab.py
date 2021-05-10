@@ -9,6 +9,7 @@ import numpy as np
 # Structural linear materials
 from STR_LIN_ELA_ISO_DIR import STR_LIN_ELA_ISO_DIR
 from STR_LIN_VIS_ISO_DIR import STR_LIN_VIS_ISO_DIR
+from STR_LIN_VIS_ORT_DIR import STR_LIN_VIS_ORT_DIR
 from STR_LIN_MAS_ISO_DIR import STR_LIN_MAS_ISO_DIR
 from STR_LIN_SPR_ORT_DIR import STR_LIN_SPR_ORT_DIR
 # Acoustic linear materials
@@ -68,6 +69,8 @@ class materialsTab(QWidget):
                 myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear visco iso':
                 myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
+            if self.materialSelector.currentText() == 'STRUCT linear visco ort':
+                myModel.materials.append(STR_LIN_VIS_ORT_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear pointmass':
                 myModel.materials.append(STR_LIN_MAS_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear spring':
@@ -105,6 +108,8 @@ class materialsTab(QWidget):
                         newMat = STR_LIN_ELA_ISO_DIR(myData[1])
                     elif myData[0] == 'STR_LIN_VIS_ISO_DIR':
                         newMat = STR_LIN_VIS_ISO_DIR(myData[1])
+                    elif myData[0] == 'STR_LIN_VIS_ORT_DIR':
+                        newMat = STR_LIN_VIS_ORT_DIR(myData[1])
                     elif myData[0] == 'STR_LIN_MAS_ISO_DIR':
                         newMat = STR_LIN_MAS_ISO_DIR(myData[1])
                     elif myData[0] == 'STR_LIN_SPR_ORT_DIR':
