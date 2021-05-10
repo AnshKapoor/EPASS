@@ -2,17 +2,18 @@
 ### Common standard classes for entire python framework ###
 ###########################################################
 
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox, QCheckBox, QButtonGroup, QRadioButton
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, QApplication, QComboBox, QCheckBox
 from PyQt5.QtCore import Qt
 import vtk
 from vtk.util import numpy_support
 import numpy as np
 from standardWidgets import progressWindow, addButton, addInterfaceWindow, messageboxOK
-from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, getPossibleInterfacePartner
+from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, getPossibleInterfacePartner, identifyOrientationTypes
 
 # Saves a model, objects created by readModels()
-class model: # Saves a model
+class model(QWidget): # Saves a model
     def __init__(self):
+        super(model, self).__init__()
         self.name = ' - '
         self.initModelInfo()
         self.initLayout()
@@ -45,27 +46,31 @@ class model: # Saves a model
         self.elementInfo.setText('Blocks: - ')
         self.frequencyInfo.setText('Frequencies: - \n ')
         self.blockInfo.setRowCount(len(self.elems))
+        self.blockMaterialSelectors = []
+        self.blockElementTypeSelectors = []
+        self.blockOrientationSelectors = []
     
     def initModelInfo(self):
         # CREATE WIDGETS
         self.title = QLabel('Name: ' + self.name)
-        self.title.setFixedWidth(200)
+        self.title.setFixedWidth(150)
         self.nodeInfo = QLabel('Nodes: - ')
         self.elementInfo = QLabel('Blocks: - ')
         self.frequencyInfo = QLabel('Frequencies: - \n ')
 
-        self.blockInfo = QTableWidget(1,5)
+        self.blockInfo = QTableWidget(1,6)
         self.blockInfo.verticalHeader().setVisible(False)
-        self.blockInfo.setHorizontalHeaderLabels(['', 'Block ID', '#Elems', 'Element type', 'Material'])
-        [self.blockInfo.setColumnWidth(n, width) for n, width in enumerate([75,65,65,95,75])]
+        self.blockInfo.setHorizontalHeaderLabels(['', 'ID', '#Elems', 'Element type', 'Material', 'Orient.'])
+        [self.blockInfo.setColumnWidth(n, width) for n, width in enumerate([50,50,65,85,70,55])]
         self.blockInfo.setColumnWidth(0, 20)
-        self.blockInfo.setFixedWidth(322)
-        self.blockInfo.setFixedHeight(200)
+        self.blockInfo.setFixedWidth(347)
+        self.blockInfo.setFixedHeight(250)
         
         self.interFaceElemAddButton = addButton()
         
         self.blockMaterialSelectors = []
         self.blockElementTypeSelectors = []
+        self.blockOrientationSelectors = []
 
     def initLayout(self):
         # ADD TO LAYOUT
@@ -86,6 +91,11 @@ class model: # Saves a model
         self.layout.addLayout(self.sublayout1)
         self.layout.addLayout(self.sublayout2)
     
+    def updateOrientationSelector(self):
+        idx = self.blockElementTypeSelectors.index(self.sender())
+        [self.blockOrientationSelectors[idx].removeItem(n) for n in range(self.blockOrientationSelectors[idx].count()-1,-1,-1)]
+        [self.blockOrientationSelectors[idx].addItem(orientType) for orientType in identifyOrientationTypes(self.sender().currentText())]
+        
     def updateBlockMaterialSelector(self):
         for n in range(len(self.blockMaterialSelectors)):
             oldSelection = self.blockMaterialSelectors[n].currentText()
@@ -130,8 +140,12 @@ class model: # Saves a model
                 self.blockElementTypeSelectors.append(QComboBox())
                 self.blockElementTypeSelectors[-1].setStyleSheet("background-color:rgb(255,255,255)")
                 [self.blockElementTypeSelectors[-1].addItem(elementType) for elementType in identifyAlternativeElemTypes(block.attrs['ElementType'])]
+                self.blockElementTypeSelectors[-1].currentIndexChanged.connect(self.updateOrientationSelector)
                 self.blockMaterialSelectors.append(QComboBox())
                 self.blockMaterialSelectors[-1].setStyleSheet("background-color:rgb(255,255,255)")
+                self.blockOrientationSelectors.append(QComboBox())
+                self.blockOrientationSelectors[-1].setStyleSheet("background-color:rgb(255,255,255)")
+                [self.blockOrientationSelectors[-1].addItem(orientType) for orientType in identifyOrientationTypes(block.attrs['ElementType'])]
                 # Block selection for interface dialog
                 self.interfaceblockChecker.append(QCheckBox())
                 self.interfaceDialogWindow.blockLayout.addRow(self.interfaceblockChecker[-1], QLabel('Block ' + str(block.attrs['Id'])))
@@ -159,6 +173,7 @@ class model: # Saves a model
                     self.blockInfo.setItem(m, n, item)
                 self.blockInfo.setCellWidget(m, 3, self.blockElementTypeSelectors[-1])
                 self.blockInfo.setCellWidget(m, 4, self.blockMaterialSelectors[-1])
+                self.blockInfo.setCellWidget(m, 5, self.blockOrientationSelectors[-1])
                 #
                 vtkWindow.grids.append(newGrid)
                 # Each block gets a vtk actor and mapper
@@ -270,6 +285,7 @@ class model: # Saves a model
                     self.hdf5File['Elements/' + block].attrs['MaterialId'] = np.int64(self.blockMaterialSelectors[n].currentText())
                 if self.blockElementTypeSelectors[n].currentText() != '':
                     self.hdf5File['Elements/' + block].attrs['ElementType'] = self.blockElementTypeSelectors[n].currentText()
+                self.hdf5File['Elements/' + block].attrs['Orientation'] = self.blockOrientationSelectors[n].currentText()
             # Export interfaces
             if not 'InterfaceElements' in self.hdf5File.keys():
                 self.hdf5File.create_group('InterfaceElements')

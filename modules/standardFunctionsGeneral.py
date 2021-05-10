@@ -80,6 +80,8 @@ def identifyElemType(elemType):
         return 'QUAD_9', 'PlShell9', 10;
     elif elemType[0] == 43: # Hexahedron with 27 nodes
         return 'HEX_NODE_27', 'Fluid27', 28; 
+    elif elemType[0] == 10: # 2-node Spring
+        return 'EDGE_2', 'Spring', 3; 
     else:
         return 'notSupported', [], 0;
 
@@ -88,9 +90,17 @@ def identifyAlternativeElemTypes(elemType):
         return ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9'];
     elif elemType in ['Fluid27','Brick27']:
         return ['Fluid27','Brick27'];
+    elif elemType in ['Spring']:
+        return ['Spring'];
     else:
         return [];
 
+def identifyOrientationTypes(elemType):
+    if elemType in ['Brick27']: 
+        return ['global','user-dev'];
+    else:
+        return ['global'];
+    
 def getPossibleInterfacePartner(elemType):
     if elemType in ['PlShell9', 'PlShell9pre','DSG9']:
         return ['Fluid27']
@@ -117,6 +127,10 @@ def getVTKElem(elpasoElemType):
         return vtk.vtkQuad(), 9, 4
     elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
         return vtk.vtkHexahedron(), 12, 8
+    elif elpasoElemType in ['Spring']:
+        return vtk.vtkLine(), 3, 2
+    else:
+        return 0, 0, 0
 
 # Read setup from hdf5 file
 def readSetup(myModel, hdf5File, cub5File=0):
