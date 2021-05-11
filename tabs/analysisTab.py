@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QLineEdit
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QCheckBox
 from PyQt5.QtGui import QFont
 from standardWidgets import analysisTypeSelector, solverTypeSelector, sepLine
 import numpy as np
@@ -14,16 +14,20 @@ class analysisTab(QWidget):
         self.titleText = "Analysis"
         #
         self.typeLabel = QLabel('Analysis Type')
+        self.typeLabel.setFixedWidth(100)
         self.typeSelector = analysisTypeSelector()
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.typeLabel)
         self.subLayouts[-1].addWidget(self.typeSelector)
+        self.subLayouts[-1].addStretch()
         #
         self.solverLabel = QLabel('Solver')
+        self.solverLabel.setFixedWidth(100)
         self.solverSelector = solverTypeSelector()
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.solverLabel)
         self.subLayouts[-1].addWidget(self.solverSelector)
+        self.subLayouts[-1].addStretch()
         #
         self.subLayouts.append(QVBoxLayout())
         self.subLayouts[-1].addWidget(sepLine())
@@ -32,28 +36,52 @@ class analysisTab(QWidget):
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.freqLabel)
         #
-        self.startLabel = QLabel('Start [Hz]:')
+        self.startLabel = QLabel('Start [Hz]')
+        self.startLabel.setFixedWidth(100)
         self.freqStart = QLineEdit()
+        self.freqStart.setFixedWidth(70)
         self.changeObjects.append(self.freqStart)
-        self.stepsLabel = QLabel('Steps:')
-        self.freqSteps = QLineEdit()
-        self.changeObjects.append(self.freqSteps)
-        self.deltaLabel = QLabel('Delta [Hz]:')
-        self.freqDelta = QLineEdit()
-        self.changeObjects.append(self.freqDelta)
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.startLabel)
         self.subLayouts[-1].addWidget(self.freqStart)
+        self.subLayouts[-1].addStretch()
+        self.stepsLabel = QLabel('Steps')
+        self.stepsLabel.setFixedWidth(100)
+        self.freqSteps = QLineEdit()
+        self.freqSteps.setFixedWidth(70)
+        self.changeObjects.append(self.freqSteps)
+        self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.stepsLabel)
         self.subLayouts[-1].addWidget(self.freqSteps)
+        self.subLayouts[-1].addStretch()
+        self.deltaLabel = QLabel('Delta [Hz]')
+        self.deltaLabel.setFixedWidth(100)
+        self.freqDelta = QLineEdit()
+        self.freqDelta.setFixedWidth(70)
+        self.changeObjects.append(self.freqDelta)
+        self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.deltaLabel)
         self.subLayouts[-1].addWidget(self.freqDelta)
+        self.subLayouts[-1].addStretch()
         #
-        self.descriptionLabel = QLabel('Description:')
+        self.subLayouts.append(QVBoxLayout())
+        self.subLayouts[-1].addWidget(sepLine())
+        #
+        self.descriptionLabel = QLabel('Description')
+        self.descriptionLabel.setFixedWidth(100)
         self.description = QLineEdit()
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.descriptionLabel)
         self.subLayouts[-1].addWidget(self.description)
+        #
+        self.outputLabel = QLabel('Output format')
+        self.outputLabel.setFixedWidth(100)
+        self.outputNames = ['hdf5','vtk','stp']
+        self.outputChecks = [QCheckBox(x) for x in self.outputNames]
+        self.subLayouts.append(QHBoxLayout())
+        self.subLayouts[-1].addWidget(self.outputLabel)
+        [self.subLayouts[-1].addWidget(wid) for wid in self.outputChecks]
+        self.subLayouts[-1].addStretch()
         #
         self.subLayouts.append(QVBoxLayout())
         self.subLayouts[-1].addWidget(sepLine())
@@ -81,6 +109,11 @@ class analysisTab(QWidget):
             # g.attrs['solver'] = myModel.solverType
             # g.attrs['revision'] = myModel.revision
             g.attrs['description'] = self.description.text()
+            for n, check in enumerate(self.outputChecks):
+                if check.isChecked():
+                    g.attrs[self.outputNames[n]] = True
+                else:
+                    g.attrs[self.outputNames[n]] = False
             return 1
         except:
             return 0

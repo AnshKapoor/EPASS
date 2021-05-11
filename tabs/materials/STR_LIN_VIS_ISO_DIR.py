@@ -17,7 +17,7 @@ class STR_LIN_VIS_ISO_DIR(material):
         self.toolTip = '<b>Structural linear visco-elastic isotropic</b> <br>Material model according to Hookes law with damping loss factor.'
         #
         self.parameterNames =                              ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
-        self.parameterValues = [QLineEdit(str(x)) for x in [7.e9, 0     , 0.001, 0.3 ,   0.,    0.,    0.,    0., 2700.,  0.]]
+        self.parameterValues = [QLineEdit(str(x)) for x in [7.e9, 1     , 0.001, 0.3 ,   0.,    0.,    0.,    0., 2700.,  0.]]
         self.allowFrequencyDependentValues =               [True, False , True ,False,False, False, False, False, False, False]
         self.parameterTipps = ['Youngs Modulus', 'Damping Type <br>1 - scales with eta <br>2 - scales with omega*eta)', 'Damping loss factor', 'Poissons ratio', 'Cross section area (only for beam elements)',
                               'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 'Moment of inertia (only for BeamBernoulli and BeamTimoshenko)', 

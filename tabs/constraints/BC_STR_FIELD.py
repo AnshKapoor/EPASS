@@ -30,15 +30,16 @@ class BC_STR_FIELD(nodeConstraint):
         # Exporting the constraint per node
         progWin = progressWindow(len(self.nodePointsIds)-1, 'Exporting ' + self.type + ' constraint ' + str(self.removeButton.id+1))
         for nN, nodeId in enumerate(self.nodePointsIds):
-            set = constraintsGroup.create_dataset('nodeConstraint'+str(self.removeButton.id+1) + '_' + str(int(nodeId)), data=[])
-            set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(nodeId))
-            set.attrs['NodeId'] = np.uint64(nodeId) # Assign element load to element
-            set.attrs['ConstraintType'] = self.type
-            set.attrs['MethodType'] = 'FEM'
+            dataSet = constraintsGroup.create_dataset('nodeConstraint'+str(self.removeButton.id+1) + '_' + str(int(nodeId)), data=[])
+            dataSet.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(nodeId))
+            dataSet.attrs['Name'] = self.name.text()
+            dataSet.attrs['NodeId'] = np.uint64(nodeId) # Assign element load to element
+            dataSet.attrs['ConstraintType'] = self.type
+            dataSet.attrs['MethodType'] = 'FEM'
             # Parameters 
             for n in range(len(self.parameterNames)): 
-                set.attrs[self.parameterNames[n]] = self.subCheckButtons[n].isChecked()
-                set.attrs['val' + self.parameterNames[n]] = float(self.parameterValues[n].text())
+                dataSet.attrs[self.parameterNames[n]] = self.subCheckButtons[n].isChecked()
+                dataSet.attrs['val' + self.parameterNames[n]] = float(self.parameterValues[n].text())
             # Update progress window
             progWin.setValue(nN)
             QApplication.processEvents()

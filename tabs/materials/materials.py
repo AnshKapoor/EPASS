@@ -141,6 +141,11 @@ class material(QHBoxLayout):
                 fDataSet.attrs['colHeader'] = ['frequency', self.parameterNames[n]]
                 fDataSet.attrs['N'] = np.int64(len(dataList))
                 dataSet.attrs[self.parameterNames[n]] = '/Parameters/material' + self.Id.text() + '_' + self.parameterNames[n]
+            elif self.parameterNames[n] in ['type']:
+                if self.parameterValues[n].text() in ['1','2']:
+                    dataSet.attrs[self.parameterNames[n]] = str(int(self.parameterValues[n].text()))
+                else:
+                    dataSet.attrs[self.parameterNames[n]] = '1'
             else:
                 dataSet.attrs[self.parameterNames[n]] = str(float(self.parameterValues[n].text()))
             
