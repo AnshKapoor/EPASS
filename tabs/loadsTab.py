@@ -56,15 +56,13 @@ class loadsTab(QWidget):
             messageboxOK('Addition of load not possible', 'Open a model first!')
             return 0
     
-    def removeLoad(self, loadIDToRemove, myModel):
+    def removeLoad(self, myModel):
         """
         Remove a load from model (removeButton click event)
         """
         # Layout is cleared
         self.loadInfo.clearLayout()
-        if loadIDToRemove=='button':
-            loadIDToRemove = self.sender().id
-        myModel.loads[loadIDToRemove].drawCheck.setChecked(0)
+        loadIDToRemove = self.sender().id
         myModel.loads[loadIDToRemove].clearLayout() # Set widgets to None (remove Button etc)
         myModel.loads[loadIDToRemove] = None # Set the pointer to None
         myModel.loads.pop(loadIDToRemove) # Remove the entry in list

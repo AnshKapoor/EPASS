@@ -263,9 +263,10 @@ class loadGUI(QMainWindow):
                 self.myModel.loads[loadNo].removeButton.clicked.connect(lambda: self.removeLoadEvent('button'))
     
     def removeLoadEvent(self, loadIDToRemove):
-        self.tabLoads.removeLoad(loadIDToRemove, self.myModel)
-        #self.vtkWindow.updateLoads(self.myModel.loads)
-        #self.vtkWindow.resetView()
+        self.myModel.loads[self.sender().id].drawCheck.setChecked(0)
+        self.vtkWindow.updateLoads(self.myModel.loads)
+        self.vtkWindow.resetView()
+        self.tabLoads.removeLoad(self.myModel)
         # Reset new ids for button in order to identify button on next click correctly
         for loadNo in range(len(self.myModel.loads)):
             self.myModel.loads[loadNo].removeButton.id = loadNo
