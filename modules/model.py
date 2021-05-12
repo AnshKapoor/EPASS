@@ -188,14 +188,15 @@ class model(QWidget): # Saves a model
                 vtkWindow.actors[-1].GetProperty().SetDiffuse(0.1)
                 vtkWindow.actors[-1].GetProperty().SetSpecular(0.)
                 vtkWindow.actors[-1].GetProperty().SetOpacity(0.85)
+                vtkWindow.actors[-1].GetProperty().SetColor(0.2,0.2,0.2)
                 # Each block gets another vtk actor and mapper for the edges of the grid
                 vtkWindow.edgeMappers.append(vtk.vtkDataSetMapper())
                 vtkWindow.edgeMappers[-1].SetInputData(vtkWindow.grids[-1])
                 vtkWindow.edgeActors.append(vtk.vtkActor())
                 vtkWindow.edgeActors[-1].SetMapper(vtkWindow.edgeMappers[-1])
                 vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
-                vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2)
-                vtkWindow.edgeActors[-1].GetProperty().SetColor(0.1,0.1,0.1)
+                vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(3)
+                vtkWindow.edgeActors[-1].GetProperty().SetColor(0.8,0.8,0.8)
                 progWin.setValue(m+1)
                 QApplication.processEvents()
 

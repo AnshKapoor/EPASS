@@ -2,6 +2,7 @@
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWidgetItem, QSizePolicy, QLabel, QLineEdit, QCheckBox, QApplication
 from standardWidgets import removeButton, editButton, setupNodeConstraintWindow, messageboxOK, progressWindow
 import numpy as np
+import vtk
 
 # ScrollArea containing loads in bottom left part of program
 class constraintInfoBox(QScrollArea):
@@ -52,7 +53,7 @@ class nodeConstraint(QHBoxLayout):
         #
         self.initLayout()
         self.initSetupWindow()
-        #self.init3DActor()
+        self.init3DActor()
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
@@ -60,11 +61,10 @@ class nodeConstraint(QHBoxLayout):
         self.editButton.clicked.connect(self.showEdit)
         var = self.showEdit()
         if var == 0: # is the case if the initial setup window is canceled by the user
-            pass
-            #self.update3DActor()
+            self.update3DActor()
     
     def initLayout(self): 
-        [self.addWidget(wid) for wid in [self.removeButton, self.Id, self.label, self.name, self.editButton]]
+        [self.addWidget(wid) for wid in [self.removeButton, self.Id, self.label, self.name, self.drawCheck, self.editButton]]
     
     def clearLayout(self):
         """
@@ -111,7 +111,7 @@ class nodeConstraint(QHBoxLayout):
             try:
                 # Extract nodes of selected nodesets
                 self.findRelevantPoints()
-                #self.update3DActor()
+                self.update3DActor()
                 self.switch()
             except: # if input is wrong, show message and reset values
                 messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
@@ -126,6 +126,54 @@ class nodeConstraint(QHBoxLayout):
         """
         for n, item in enumerate(self.parameterValues):
             item.setText(self.varSave[n])   
+        
+    def init3DActor(self):
+        """
+        initialize vtk objects of this load
+        """
+        # Get model infos
+        self.sphereSource = vtk.vtkSphereSource()
+        # Arrows for load application
+        self.sphereDataLoad = vtk.vtkPolyData()
+        spherePointLoad = vtk.vtkPoints()
+        self.sphereDataLoad.SetPoints(spherePointLoad)
+        # Glyph for load symbol
+        glyphLoad = vtk.vtkGlyph3D()
+        glyphLoad.SetScaleModeToScaleByVector()
+        glyphLoad.SetSourceConnection(self.sphereSource.GetOutputPort())
+        glyphLoad.SetInputData(self.sphereDataLoad)
+        glyphLoad.Update()
+        # Mapper for load
+        self.sphereMapperLoad = vtk.vtkPolyDataMapper()
+        self.sphereMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
+        # Actor for load
+        self.sphereActorLoad = vtk.vtkActor()
+        self.sphereActorLoad.GetProperty().SetColor(0.2, 0.2, 1.)
+        self.sphereActorLoad.SetMapper(self.sphereMapperLoad)
+        #List of Actors for iteration in vtkWindow
+        self.actorsList = [self.sphereActorLoad]
+        
+    def update3DActor(self):
+        """
+        updates the vtk actors
+        """
+        # Get model infos
+        nodes = self.myModel.nodes
+        scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
+        self.sphereSource.SetRadius(scaleFactor*0.01)
+        # Update load
+        spherePointLoad = vtk.vtkPoints()
+        # get a lower number of arrows if there are more elements or the element size is small
+        try: 
+            arrNoScale = int(len(self.nodePoints)/100.) # draw every 100th arrow in case there are >100 arrows
+            if arrNoScale<1:
+                arrNoScale = 1
+        except: 
+            arrNoScale = 1
+        [spherePointLoad.InsertNextPoint([self.nodePoints[p,0], self.nodePoints[p,1], self.nodePoints[p,2]]) for p in range(0,len(self.nodePoints),arrNoScale)]
+        self.sphereDataLoad.SetPoints(spherePointLoad)
+        self.sphereDataLoad.Modified()
+        nodes = 0
             
     def switch(self):
         """

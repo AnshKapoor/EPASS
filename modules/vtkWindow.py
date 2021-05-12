@@ -113,6 +113,15 @@ class vtkWindow(QVTKRenderWindowInteractor):
                         self.mappers[block].ScalarVisibilityOff()
                         for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
                             self.grids[block].GetCellData().RemoveArray(arNo)
+    
+    def updateConstraints(self, constraints):
+        for n, constraint in enumerate(constraints):
+            for act in constraint.actorsList:
+                state = constraint.drawCheck.isChecked()
+                if state==0:
+                    self.ren.RemoveActor(act)
+                elif state==1:
+                    self.ren.AddActor(act)
 
     def updateWindow(self, myModel):
         for blockIdx in range(myModel.blockInfo.rowCount()):
@@ -125,8 +134,12 @@ class vtkWindow(QVTKRenderWindowInteractor):
                 self.ren.AddActor(self.edgeActors[blockIdx])
         self.ren.RemoveActor(self.scalarBar)
         self.updateLoads(myModel.loads)
+        self.updateConstraints(myModel.constraints)
         self.stepValueActor.SetInput(str(myModel.frequencies[self.currentFrequencyStep]) + ' Hz')
         self.GetRenderWindow().Render()
+    
+    def defineAxisLength(self, scaleFactor):
+        self.mainAxes.SetTotalLength(scaleFactor*0.5,scaleFactor*0.5,scaleFactor*0.5)
     
     def axisChange(self):
         if self.axisSelector.checkState() == 2:

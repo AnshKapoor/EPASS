@@ -59,35 +59,6 @@ class pointForce(nodeLoad):
         """
         return self.myModel.frequencies, len(self.myModel.frequencies)*[float(self.amp)], 'tab:green'
 
-    def init3DActor(self):
-        """
-        initialize vtk objects of this load
-        """
-        # Get model infos
-        arrowSource = vtk.vtkArrowSource()
-        # Arrows for load application
-        self.arrowDataLoad = vtk.vtkPolyData()
-        arrowPointLoad = vtk.vtkPoints()
-        self.arrowDataLoad.SetPoints(arrowPointLoad)
-        arrowVectorsLoad = vtk.vtkDoubleArray()
-        arrowVectorsLoad.SetNumberOfComponents(3)
-        self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
-        # Glyph for load symbol
-        glyphLoad = vtk.vtkGlyph3D()
-        glyphLoad.SetScaleModeToScaleByVector()
-        glyphLoad.SetSourceConnection(arrowSource.GetOutputPort())
-        glyphLoad.SetInputData(self.arrowDataLoad)
-        glyphLoad.Update()
-        # Mapper for load
-        self.arrowMapperLoad = vtk.vtkPolyDataMapper()
-        self.arrowMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
-        # Actor for load
-        self.arrowActorLoad = vtk.vtkActor()
-        self.arrowActorLoad.GetProperty().SetColor(0., 1., 0.6)
-        self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
-        #List of Actors for iteration in vtkWindow
-        self.actorsList = [self.arrowActorLoad]
-
     def initSetupWindow(self):
         """
         initialisation of setup popup window for parameter/file path input
@@ -138,6 +109,35 @@ class pointForce(nodeLoad):
             self.resetValues()
         return var
 
+    def init3DActor(self):
+        """
+        initialize vtk objects of this load
+        """
+        # Get model infos
+        arrowSource = vtk.vtkArrowSource()
+        # Arrows for load application
+        self.arrowDataLoad = vtk.vtkPolyData()
+        arrowPointLoad = vtk.vtkPoints()
+        self.arrowDataLoad.SetPoints(arrowPointLoad)
+        arrowVectorsLoad = vtk.vtkDoubleArray()
+        arrowVectorsLoad.SetNumberOfComponents(3)
+        self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
+        # Glyph for load symbol
+        glyphLoad = vtk.vtkGlyph3D()
+        glyphLoad.SetScaleModeToScaleByVector()
+        glyphLoad.SetSourceConnection(arrowSource.GetOutputPort())
+        glyphLoad.SetInputData(self.arrowDataLoad)
+        glyphLoad.Update()
+        # Mapper for load
+        self.arrowMapperLoad = vtk.vtkPolyDataMapper()
+        self.arrowMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
+        # Actor for load
+        self.arrowActorLoad = vtk.vtkActor()
+        self.arrowActorLoad.GetProperty().SetColor(0., 1., 0.6)
+        self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
+        #List of Actors for iteration in vtkWindow
+        self.actorsList = [self.arrowActorLoad]
+
     def update3DActor(self):
         """
         updates the vtk actors
@@ -161,4 +161,5 @@ class pointForce(nodeLoad):
         [arrowVectorsLoad.InsertNextTuple([-0.3*scaleFactor*float(self.dirX.text())/self.amp, -0.3*scaleFactor*float(self.dirY.text())/self.amp, -0.3*scaleFactor*float(self.dirZ.text())/self.amp]) for p in range(0,len(self.nodePoints),arrNoScale)]
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
+        nodes = 0
     

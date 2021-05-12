@@ -111,6 +111,8 @@ class loadGUI(QMainWindow):
                     self.myModel.updateModel(self.vtkWindow)
                     self.myModel.interFaceElemAddButton.clicked.connect(self.interfaceElemDialogEvent)
                 self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
+                scaleFactor = max( [abs(max(self.myModel.nodes[:]['xCoords'])-min(self.myModel.nodes[:]['xCoords'])), abs(max(self.myModel.nodes[:]['yCoords'])-min(self.myModel.nodes[:]['yCoords'])), abs(max(self.myModel.nodes[:]['zCoords'])-min(self.myModel.nodes[:]['zCoords']))] )
+                self.vtkWindow.defineAxisLength(scaleFactor)
                 self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
                 self.update2D()
                 self.update3D()
