@@ -244,12 +244,12 @@ class loadGUI(QMainWindow):
     
     def analysisTabChangeEvent(self):
         try: 
-            self.myModel.freqStart = int(self.tabAnalysis.freqStart.text())
+            self.myModel.freqStart = float(self.tabAnalysis.freqStart.text())
             self.myModel.freqSteps = int(self.tabAnalysis.freqSteps.text())
-            self.myModel.freqDelta = int(self.tabAnalysis.freqDelta.text())
+            self.myModel.freqDelta = float(self.tabAnalysis.freqDelta.text())
             self.myModel.updateModelSetup()
         except:
-            pass
+            self.myModel.updateModelSetup(True)
     
     def addLoadEvent(self):
         success = self.tabLoads.addLoad(self.myModel)

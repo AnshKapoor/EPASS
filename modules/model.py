@@ -105,15 +105,18 @@ class model(QWidget): # Saves a model
             if oldSelection in allNewItems: 
                 self.blockMaterialSelectors[n].setCurrentIndex(allNewItems.index(oldSelection))
     
-    def updateModelSetup(self):
+    def updateModelSetup(self, inputProblem=False):
         self.nodeInfo.setText('Nodes: ' + str(self.nodes[:]['Ids'].shape[0]))
         self.elementInfo.setText('Blocks: ' + str(len(self.elems)))
         self.blockInfo.setRowCount(len(self.elems))
-        self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)])
-        addInfo = '\n                      (df=' + str(self.frequencies[1]-self.frequencies[0]) + ' Hz)'
-        #if self.calculationObjects[-1].frequencyFile == 1:
-        #    addInfo = '\n                      (from frq file)'
-        self.frequencyInfo.setText('Frequencies: ' + str(min(self.frequencies)) + ' - ' + str(max(self.frequencies)) + ' Hz' + addInfo)
+        if inputProblem:
+            self.frequencyInfo.setText('Frequencies: Wrong input')
+        else:
+            self.frequencies = np.array([self.freqStart+n*self.freqDelta for n in range(self.freqSteps)])
+            addInfo = '\n                      (df=' + str(self.frequencies[1]-self.frequencies[0]) + ' Hz)'
+            #if self.calculationObjects[-1].frequencyFile == 1:
+            #    addInfo = '\n                      (from frq file)'
+            self.frequencyInfo.setText('Frequencies: ' + str(min(self.frequencies)) + ' - ' + str(max(self.frequencies)) + ' Hz' + addInfo)
         
     def updateModel(self, vtkWindow):
         # UPDATE WIDGETS
