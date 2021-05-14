@@ -105,6 +105,11 @@ class model(QWidget): # Saves a model
             if oldSelection in allNewItems: 
                 self.blockMaterialSelectors[n].setCurrentIndex(allNewItems.index(oldSelection))
     
+    def autoAssignBlockMaterialSelectors(self):
+        for n in range(len(self.blockMaterialSelectors)):
+            if self.blockMaterialSelectors[n].count() >= n+1:
+                self.blockMaterialSelectors[n].setCurrentIndex(n)
+        
     def updateModelSetup(self, inputProblem=False):
         self.nodeInfo.setText('Nodes: ' + str(self.nodes[:]['Ids'].shape[0]))
         self.elementInfo.setText('Blocks: ' + str(len(self.elems)))

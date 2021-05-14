@@ -113,6 +113,8 @@ class materialsTab(QWidget):
                         newMat = STR_LIN_VIS_ISO_DIR(myData[1])
                     elif myData[0] == 'STR_LIN_VIS_ORT_DIR':
                         newMat = STR_LIN_VIS_ORT_DIR(myData[1])
+                    elif myData[0] == 'STR_LIN_VIS_ORT_LAM':
+                        newMat = STR_LIN_VIS_ORT_LAM(myData[1])
                     elif myData[0] == 'STR_LIN_MAS_ISO_DIR':
                         newMat = STR_LIN_MAS_ISO_DIR(myData[1])
                     elif myData[0] == 'STR_LIN_SPR_ORT_DIR':
@@ -126,8 +128,8 @@ class materialsTab(QWidget):
                     else:
                         newMat = STR_LIN_ELA_ISO_DIR(0)
                         myData = []
-                    newMat.name.setText(myData[2])
                     if len(myData) == len(newMat.parameterNames)+3:
+                        newMat.name.setText(myData[2])
                         for n, entry in enumerate(myData[3:]): 
                             try: # Check if number
                                 float(entry)

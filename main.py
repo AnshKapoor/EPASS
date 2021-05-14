@@ -301,6 +301,7 @@ class loadGUI(QMainWindow):
         success = self.tabMaterials.importMaterial(self.myModel)
         if success:
             self.updateMaterials()
+            self.myModel.autoAssignBlockMaterialSelectors()
    
     def removeMaterialEvent(self, matIDToRemove):
         self.tabMaterials.removeMaterial(matIDToRemove, self.myModel)
