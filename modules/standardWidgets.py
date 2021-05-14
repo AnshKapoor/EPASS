@@ -1,7 +1,7 @@
 #
 import os
 #
-from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QHBoxLayout, QLabel, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget
+from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget, QScrollArea, QWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
 
@@ -262,13 +262,14 @@ class setupLoadWindow(QDialog):
         self.layout = QFormLayout()
         self.formGroupBox.setLayout(self.layout)
         # block selection
-        self.formGroupBoxBlocks = QGroupBox('Blocks')
-        self.blockLayout = QFormLayout()
-        self.formGroupBoxBlocks.setLayout(self.blockLayout)
+        self.formGroupBoxBlocks = QScrollArea()
+        self.contWidget = QWidget()
+        self.formGroupBoxBlocks.setWidget(self.contWidget)
+        self.blockLayout = QVBoxLayout(self.contWidget)
         #
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addWidget(self.formGroupBox)
-        self.mainLayout.addWidget(self.formGroupBoxBlocks)
+        self.mainLayout.addWidget(self.contWidget)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
 

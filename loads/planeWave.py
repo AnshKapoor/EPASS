@@ -1,9 +1,10 @@
 #
-from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QHBoxLayout
 import vtk
 import numpy as np
 import math
 from standardWidgets import removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
+from standardFunctionsGeneral import isPlateType
 from loads import elemLoad
 
 class planeWave(elemLoad):
@@ -186,7 +187,12 @@ class planeWave(elemLoad):
         self.blockChecker = []
         for block in self.myModel.elems:
             self.blockChecker.append(QCheckBox())
-            self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')'))
+            if not isPlateType(str(block.attrs['ElementType'])):
+                self.blockChecker[-1].setEnabled(False)
+            subLayout = QHBoxLayout()
+            [subLayout.addWidget(wid) for wid in [self.blockChecker[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
+            subLayout.addStretch()
+            self.setupWindow.blockLayout.addLayout(subLayout)
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 

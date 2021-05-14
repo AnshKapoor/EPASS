@@ -160,7 +160,7 @@ class nodeConstraint(QHBoxLayout):
         # Get model infos
         nodes = self.myModel.nodes
         scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
-        self.sphereSource.SetRadius(scaleFactor*0.01)
+        self.sphereSource.SetRadius(scaleFactor*0.005)
         # Update load
         spherePointLoad = vtk.vtkPoints()
         # get a lower number of arrows if there are more elements or the element size is small

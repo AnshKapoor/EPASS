@@ -122,6 +122,12 @@ def getPossibleInterfacePartner(elemType):
         return ['PlShell9', 'PlShell9pre','DSG9']
     else:
         return []
+    
+def isPlateType(elemType):
+    if elemType in ['PlShell9', 'PlShell9pre','DSG9']:
+        return 1
+    else:
+        return 0
 
 def getNodeIdxOfFaces(elemType):
     if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']:
