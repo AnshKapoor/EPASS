@@ -37,25 +37,39 @@ def readNodes(myModel, hdf5File, cub5File=0):
 def readElements(myModel, hdf5File, cub5File=0):
     if cub5File: 
         g = hdf5File.create_group('Elements')
+        # Sort blocks according to ID
+        groupIDs = []
+        allBlocks = []
         for block in cub5File['Simulation Model/Blocks'].keys():
+            groupIDs.append(cub5File['Simulation Model/Blocks/' + block].attrs['block_id'][()][0])
+            allBlocks.append(block)
+        idx = np.argsort(np.array(groupIDs))
+        allBlocks = [allBlocks[n] for n in idx]
+        # Load blocks in correct ordering
+        for block in allBlocks:
             groupID = cub5File['Simulation Model/Blocks/' + block].attrs['block_id'][()][0]
             elemType = cub5File['Simulation Model/Blocks/' + block].attrs['element_type'][()]
             coreformKey, elemType, M = identifyElemType(elemType)
             N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
             if coreformKey != 'notSupported':
                 dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
-                dataSet[:,0] = cub5File['Simulation Model/Blocks/' + block + '/member ids'][:].T
                 elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs']
-                idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in dataSet[:,0]]
-                dataSet[:,1:] = cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][idx,:]
-            myModel.elems.append(dataSet)
+                idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in cub5File['Simulation Model/Blocks/' + block + '/member ids'][:]]
+                dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
+                dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
+                myModel.elems.append(dataSet)
         # Element-/Sidesets 
         g = hdf5File.create_group('Elementsets')
-        if 'Sidesets' in cub5File['Simulation Model'].keys(): # If sidesets exist in cub5 file by coreform, then read them as element sets
-            for elemset in cub5File['Simulation Model/Sidesets'].keys():
-                elemsetID = cub5File['Simulation Model/Sidesets/' + elemset].attrs['sideset_id'][()][0]
-                g.create_dataset('vecElemset' + str(elemsetID), data=cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][()])
-                g['vecElemset' + str(elemsetID)].attrs['Id'] = np.uint64(elemsetID)
+        #if 'Sidesets' in cub5File['Simulation Model'].keys(): # If sidesets exist in cub5 file by coreform, then read them as element sets
+        #    for elemset in cub5File['Simulation Model/Sidesets'].keys():
+        #        elemsetID = cub5File['Simulation Model/Sidesets/' + elemset].attrs['sideset_id'][()][0]
+        #        ###
+        #        # This line is required to identify global ids, implementation not finished.
+        #        idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][:].T]
+        #        ###
+        #        # Currently here are local (face / hex) number saved, which is not working if elemsets are used!
+        #        g.create_dataset('vecElemset' + str(elemsetID), data=cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][()])
+        #        g['vecElemset' + str(elemsetID)].attrs['Id'] = np.uint64(elemsetID)
     else: 
         for block in hdf5File['Elements'].keys():
             myModel.elems.append(hdf5File['Elements/' + block])

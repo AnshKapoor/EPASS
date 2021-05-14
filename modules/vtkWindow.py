@@ -26,6 +26,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
 
         # Create Renderer
         self.ren = vtk.vtkRenderer()
+        self.ren.UseFXAAOn()
         self.GetRenderWindow().AddRenderer(self.ren)
 
         # Create Interactor

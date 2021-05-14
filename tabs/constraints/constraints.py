@@ -164,12 +164,12 @@ class nodeConstraint(QHBoxLayout):
         # Update load
         spherePointLoad = vtk.vtkPoints()
         # get a lower number of arrows if there are more elements or the element size is small
-        try: 
-            arrNoScale = int(len(self.nodePoints)/100.) # draw every 100th arrow in case there are >100 arrows
-            if arrNoScale<1:
-                arrNoScale = 1
-        except: 
-            arrNoScale = 1
+        #try: 
+        #    arrNoScale = int(len(self.nodePoints)/100.) # draw every 100th arrow in case there are >100 arrows
+        #    if arrNoScale<1:
+        #        arrNoScale = 1
+        #except: 
+        arrNoScale = 1
         [spherePointLoad.InsertNextPoint([self.nodePoints[p,0], self.nodePoints[p,1], self.nodePoints[p,2]]) for p in range(0,len(self.nodePoints),arrNoScale)]
         self.sphereDataLoad.SetPoints(spherePointLoad)
         self.sphereDataLoad.Modified()
