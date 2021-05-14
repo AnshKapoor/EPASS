@@ -156,7 +156,10 @@ class model(QWidget): # Saves a model
                 [self.blockOrientationSelectors[-1].addItem(orientType) for orientType in identifyOrientationTypes(block.attrs['ElementType'])]
                 # Block selection for interface dialog
                 self.interfaceblockChecker.append(QCheckBox())
-                self.interfaceDialogWindow.blockLayout.addRow(self.interfaceblockChecker[-1], QLabel('Block ' + str(block.attrs['Id'])))
+                subLayout = QHBoxLayout()
+                [subLayout.addWidget(wid) for wid in [self.interfaceblockChecker[-1], QLabel('Block ' + str(block.attrs['Id']))]]
+                subLayout.addStretch()
+                self.interfaceDialogWindow.blockLayout.addLayout(subLayout)
                 # VTK Elements
                 newGrid = vtk.vtkUnstructuredGrid()
                 newGrid.SetPoints(self.vtkPoints)

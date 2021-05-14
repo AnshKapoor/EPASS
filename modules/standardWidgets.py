@@ -204,10 +204,13 @@ class addInterfaceWindow(QDialog):
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        # Block 1 selection
-        self.formGroupBoxBlocks = QGroupBox('Block')
-        self.blockLayout = QFormLayout()
-        self.formGroupBoxBlocks.setLayout(self.blockLayout)
+        # Block selection
+        self.contWidget = QWidget()
+        self.formGroupBoxBlocks = QScrollArea()
+        self.formGroupBoxBlocks.setWidget(self.contWidget)
+        self.formGroupBoxBlocks.setWidgetResizable(True)
+        self.formGroupBoxBlocks.setMaximumHeight(400)
+        self.blockLayout = QVBoxLayout(self.contWidget)
         #
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addWidget(self.formGroupBoxBlocks)
@@ -267,7 +270,6 @@ class setupLoadWindow(QDialog):
         self.formGroupBoxBlocks.setWidget(self.contWidget)
         self.formGroupBoxBlocks.setWidgetResizable(True)
         self.formGroupBoxBlocks.setMaximumHeight(400)
-        #self.formGroupBoxBlocks.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.blockLayout = QVBoxLayout(self.contWidget)
         #
         self.mainLayout = QVBoxLayout()

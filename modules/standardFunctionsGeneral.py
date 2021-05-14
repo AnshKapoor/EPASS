@@ -180,7 +180,7 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
-def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations):
+def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
     foundInterFaceElements = []
     for blockCombi in blockCombinations: 
         # change number of faces
@@ -227,9 +227,9 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations):
         # Find interface elements for coincident nodes using saved coordinates
         progWin = progressWindow(noOfTotalFaces1-1, 'Searching interfaces between block' + str(elems[blockCombi[0]].attrs['Id']) + ' and ' + str(elems[blockCombi[1]].attrs['Id']))
         for m in range(noOfTotalFaces1):
-            xIdx = ((xCoords2[:,0] == xCoords1[m,0]) & (xCoords2[:,1] == xCoords1[m,1]) & (xCoords2[:,2] == xCoords1[m,2]) & (xCoords2[:,3] == xCoords1[m,3]))
-            yIdx = ((yCoords2[:,0] == yCoords1[m,0]) & (yCoords2[:,1] == yCoords1[m,1]) & (yCoords2[:,2] == yCoords1[m,2]) & (yCoords2[:,3] == yCoords1[m,3]))
-            zIdx = ((zCoords2[:,0] == zCoords1[m,0]) & (zCoords2[:,1] == zCoords1[m,1]) & (zCoords2[:,2] == zCoords1[m,2]) & (zCoords2[:,3] == zCoords1[m,3]))
+            xIdx = ((abs(xCoords2[:,0]-xCoords1[m,0])<tolerance) & (abs(xCoords2[:,1]-xCoords1[m,1])<tolerance) & (abs(xCoords2[:,2]-xCoords1[m,2])<tolerance) & (abs(xCoords2[:,3]-xCoords1[m,3])<tolerance))
+            yIdx = ((abs(yCoords2[:,0]-yCoords1[m,0])<tolerance) & (abs(yCoords2[:,1]-yCoords1[m,1])<tolerance) & (abs(yCoords2[:,2]-yCoords1[m,2])<tolerance) & (abs(yCoords2[:,3]-yCoords1[m,3])<tolerance))
+            zIdx = ((abs(zCoords2[:,0]-zCoords1[m,0])<tolerance) & (abs(zCoords2[:,1]-zCoords1[m,1])<tolerance) & (abs(zCoords2[:,2]-zCoords1[m,2])<tolerance) & (abs(zCoords2[:,3]-zCoords1[m,3])<tolerance))
             if True in (xIdx & yIdx & zIdx):
                 # Compute normal of elem 1 using original order 
                 elem1 = elems[blockCombi[0]][elemAndFaceIDs1[m][0]]
@@ -263,9 +263,9 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations):
                 matchingNodes=[-1,-1] # First and second matching node
                 # The order of nodes must be considered (matching nodes must be given at the same index!); 8 cases of face rotations are possible, the midside nodes are assumed to be coincident.
                 for n in range(4):
-                    if elem1x[0] == elem2x[n] and elem1y[0] == elem2y[n] and elem1z[0] == elem2z[n]: 
+                    if (abs(elem1x[0] - elem2x[n])<tolerance) and (abs(elem1y[0] - elem2y[n])<tolerance) and (abs(elem1z[0] - elem2z[n])<tolerance): 
                         matchingNodes[0] = n
-                    if elem1x[1] == elem2x[n] and elem1y[1] == elem2y[n] and elem1z[1] == elem2z[n]: 
+                    if (abs(elem1x[1] - elem2x[n])<tolerance) and (abs(elem1y[1] - elem2y[n])<tolerance) and (abs(elem1z[1] - elem2z[n])<tolerance): 
                         matchingNodes[1] = n
                 if matchingNodes==[0,1]: 
                     matchingNodeIdx = [0,1,2,3,4,5,6,7,8]
