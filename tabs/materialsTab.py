@@ -126,8 +126,9 @@ class materialsTab(QWidget):
                     else:
                         newMat = STR_LIN_ELA_ISO_DIR(0)
                         myData = []
-                    if len(myData) == len(newMat.parameterNames)+2:
-                        for n, entry in enumerate(myData[2:]): 
+                    newMat.name.setText(myData[2])
+                    if len(myData) == len(newMat.parameterNames)+3:
+                        for n, entry in enumerate(myData[3:]): 
                             try: # Check if number
                                 float(entry)
                                 newMat.parameterValues[n].setText(entry)
