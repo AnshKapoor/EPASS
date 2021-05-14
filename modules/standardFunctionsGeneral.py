@@ -46,7 +46,8 @@ def readElements(myModel, hdf5File, cub5File=0):
         idx = np.argsort(np.array(groupIDs))
         allBlocks = [allBlocks[n] for n in idx]
         # Load blocks in correct ordering
-        for block in allBlocks:
+        progWin = progressWindow(len(allBlocks)-1, 'Loading blocks ...')
+        for p, block in enumerate(allBlocks):
             groupID = cub5File['Simulation Model/Blocks/' + block].attrs['block_id'][()][0]
             elemType = cub5File['Simulation Model/Blocks/' + block].attrs['element_type'][()]
             coreformKey, elemType, M = identifyElemType(elemType)
@@ -58,6 +59,8 @@ def readElements(myModel, hdf5File, cub5File=0):
                 dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
                 dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
                 myModel.elems.append(dataSet)
+                progWin.setValue(p)
+                QApplication.processEvents()
         # Element-/Sidesets 
         g = hdf5File.create_group('Elementsets')
         #if 'Sidesets' in cub5File['Simulation Model'].keys(): # If sidesets exist in cub5 file by coreform, then read them as element sets
@@ -101,7 +104,7 @@ def identifyElemType(elemType):
 
 def identifyAlternativeElemTypes(elemType):
     if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']: 
-        return ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9'];
+        return ['PlShell9pre','PlShell9','DSG9','Disc9','Fluid2d9'];
     elif elemType in ['Fluid27','Brick27']:
         return ['Fluid27','Brick27'];
     elif elemType in ['Spring']:

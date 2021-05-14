@@ -193,15 +193,16 @@ class planeWave(elemLoad):
             [subLayout.addWidget(wid) for wid in [self.blockChecker[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
             subLayout.addStretch()
             self.setupWindow.blockLayout.addLayout(subLayout)
+        self.setupWindow.blockLayout.addStretch()
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 
-    def resetValues(self):
-        """
-        resets parameter values
-        """
-        for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c]):
-            item.setText(self.varSave[n])
+    #def resetValues(self):
+    #    """
+    #    resets parameter values
+    #    """
+    #    for n, item in enumerate([self.amp, self.dirX, self.dirY, self.dirZ, self.c]):
+    #        item.setText(self.varSave[n])
 
     def showEdit(self):
         """
@@ -210,7 +211,8 @@ class planeWave(elemLoad):
         self.varSave = [self.amp.text(), self.dirX.text(), self.dirY.text(), self.dirZ.text(), self.c.text()]
         var = self.setupWindow.exec_()
         if var == 0: # reset values
-            self.resetValues()
+            pass
+            #self.resetValues()
         elif var == 1: # set new values
             try:
                 if float(self.dirX.text()) == 0. and float(self.dirY.text()) == 0. and float(self.dirZ.text()) == 0.:
@@ -223,9 +225,10 @@ class planeWave(elemLoad):
                 self.switch()
             except: # if input is wrong, show message and reset values
                 messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
-                self.resetValues()
+                #self.resetValues()
         else:
-            self.resetValues()
+            pass
+            #self.resetValues()
         return var
 
     def update3DActor(self):

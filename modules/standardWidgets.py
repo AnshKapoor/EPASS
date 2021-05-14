@@ -262,14 +262,17 @@ class setupLoadWindow(QDialog):
         self.layout = QFormLayout()
         self.formGroupBox.setLayout(self.layout)
         # block selection
-        self.formGroupBoxBlocks = QScrollArea()
         self.contWidget = QWidget()
+        self.formGroupBoxBlocks = QScrollArea()
         self.formGroupBoxBlocks.setWidget(self.contWidget)
+        self.formGroupBoxBlocks.setWidgetResizable(True)
+        self.formGroupBoxBlocks.setMaximumHeight(400)
+        #self.formGroupBoxBlocks.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.blockLayout = QVBoxLayout(self.contWidget)
         #
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addWidget(self.formGroupBox)
-        self.mainLayout.addWidget(self.contWidget)
+        self.mainLayout.addWidget(self.formGroupBoxBlocks)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
 

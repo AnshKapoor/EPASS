@@ -1,5 +1,5 @@
 import sys, os
-from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QLineEdit, QTableWidgetItem
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QFileDialog, QTableWidgetItem
 from PyQt5.QtGui import QFont
 from standardWidgets import addButton, messageboxOK, materialTypeSelector
 ###############################IMPORTING MATERIAL CLASSES###########################

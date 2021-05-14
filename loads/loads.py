@@ -66,14 +66,14 @@ class elemLoad(QHBoxLayout):
         for block in relevantBlocks:
             for elemIdx in range(block.attrs['N']):
                 elemID = block[elemIdx,0]
-                idx = (nodes[:]['Ids']==block[elemIdx,1])
-                node1 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
-                idx = (nodes[:]['Ids']==block[elemIdx,2])
-                node2 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
-                idx = (nodes[:]['Ids']==block[elemIdx,3])
-                node3 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
-                idx = (nodes[:]['Ids']==block[elemIdx,4])
-                node4 = [nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]]
+                idx = self.myModel.nodesInv[block[elemIdx,1]]
+                node1 = [nodes[idx]['xCoords'], nodes[idx]['yCoords'], nodes[idx]['zCoords']]
+                idx = self.myModel.nodesInv[block[elemIdx,2]]
+                node2 = [nodes[idx]['xCoords'], nodes[idx]['yCoords'], nodes[idx]['zCoords']]
+                idx = self.myModel.nodesInv[block[elemIdx,3]]
+                node3 = [nodes[idx]['xCoords'], nodes[idx]['yCoords'], nodes[idx]['zCoords']]
+                idx = self.myModel.nodesInv[block[elemIdx,4]]
+                node4 = [nodes[idx]['xCoords'], nodes[idx]['yCoords'], nodes[idx]['zCoords']]
                 centerX = 0.25*(node1[0]+node2[0]+node3[0]+node4[0])
                 centerY = 0.25*(node1[1]+node2[1]+node3[1]+node4[1])
                 centerZ = 0.25*(node1[2]+node2[2]+node3[2]+node4[2])
