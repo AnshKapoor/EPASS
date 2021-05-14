@@ -259,12 +259,12 @@ class planeWave(elemLoad):
         arrowPointLoad = vtk.vtkPoints()
 
         ### get a lower number of arrows if there are more elements or the element size is small
-        try: 
-            arrNoScale = int(len(self.surfacePoints)/100.) # draw every 100th arrow in case there are >100 arrows
-            if arrNoScale<1:
-                arrNoScale = 1
-        except: 
-            arrNoScale = 1
+        #try: 
+        #    arrNoScale = int(len(self.surfacePoints)/100.) # draw every 100th arrow in case there are >100 arrows
+        #    if arrNoScale<1:
+        #        arrNoScale = 1
+        #except: 
+        arrNoScale = 1
         [arrowPointLoad.InsertNextPoint([self.surfacePoints[p][0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], self.surfacePoints[p][1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], self.surfacePoints[p][2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p in range(0,len(self.surfacePoints),arrNoScale)]
         #[arrowPointLoad.InsertNextPoint([point[0] + 0.1*scaleFactor*self.surfaceElementNormals[p][0], point[1] + 0.1*scaleFactor*self.surfaceElementNormals[p][1], point[2] + 0.1*scaleFactor*self.surfaceElementNormals[p][2]]) for p, point in enumerate(self.surfacePoints)]
         self.arrowDataLoad.SetPoints(arrowPointLoad)

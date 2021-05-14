@@ -284,9 +284,17 @@ class model(QWidget): # Saves a model
         
     def data2hdf5(self): 
         try:
-            # Update blocks and receive maximum ID
+            # Sort blocks according to ID
+            groupIDs = []
+            allBlocks = []
+            for block in self.hdf5File['Elements'].keys():
+                groupIDs.append(self.hdf5File['Elements/' + block].attrs['Id'])
+                allBlocks.append(block)
+            idx = np.argsort(np.array(groupIDs))
+            allBlocks = [allBlocks[n] for n in idx]
+            # Update blocks and receive maximum ID in correct order
             maxElemId = 0
-            for n, block in enumerate(self.hdf5File['Elements'].keys()):
+            for n, block in enumerate(allBlocks):
                 currentMaxId = self.hdf5File['Elements/' + block][:,0].max()
                 if currentMaxId > maxElemId:
                     maxElemId = currentMaxId

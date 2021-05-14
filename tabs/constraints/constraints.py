@@ -199,8 +199,8 @@ class nodeConstraint(QHBoxLayout):
         for nodeset in relevantNodesets:
             for nodeIdx in range(len(nodeset[:])):
                 self.nodePointsIds.append(nodeset[nodeIdx][0])
-                idx = (nodes[:]['Ids']==self.nodePointsIds[-1])
-                self.nodePoints.append([nodes[idx]['xCoords'][0], nodes[idx]['yCoords'][0], nodes[idx]['zCoords'][0]])
+                idx = self.myModel.nodesInv[self.nodePointsIds[-1]]
+                self.nodePoints.append([nodes[idx]['xCoords'], nodes[idx]['yCoords'], nodes[idx]['zCoords']])
             self.nodePoints = np.array(self.nodePoints)
         relevantNodesets = []
         nodes = 0
