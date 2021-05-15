@@ -8,7 +8,7 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 from standardWidgets import progressWindow, addButton, addInterfaceWindow, messageboxOK
-from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, getPossibleInterfacePartner, identifyOrientationTypes
+from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, getPossibleInterfacePartner, identifyOrientationTypes, isPlateType
 
 # Saves a model, objects created by readModels()
 class model(QWidget): # Saves a model
@@ -28,6 +28,7 @@ class model(QWidget): # Saves a model
         self.nodes = 0
         self.nodeSets = []
         self.elems = []
+        self.elemsInv = []
         self.interfaceElems = []
         self.elementSets = []
         self.loads = []
@@ -227,8 +228,11 @@ class model(QWidget): # Saves a model
                             if m!=n:
                                 elemType1 = self.blockElementTypeSelectors[m].currentText()
                                 elemType2 = self.blockElementTypeSelectors[n].currentText()
-                                if elemType1 in getPossibleInterfacePartner(elemType2):
-                                    relevantBlockCombinations.append(sorted([m,n])) # Compatible element types? 
+                                if elemType1 in getPossibleInterfacePartner(elemType2): # Compatible element types?
+                                    if isPlateType(elemType1):
+                                        relevantBlockCombinations.append([n,m]) 
+                                    else:
+                                        relevantBlockCombinations.append([m,n])
             if relevantBlockCombinations:
                 foundInterFaceElements = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
                 if foundInterFaceElements: 
@@ -251,6 +255,7 @@ class model(QWidget): # Saves a model
                     newGrid.SetPoints(self.vtkPoints)
                     #
                     vtkCells = vtk.vtkCellArray()
+                    print(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
                     newElem, newElemTypeId, nnodes = getVTKElem(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
                     cells = np.zeros((noOfInterfaceElems,nnodes+1), dtype=np.int64)
                     cells[:,0] = nnodes

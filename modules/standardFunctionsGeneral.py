@@ -54,8 +54,10 @@ def readElements(myModel, hdf5File, cub5File=0):
             N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
             if coreformKey != 'notSupported':
                 dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
-                elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs']
-                idx = [np.where(elemIDs[:] == elemID)[0][0] for elemID in cub5File['Simulation Model/Blocks/' + block + '/member ids'][:]]
+                elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs'][:]
+                myModel.elemsInv.append(dict([[ID, n] for n, ID in enumerate(elemIDs)]))
+                elemsInv = myModel.elemsInv[-1]
+                idx = [elemsInv[elemID[0]] for elemID in cub5File['Simulation Model/Blocks/' + block + '/member ids'][:]]
                 dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
                 dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
                 myModel.elems.append(dataSet)
@@ -182,29 +184,25 @@ def readSetup(myModel, hdf5File, cub5File=0):
 
 def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
     foundInterFaceElements = []
-    for blockCombi in blockCombinations: 
+    # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
+    hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
+    print(hexaBlocks)
+    for hexaBlock in hexaBlocks:
+        print(hexaBlock)
         # change number of faces
-        nodeIdxOfFaces1 = getNodeIdxOfFaces(elems[blockCombi[0]].attrs['ElementType'])
-        nodeIdxOfFaces2 = getNodeIdxOfFaces(elems[blockCombi[1]].attrs['ElementType'])
+        nodeIdxOfFaces1 = getNodeIdxOfFaces(elems[hexaBlock].attrs['ElementType'])
         # Get sizes
-        noOfElems1 = len(elems[blockCombi[0]])
-        noOfElems2 = len(elems[blockCombi[1]])
+        noOfElems1 = len(elems[hexaBlock])
         noOfFaces1 = nodeIdxOfFaces1.shape[0]
-        noOfFaces2 = nodeIdxOfFaces2.shape[0]
         noOfTotalFaces1 = noOfElems1 * noOfFaces1
-        noOfTotalFaces2 = noOfElems2 * noOfFaces2
         # Init arrays containing all coordinates
         elemAndFaceIDs1 = []
-        elemAndFaceIDs2 = []
         xCoords1 = np.zeros((noOfTotalFaces1,4))
         yCoords1 = np.zeros((noOfTotalFaces1,4))
         zCoords1 = np.zeros((noOfTotalFaces1,4))
-        xCoords2 = np.zeros((noOfTotalFaces2,4))
-        yCoords2 = np.zeros((noOfTotalFaces2,4))
-        zCoords2 = np.zeros((noOfTotalFaces2,4))
         # Loops to collect coordinates in block 1
-        progWin = progressWindow(len(elems[blockCombi[0]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[0]].attrs['Id']))
-        for m, elem1 in enumerate(elems[blockCombi[0]]):
+        progWin = progressWindow(len(elems[hexaBlock])-1, 'Collecting coordinates of block' + str(elems[hexaBlock].attrs['Id']))
+        for m, elem1 in enumerate(elems[hexaBlock]):
             for faceNo1 in range(noOfFaces1): 
                 nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[faceNo1,:4]+1]] # indices of nodes belonging to the face
                 xCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['xCoords']) # Sorting necessary
@@ -213,87 +211,102 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                 elemAndFaceIDs1.append([m, faceNo1])
             progWin.setValue(m)
             QApplication.processEvents()
-        # Loops to collect coordinates in block 2
-        progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[1]].attrs['Id']))
-        for m, elem2 in enumerate(elems[blockCombi[1]]): 
-            for faceNo2 in range(noOfFaces2):
-                nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[faceNo2,:4]+1]] # indices of nodes belonging to the face
-                xCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['xCoords'])
-                yCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['yCoords'])
-                zCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['zCoords'])
-                elemAndFaceIDs2.append([m, faceNo2])
-            progWin.setValue(m)
-            QApplication.processEvents()
-        # Find interface elements for coincident nodes using saved coordinates
-        progWin = progressWindow(noOfTotalFaces1-1, 'Searching interfaces between block' + str(elems[blockCombi[0]].attrs['Id']) + ' and ' + str(elems[blockCombi[1]].attrs['Id']))
-        for m in range(noOfTotalFaces1):
-            xIdx = ((abs(xCoords2[:,0]-xCoords1[m,0])<tolerance) & (abs(xCoords2[:,1]-xCoords1[m,1])<tolerance) & (abs(xCoords2[:,2]-xCoords1[m,2])<tolerance) & (abs(xCoords2[:,3]-xCoords1[m,3])<tolerance))
-            yIdx = ((abs(yCoords2[:,0]-yCoords1[m,0])<tolerance) & (abs(yCoords2[:,1]-yCoords1[m,1])<tolerance) & (abs(yCoords2[:,2]-yCoords1[m,2])<tolerance) & (abs(yCoords2[:,3]-yCoords1[m,3])<tolerance))
-            zIdx = ((abs(zCoords2[:,0]-zCoords1[m,0])<tolerance) & (abs(zCoords2[:,1]-zCoords1[m,1])<tolerance) & (abs(zCoords2[:,2]-zCoords1[m,2])<tolerance) & (abs(zCoords2[:,3]-zCoords1[m,3])<tolerance))
-            if True in (xIdx & yIdx & zIdx):
-                # Compute normal of elem 1 using original order 
-                elem1 = elems[blockCombi[0]][elemAndFaceIDs1[m][0]]
-                nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:4]+1]]
-                elem1x = [nodes[idx]['xCoords'] for idx in nodeIdx1]
-                elem1y = [nodes[idx]['yCoords'] for idx in nodeIdx1]
-                elem1z = [nodes[idx]['zCoords'] for idx in nodeIdx1]
-                a1 = [elem1x[1] - elem1x[0], elem1y[1] - elem1y[0], elem1z[1] - elem1z[0]]
-                b1 = [elem1x[3] - elem1x[0], elem1y[3] - elem1y[0], elem1z[3] - elem1z[0]]
-                normal1 = np.cross(a1,b1)
-                normal1 = normal1 / np.linalg.norm(normal1)
-                # Compute normal of elem 2
-                idx = (xIdx & yIdx & zIdx).nonzero()[0][0]
-                elem2 = elems[blockCombi[1]][elemAndFaceIDs2[idx][0]]
-                nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],:4]+1]]
-                elem2x = [nodes[idx]['xCoords'] for idx in nodeIdx2]
-                elem2y = [nodes[idx]['yCoords'] for idx in nodeIdx2]
-                elem2z = [nodes[idx]['zCoords'] for idx in nodeIdx2]
-                a2 = [elem2x[1] - elem2x[0], elem2y[1] - elem2y[0], elem2z[1] - elem2z[0]]
-                b2 = [elem2x[3] - elem2x[0], elem2y[3] - elem2y[0], elem2z[3] - elem2z[0]]
-                normal2 = np.cross(a2,b2)
-                normal2 = normal2 / np.linalg.norm(normal2)
-                # Identify orientation
-                cosineOfAngle = np.dot(normal1, normal2)
-                if cosineOfAngle > 0: # Normal vector show in equal direction
-                    ori = -1
-                else:
-                    ori = 1
-                foundInterFaceElements.append(interfaceElement())
-                foundInterFaceElements[-1].ori = ori
-                matchingNodes=[-1,-1] # First and second matching node
-                # The order of nodes must be considered (matching nodes must be given at the same index!); 8 cases of face rotations are possible, the midside nodes are assumed to be coincident.
-                for n in range(4):
-                    if (abs(elem1x[0] - elem2x[n])<tolerance) and (abs(elem1y[0] - elem2y[n])<tolerance) and (abs(elem1z[0] - elem2z[n])<tolerance): 
-                        matchingNodes[0] = n
-                    if (abs(elem1x[1] - elem2x[n])<tolerance) and (abs(elem1y[1] - elem2y[n])<tolerance) and (abs(elem1z[1] - elem2z[n])<tolerance): 
-                        matchingNodes[1] = n
-                if matchingNodes==[0,1]: 
-                    matchingNodeIdx = [0,1,2,3,4,5,6,7,8]
-                elif matchingNodes==[0,3]: 
-                    matchingNodeIdx = [0,3,2,1,7,6,5,4,8]
-                elif matchingNodes==[1,2]: 
-                    matchingNodeIdx = [1,2,3,0,5,6,7,4,8]
-                elif matchingNodes==[1,0]: 
-                    matchingNodeIdx = [1,0,3,2,4,7,6,5,8]
-                elif matchingNodes==[2,3]: 
-                    matchingNodeIdx = [2,3,0,1,6,7,4,5,8]
-                elif matchingNodes==[2,1]: 
-                    matchingNodeIdx = [2,1,0,3,5,4,7,6,8]
-                elif matchingNodes==[3,0]: 
-                    matchingNodeIdx = [3,0,1,2,7,4,5,6,8]
-                elif matchingNodes==[3,2]: 
-                    matchingNodeIdx = [3,2,1,0,6,5,4,7,8]
-                else:
-                    return 0
-                #
-                foundInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:]+1]]
-                foundInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[m][1],matchingNodeIdx]+1]]
-                foundInterFaceElements[-1].structElemId = np.uint64(elem1[0])
-                foundInterFaceElements[-1].structBlockIdx = blockCombi[0]
-                foundInterFaceElements[-1].fluidBlockIdx = blockCombi[1]
-                #print('Elem ' + str(elems[blockCombi[0]][elemAndFaceIDs1[m][0]][0]) + '(face' + str(elemAndFaceIDs1[m][1]) + ') fits elem ' + str(elems[blockCombi[1]][elemAndFaceIDs2[idx][0]][0]) + '(face' + str(elemAndFaceIDs2[idx][1]) + ')')
-            progWin.setValue(m)
-            QApplication.processEvents()
+        # Now loop over fitting second blocks and re-use coords of (potentially larger) hexa block
+        for blockCombi in blockCombinations:
+            print(blockCombi[0])
+            if blockCombi[0] == hexaBlocks:
+                # change number of faces
+                nodeIdxOfFaces2 = getNodeIdxOfFaces(elems[blockCombi[1]].attrs['ElementType'])
+                # Get sizes
+                noOfElems2 = len(elems[blockCombi[1]])
+                noOfFaces2 = nodeIdxOfFaces2.shape[0]
+                noOfTotalFaces2 = noOfElems2 * noOfFaces2
+                # Init arrays containing all coordinates
+                elemAndFaceIDs2 = []
+                xCoords2 = np.zeros((noOfTotalFaces2,4))
+                yCoords2 = np.zeros((noOfTotalFaces2,4))
+                zCoords2 = np.zeros((noOfTotalFaces2,4))
+                # Loops to collect coordinates in block 2
+                progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[1]].attrs['Id']))
+                for m, elem2 in enumerate(elems[blockCombi[1]]): 
+                    for faceNo2 in range(noOfFaces2):
+                        nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[faceNo2,:4]+1]] # indices of nodes belonging to the face
+                        xCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['xCoords'])
+                        yCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['yCoords'])
+                        zCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['zCoords'])
+                        elemAndFaceIDs2.append([m, faceNo2])
+                    progWin.setValue(m)
+                    QApplication.processEvents()
+                # Find interface elements for coincident nodes using saved coordinates
+                progWin = progressWindow(noOfTotalFaces1-1, 'Searching interfaces between block' + str(elems[blockCombi[0]].attrs['Id']) + ' and ' + str(elems[blockCombi[1]].attrs['Id']))
+                for m in range(noOfTotalFaces1):
+                    xIdx = ((abs(xCoords2[:,0]-xCoords1[m,0])<tolerance) & (abs(xCoords2[:,1]-xCoords1[m,1])<tolerance) & (abs(xCoords2[:,2]-xCoords1[m,2])<tolerance) & (abs(xCoords2[:,3]-xCoords1[m,3])<tolerance))
+                    yIdx = ((abs(yCoords2[:,0]-yCoords1[m,0])<tolerance) & (abs(yCoords2[:,1]-yCoords1[m,1])<tolerance) & (abs(yCoords2[:,2]-yCoords1[m,2])<tolerance) & (abs(yCoords2[:,3]-yCoords1[m,3])<tolerance))
+                    zIdx = ((abs(zCoords2[:,0]-zCoords1[m,0])<tolerance) & (abs(zCoords2[:,1]-zCoords1[m,1])<tolerance) & (abs(zCoords2[:,2]-zCoords1[m,2])<tolerance) & (abs(zCoords2[:,3]-zCoords1[m,3])<tolerance))
+                    if True in (xIdx & yIdx & zIdx):
+                        # Compute normal of elem 1 using original order 
+                        elem1 = elems[blockCombi[0]][elemAndFaceIDs1[m][0]]
+                        nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:4]+1]]
+                        elem1x = [nodes[idx]['xCoords'] for idx in nodeIdx1]
+                        elem1y = [nodes[idx]['yCoords'] for idx in nodeIdx1]
+                        elem1z = [nodes[idx]['zCoords'] for idx in nodeIdx1]
+                        a1 = [elem1x[1] - elem1x[0], elem1y[1] - elem1y[0], elem1z[1] - elem1z[0]]
+                        b1 = [elem1x[3] - elem1x[0], elem1y[3] - elem1y[0], elem1z[3] - elem1z[0]]
+                        normal1 = np.cross(a1,b1)
+                        normal1 = normal1 / np.linalg.norm(normal1)
+                        # Compute normal of elem 2
+                        idx = (xIdx & yIdx & zIdx).nonzero()[0][0]
+                        elem2 = elems[blockCombi[1]][elemAndFaceIDs2[idx][0]]
+                        nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],:4]+1]]
+                        elem2x = [nodes[idx]['xCoords'] for idx in nodeIdx2]
+                        elem2y = [nodes[idx]['yCoords'] for idx in nodeIdx2]
+                        elem2z = [nodes[idx]['zCoords'] for idx in nodeIdx2]
+                        a2 = [elem2x[1] - elem2x[0], elem2y[1] - elem2y[0], elem2z[1] - elem2z[0]]
+                        b2 = [elem2x[3] - elem2x[0], elem2y[3] - elem2y[0], elem2z[3] - elem2z[0]]
+                        normal2 = np.cross(a2,b2)
+                        normal2 = normal2 / np.linalg.norm(normal2)
+                        # Identify orientation
+                        cosineOfAngle = np.dot(normal1, normal2)
+                        if cosineOfAngle > 0: # Normal vector show in equal direction
+                            ori = -1
+                        else:
+                            ori = 1
+                        foundInterFaceElements.append(interfaceElement())
+                        foundInterFaceElements[-1].ori = ori
+                        matchingNodes=[-1,-1] # First and second matching node
+                        # The order of nodes must be considered (matching nodes must be given at the same index!); 8 cases of face rotations are possible, the midside nodes are assumed to be coincident.
+                        for n in range(4):
+                            if (abs(elem1x[0] - elem2x[n])<tolerance) and (abs(elem1y[0] - elem2y[n])<tolerance) and (abs(elem1z[0] - elem2z[n])<tolerance): 
+                                matchingNodes[0] = n
+                            if (abs(elem1x[1] - elem2x[n])<tolerance) and (abs(elem1y[1] - elem2y[n])<tolerance) and (abs(elem1z[1] - elem2z[n])<tolerance): 
+                                matchingNodes[1] = n
+                        if matchingNodes==[0,1]: 
+                            matchingNodeIdx = [0,1,2,3,4,5,6,7,8]
+                        elif matchingNodes==[0,3]: 
+                            matchingNodeIdx = [0,3,2,1,7,6,5,4,8]
+                        elif matchingNodes==[1,2]: 
+                            matchingNodeIdx = [1,2,3,0,5,6,7,4,8]
+                        elif matchingNodes==[1,0]: 
+                            matchingNodeIdx = [1,0,3,2,4,7,6,5,8]
+                        elif matchingNodes==[2,3]: 
+                            matchingNodeIdx = [2,3,0,1,6,7,4,5,8]
+                        elif matchingNodes==[2,1]: 
+                            matchingNodeIdx = [2,1,0,3,5,4,7,6,8]
+                        elif matchingNodes==[3,0]: 
+                            matchingNodeIdx = [3,0,1,2,7,4,5,6,8]
+                        elif matchingNodes==[3,2]: 
+                            matchingNodeIdx = [3,2,1,0,6,5,4,7,8]
+                        else:
+                            return 0
+                        #
+                        foundInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:]+1]]
+                        foundInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],matchingNodeIdx]+1]]
+                        foundInterFaceElements[-1].structElemId = np.uint64(elem2[0])
+                        foundInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
+                        foundInterFaceElements[-1].structBlockIdx = blockCombi[1]
+                        #print('Elem ' + str(elems[blockCombi[0]][elemAndFaceIDs1[m][0]][0]) + '(face' + str(elemAndFaceIDs1[m][1]) + ') fits elem ' + str(elems[blockCombi[1]][elemAndFaceIDs2[idx][0]][0]) + '(face' + str(elemAndFaceIDs2[idx][1]) + ')')
+                    progWin.setValue(m)
+                    QApplication.processEvents()
     return foundInterFaceElements
 
 class interfaceElement: # Define an interface element
