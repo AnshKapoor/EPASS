@@ -37,6 +37,11 @@ def readNodes(myModel, hdf5File, cub5File=0):
 def readElements(myModel, hdf5File, cub5File=0):
     if cub5File: 
         g = hdf5File.create_group('Elements')
+        # Prepare dictionary for faster elem id search
+        for coreformKey in cub5File['Mesh/Elements'].keys():
+            myModel.elemsInvTags.append(coreformKey)
+            elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs'][:]
+            myModel.elemsInv.append(dict([[ID, n] for n, ID in enumerate(elemIDs)]))
         # Sort blocks according to ID
         groupIDs = []
         allBlocks = []
@@ -54,10 +59,9 @@ def readElements(myModel, hdf5File, cub5File=0):
             N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
             if coreformKey != 'notSupported':
                 dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
-                elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs'][:]
-                myModel.elemsInv.append(dict([[ID, n] for n, ID in enumerate(elemIDs)]))
-                elemsInv = myModel.elemsInv[-1]
-                idx = [elemsInv[elemID[0]] for elemID in cub5File['Simulation Model/Blocks/' + block + '/member ids'][:]]
+                elemsInv = myModel.elemsInv[myModel.elemsInvTags.index(coreformKey)]
+                memberIDs = (cub5File['Simulation Model/Blocks/' + block + '/member ids'][:].T).tolist()[0]
+                idx = [elemsInv[elemID] for elemID in memberIDs]
                 dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
                 dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
                 myModel.elems.append(dataSet)
@@ -186,9 +190,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
     foundInterFaceElements = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
     hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
-    print(hexaBlocks)
     for hexaBlock in hexaBlocks:
-        print(hexaBlock)
         # change number of faces
         nodeIdxOfFaces1 = getNodeIdxOfFaces(elems[hexaBlock].attrs['ElementType'])
         # Get sizes
@@ -213,8 +215,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
             QApplication.processEvents()
         # Now loop over fitting second blocks and re-use coords of (potentially larger) hexa block
         for blockCombi in blockCombinations:
-            print(blockCombi[0])
-            if blockCombi[0] == hexaBlocks:
+            if blockCombi[0] == hexaBlock:
                 # change number of faces
                 nodeIdxOfFaces2 = getNodeIdxOfFaces(elems[blockCombi[1]].attrs['ElementType'])
                 # Get sizes

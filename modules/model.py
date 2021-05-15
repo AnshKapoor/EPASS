@@ -29,6 +29,7 @@ class model(QWidget): # Saves a model
         self.nodeSets = []
         self.elems = []
         self.elemsInv = []
+        self.elemsInvTags = []
         self.interfaceElems = []
         self.elementSets = []
         self.loads = []
@@ -255,7 +256,6 @@ class model(QWidget): # Saves a model
                     newGrid.SetPoints(self.vtkPoints)
                     #
                     vtkCells = vtk.vtkCellArray()
-                    print(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
                     newElem, newElemTypeId, nnodes = getVTKElem(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
                     cells = np.zeros((noOfInterfaceElems,nnodes+1), dtype=np.int64)
                     cells[:,0] = nnodes
