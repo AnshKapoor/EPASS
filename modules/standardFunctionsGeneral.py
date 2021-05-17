@@ -6,21 +6,41 @@
 from PyQt5.QtWidgets import QApplication
 import numpy as np
 import vtk
-from standardWidgets import progressWindow
+from standardWidgets import progressWindow, messageboxOK
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
 def readNodes(myModel, hdf5File, cub5File=0):
     if cub5File: 
+        progWin = progressWindow(2, 'Loading nodes ...')
         # Nodes 
         nodeIDs = cub5File['Mesh/Nodes/Node IDs']
         g = hdf5File.create_group('Nodes')
         comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
-        dataSet = g.create_dataset('mtxFemNodes', (len(nodeIDs),), comp_type)
-        dataSet[:,'Ids'] = np.array(cub5File['Mesh/Nodes/Node IDs'][()], dtype=np.uint64)
-        dataSet[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][()]
-        dataSet[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][()]
-        dataSet[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][()]
+        #
+        dataSetDUMMY = g.create_dataset('mtxFemNodesDUMMY', (len(nodeIDs),), comp_type)
+        dataSetDUMMY[:,'Ids'] = np.array(cub5File['Mesh/Nodes/Node IDs'][()], dtype=np.uint64)
+        dataSetDUMMY[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][()]
+        dataSetDUMMY[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][()]
+        dataSetDUMMY[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][()]
+        nodesInv = dict([[ID, n] for n, ID in enumerate(dataSetDUMMY[:,'Ids'])])
+        #
+        progWin.setValue(1)
+        QApplication.processEvents()
+        myModel.allUsedNodesIdx = [nodesInv[nodeId] for nodeId in np.unique(myModel.allUsedNodes)]
+        #
+        dataSet = g.create_dataset('mtxFemNodes', (len(myModel.allUsedNodesIdx),), comp_type)
+        dataSet[:,'Ids'] = np.array(cub5File['Mesh/Nodes/Node IDs'][sorted(myModel.allUsedNodesIdx)], dtype=np.uint64)
+        dataSet[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][sorted(myModel.allUsedNodesIdx)]
+        dataSet[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][sorted(myModel.allUsedNodesIdx)]
+        dataSet[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][sorted(myModel.allUsedNodesIdx)]
         myModel.nodesInv = dict([[ID, n] for n, ID in enumerate(dataSet[:,'Ids'])])
+        print(len(nodesInv))
+        print(len(myModel.nodesInv))
+        del dataSetDUMMY
+        progWin.setValue(2)
+        QApplication.processEvents()
+        if len(myModel.nodesInv)<len(nodesInv):
+            messageboxOK('Ignored nodes', str(len(nodesInv)-len(myModel.nodesInv)) + ' nodes have been ignored as no elements use these nodes.')
         # Nodesets 
         g = hdf5File.create_group('Nodesets')
         if 'Nodesets' in cub5File['Simulation Model'].keys(): # If nodesets exist in cub5 file by coreform, then read them
@@ -36,6 +56,7 @@ def readNodes(myModel, hdf5File, cub5File=0):
 # Read Elements from cub5 and save them into hdf5 OR only read elements directly from hdf5
 def readElements(myModel, hdf5File, cub5File=0):
     if cub5File: 
+        myModel.allUsedNodes = []
         g = hdf5File.create_group('Elements')
         # Prepare dictionary for faster elem id search
         for coreformKey in cub5File['Mesh/Elements'].keys():
@@ -64,9 +85,14 @@ def readElements(myModel, hdf5File, cub5File=0):
                 idx = [elemsInv[elemID] for elemID in memberIDs]
                 dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
                 dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
+                if len(myModel.allUsedNodes) != 0:
+                    myModel.allUsedNodes = np.append(myModel.allUsedNodes, dataSet[:,1:].flatten())
+                else:
+                    myModel.allUsedNodes = dataSet[:,1:].flatten()
                 myModel.elems.append(dataSet)
                 progWin.setValue(p)
                 QApplication.processEvents()
+        #newNodes = myModel.nodes
         # Element-/Sidesets 
         g = hdf5File.create_group('Elementsets')
         #if 'Sidesets' in cub5File['Simulation Model'].keys(): # If sidesets exist in cub5 file by coreform, then read them as element sets

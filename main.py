@@ -134,8 +134,8 @@ class loadGUI(QMainWindow):
             # relevant cub5 data is transferred to new hdf5 file
             try: 
                 with h5py.File(fileName,'r') as cub5File:
-                    readNodes(self.myModel, self.myModel.hdf5File, cub5File)
                     readElements(self.myModel, self.myModel.hdf5File, cub5File)
+                    readNodes(self.myModel, self.myModel.hdf5File, cub5File)
                     readSetup(self.myModel, self.myModel.hdf5File, cub5File)
                 messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
                 return 1
@@ -152,8 +152,8 @@ class loadGUI(QMainWindow):
         fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
         self.myModel.hdf5File = h5py.File(fileName, 'r+')
         atexit.register(self.myModel.hdf5File.close)
-        readNodes(self.myModel, self.myModel.hdf5File)
         readElements(self.myModel, self.myModel.hdf5File)
+        readNodes(self.myModel, self.myModel.hdf5File)
         readSetup(self.myModel, self.myModel.hdf5File)
         messageboxOK('Ready','hdf5 file successfully loaded')
         return 1
