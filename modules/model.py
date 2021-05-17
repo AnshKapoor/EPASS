@@ -343,7 +343,7 @@ class model(QWidget): # Saves a model
                     #
                     structMatId = np.uint64(self.blockMaterialSelectors[interFaceElem.structBlockIdx].currentText())
                     structMatIdx = self.blockMaterialSelectors[interFaceElem.structBlockIdx].currentIndex()
-                    dataSet.attrs['matS'] = structMatId
+                    dataSet.attrs['mats'] = structMatId
                     #
                     fluidMatId = np.uint64(self.blockMaterialSelectors[interFaceElem.fluidBlockIdx].currentText())
                     fluidMatIdx = self.blockMaterialSelectors[interFaceElem.fluidBlockIdx].currentIndex()
