@@ -13,34 +13,25 @@ def readNodes(myModel, hdf5File, cub5File=0):
     if cub5File: 
         progWin = progressWindow(2, 'Loading nodes ...')
         # Nodes 
-        nodeIDs = cub5File['Mesh/Nodes/Node IDs']
-        g = hdf5File.create_group('Nodes')
-        comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
-        #
-        dataSetDUMMY = g.create_dataset('mtxFemNodesDUMMY', (len(nodeIDs),), comp_type)
-        dataSetDUMMY[:,'Ids'] = np.array(cub5File['Mesh/Nodes/Node IDs'][()], dtype=np.uint64)
-        dataSetDUMMY[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][()]
-        dataSetDUMMY[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][()]
-        dataSetDUMMY[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][()]
-        nodesInv = dict([[ID, n] for n, ID in enumerate(dataSetDUMMY[:,'Ids'])])
+        nodesInv = dict([[ID, n] for n, ID in enumerate(cub5File['Mesh/Nodes/Node IDs'][:])])
         #
         progWin.setValue(1)
         QApplication.processEvents()
         myModel.allUsedNodesIdx = [nodesInv[nodeId] for nodeId in np.unique(myModel.allUsedNodes)]
         #
+        g = hdf5File.create_group('Nodes')
+        comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
         dataSet = g.create_dataset('mtxFemNodes', (len(myModel.allUsedNodesIdx),), comp_type)
         dataSet[:,'Ids'] = np.array(cub5File['Mesh/Nodes/Node IDs'][sorted(myModel.allUsedNodesIdx)], dtype=np.uint64)
         dataSet[:,'xCoords'] = cub5File['Mesh/Nodes/X Coords'][sorted(myModel.allUsedNodesIdx)]
         dataSet[:,'yCoords'] = cub5File['Mesh/Nodes/Y Coords'][sorted(myModel.allUsedNodesIdx)]
         dataSet[:,'zCoords'] = cub5File['Mesh/Nodes/Z Coords'][sorted(myModel.allUsedNodesIdx)]
         myModel.nodesInv = dict([[ID, n] for n, ID in enumerate(dataSet[:,'Ids'])])
-        print(len(nodesInv))
-        print(len(myModel.nodesInv))
-        del dataSetDUMMY
         progWin.setValue(2)
         QApplication.processEvents()
         if len(myModel.nodesInv)<len(nodesInv):
             messageboxOK('Ignored nodes', str(len(nodesInv)-len(myModel.nodesInv)) + ' nodes have been ignored as no elements use these nodes.')
+        nodesInv = 0
         # Nodesets 
         g = hdf5File.create_group('Nodesets')
         if 'Nodesets' in cub5File['Simulation Model'].keys(): # If nodesets exist in cub5 file by coreform, then read them

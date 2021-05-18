@@ -78,6 +78,7 @@ class analysisTab(QWidget):
         self.outputLabel.setFixedWidth(100)
         self.outputNames = ['hdf5','vtk','stp']
         self.outputChecks = [QCheckBox(x) for x in self.outputNames]
+        self.outputChecks[0].setChecked(True)
         self.subLayouts.append(QHBoxLayout())
         self.subLayouts[-1].addWidget(self.outputLabel)
         [self.subLayouts[-1].addWidget(wid) for wid in self.outputChecks]
