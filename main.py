@@ -15,11 +15,12 @@ from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QHBoxLayout, QVB
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 #
-sys.path.append(os.path.dirname(sys.argv[0]) + '/modules')
-sys.path.append(os.path.dirname(sys.argv[0]) + '/loads')
-sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs')
-sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/materials')
-sys.path.append(os.path.dirname(sys.argv[0]) + '/tabs/constraints')
+dirname, filename = os.path.split(os.path.abspath(__file__))
+sys.path.append(dirname + '/modules')
+sys.path.append(dirname + '/loads')
+sys.path.append(dirname + '/tabs')
+sys.path.append(dirname + '/tabs/materials')
+sys.path.append(dirname + '/tabs/constraints')
 #
 from standardFunctionsGeneral import readNodes, readElements, readSetup
 from standardWidgets import ak3LoadButton, sepLine, saveAndExitButton, messageboxOK
