@@ -116,7 +116,9 @@ def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem
     return dataSet
 
 def identifyElemType(elemType): 
-    if elemType[0] == 22: # Quadrilateral with 9 nodes
+    if elemType[0] == 20: #Quadrilateral with 4 nodes
+        return 'QUAD_4', 'PlShell4', 5;
+    elif elemType[0] == 22: # Quadrilateral with 9 nodes
         return 'QUAD_9', 'PlShell9', 10;
     elif elemType[0] == 43: # Hexahedron with 27 nodes
         return 'HEX_NODE_27', 'Fluid27', 28; 
@@ -126,7 +128,9 @@ def identifyElemType(elemType):
         return 'notSupported', [], 0;
 
 def identifyAlternativeElemTypes(elemType):
-    if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']: 
+    if elemType in ['PlShell4','DSG4']:
+        return ['PlShell4','DSG4'];
+    elif elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']: 
         return ['PlShell9pre','PlShell9','DSG9','Disc9','Fluid2d9'];
     elif elemType in ['Fluid27','Brick27']:
         return ['Fluid27','Brick27'];
@@ -150,7 +154,7 @@ def getPossibleInterfacePartner(elemType):
         return []
     
 def isPlateType(elemType):
-    if elemType in ['PlShell9', 'PlShell9pre','DSG9']:
+    if elemType in ['PlShell9', 'PlShell9pre','DSG9','PlShell4','DSG4']:
         return 1
     else:
         return 0
