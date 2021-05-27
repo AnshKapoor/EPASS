@@ -120,6 +120,8 @@ def identifyElemType(elemType):
         return 'QUAD_4', 'PlShell4', 5;
     elif elemType[0] == 22: # Quadrilateral with 9 nodes
         return 'QUAD_9', 'PlShell9', 10;
+    elif elemType[0] == 40: # Hexahedron with 8 nodes
+        return 'HEX_NODE_8', 'Fluid8', 9;
     elif elemType[0] == 43: # Hexahedron with 27 nodes
         return 'HEX_NODE_27', 'Fluid27', 28; 
     elif elemType[0] == 10: # 2-node Spring
@@ -132,6 +134,8 @@ def identifyAlternativeElemTypes(elemType):
         return ['PlShell4','DSG4'];
     elif elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']: 
         return ['PlShell9pre','PlShell9','DSG9','Disc9','Fluid2d9'];
+    elif elemType in ['Fluid8','Brick8']:
+        return ['Fluid8','Brick8'];
     elif elemType in ['Fluid27','Brick27']:
         return ['Fluid27','Brick27'];
     elif elemType in ['Spring']:
@@ -150,6 +154,10 @@ def getPossibleInterfacePartner(elemType):
         return ['Fluid27']
     elif elemType in ['Fluid27']:
         return ['PlShell9', 'PlShell9pre','DSG9']
+    elif elemType in ['Fluid8']:
+        return ['PlShell4', 'DSG4']
+    elif elemType in ['PlShell4', 'DSG4']:
+        return ['Fluid8']
     else:
         return []
     
@@ -169,6 +177,15 @@ def getNodeIdxOfFaces(elemType):
                          [1,2,6,5,9,14,17,13,24],
                          [4,5,6,7,16,17,18,19,22],
                          [0,4,7,3,12,19,15,11,23]]) # Face 0,1,2,3,4,5
+    elif elemType in ['PlShell4','DSG4']:
+        return np.array([[0,1,2,3]]) # Face 0
+    elif elemType in ['Fluid8','Brick8','Disc4','Fluid2d4']:
+        return np.array([[0,1,5,4],
+                         [2,3,7,6],
+                         [0,3,2,1],
+                         [1,2,6,5],
+                         [4,5,6,7],
+                         [0,4,7,3]]) # Face 0,1,2,3,4,5
     else:
         return []
 
@@ -322,7 +339,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                             return 0
                         #
                         foundInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:]+1]]
-                        foundInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],matchingNodeIdx]+1]]
+                        foundInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],matchingNodeIdx[:nodeIdxOfFaces1.shape[1]]]+1]]
                         foundInterFaceElements[-1].structElemId = np.uint64(elem2[0])
                         foundInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
                         foundInterFaceElements[-1].structBlockIdx = blockCombi[1]
