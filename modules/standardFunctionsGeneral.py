@@ -39,8 +39,10 @@ def readNodes(myModel, hdf5File, cub5File=0):
                 nodesetID = cub5File['Simulation Model/Nodesets/' + nodeset].attrs['nodeset_id'][()][0]
                 g.create_dataset('vecNodeset' + str(nodesetID), data=cub5File['Simulation Model/Nodesets/' + nodeset + '/member ids'][()])
                 g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
-    # Standard ops/assignments
-    myModel.nodes = hdf5File['Nodes/mtxFemNodes']
+        myModel.nodes = hdf5File['Nodes/mtxFemNodes']
+    else:
+        myModel.nodes = hdf5File['Nodes/mtxFemNodes']
+        myModel.nodesInv = dict([[ID, n] for n, ID in enumerate(myModel.nodes[:,'Ids'])])
     for nodeset in hdf5File['Nodesets'].keys():
         myModel.nodeSets.append(hdf5File['Nodesets/' + nodeset])
 

@@ -36,6 +36,10 @@ class vtkWindow(QVTKRenderWindowInteractor):
 
         # Axis
         self.mainAxes = vtk.vtkAxesActor()
+        myAxes = [self.mainAxes.GetXAxisCaptionActor2D(), self.mainAxes.GetYAxisCaptionActor2D(), self.mainAxes.GetZAxisCaptionActor2D()]
+        prop = vtk.vtkTextProperty()
+        prop.SetFontSize(1)
+        [axis.SetCaptionTextProperty(prop) for axis in myAxes]
         self.ren.AddActor(self.mainAxes)
 
         # Lookup Table

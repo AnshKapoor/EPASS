@@ -17,6 +17,11 @@ class graphWindow(FigureCanvas):
         self.axes.set_ylabel('Mean Amplitude  [Pa]')
         self.fig.tight_layout()
         self.draw()
+    
+    def setLabels(self, xlabel, ylabel): 
+        self.axes.set_xlabel(str(xlabel))
+        self.axes.set_ylabel(str(ylabel))
+        self.draw()
        
     def plot(self, x, y, col='k', lin='-', wid=1):
         self.axes.plot(x, y, color=col, linestyle=lin, linewidth=wid)
