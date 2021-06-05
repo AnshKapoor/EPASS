@@ -111,7 +111,7 @@ class loadGUI(QMainWindow):
         atexit.register(self.myModel.hdf5File.close)
         readElements(self.myModel, self.myModel.hdf5File)
         readNodes(self.myModel, self.myModel.hdf5File)
-        #readSetup(self.myModel, self.myModel.hdf5File)
+        readSetup(self.myModel, self.myModel.hdf5File)
         messageboxOK('Ready','hdf5 file successfully loaded')
         return 1
         
@@ -129,6 +129,7 @@ class loadGUI(QMainWindow):
         # 1a | Data tree
         self.dataTree = QTreeWidget()
         self.dataTree.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.dataTree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.dataTree.setHeaderHidden(1)
         self.dataTree.setStyleSheet("background-color: white;")
         self.tabWidget.addTab(self.dataTree, "Data structure")
@@ -182,7 +183,7 @@ class loadGUI(QMainWindow):
         self.modelMenu = self.menubar.addMenu('&Model')
         self.loadAct = QAction('&Load model', self)
         self.loadAct.setShortcut('Ctrl+L')
-        self.loadAct.setStatusTip('Load model from ak3 file')
+        self.loadAct.setStatusTip('Load model from hdf5 file')
         self.modelMenu.addAction(self.loadAct)
         #
         self.modelMenu = self.menubar.addMenu('&Help')
@@ -194,6 +195,7 @@ class loadGUI(QMainWindow):
         
     def contextMenuEvent(self, event):
         cmenu = QMenu(self)
+        cmenu.setStyleSheet("QMenu::item:selected { background: #abc13b; }")
         openAct = cmenu.addAction("Open")
         quitAct = cmenu.addAction("Quit")
         action = cmenu.exec_(self.mapToGlobal(event.pos()))

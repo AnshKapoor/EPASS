@@ -98,11 +98,37 @@ def readElements(myModel, hdf5File, cub5File=0):
         #        # Currently here are local (face / hex) number saved, which is not working if elemsets are used!
         #        g.create_dataset('vecElemset' + str(elemsetID), data=cub5File['Simulation Model/Sidesets/' + elemset + '/member ids'][()])
         #        g['vecElemset' + str(elemsetID)].attrs['Id'] = np.uint64(elemsetID)
-    else: 
+    else:
         for block in hdf5File['Elements'].keys():
             myModel.elems.append(hdf5File['Elements/' + block])
     for elemset in hdf5File['Elementsets'].keys():
         myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
+
+
+# Read setup from hdf5 file
+def readSetup(myModel, hdf5File, cub5File=0):
+    if cub5File: 
+        # Write standard values to hdf5 file
+        g = hdf5File.create_group('Analysis')
+        g.attrs['id'] = np.uint64(myModel.analysisID)
+        g.attrs['type'] = myModel.analysisType 
+        g.attrs['start'] = np.float64(myModel.freqStart)
+        g.attrs['steps'] = np.uint64(myModel.freqSteps)
+        g.attrs['delta'] = np.float64(myModel.freqDelta)
+        g.attrs['solver'] = myModel.solverType
+        g.attrs['revision'] = np.uint64(myModel.revision)
+        g.attrs['description'] = myModel.description
+    else:
+        g = hdf5File['Analysis']
+        myModel.analysisID = g.attrs['id'][()]
+        myModel.analysisType = g.attrs['type'][:]
+        myModel.freqStart = g.attrs['start'][()]
+        myModel.freqSteps = g.attrs['steps'][()]
+        myModel.freqDelta = g.attrs['delta'][()]
+        myModel.solverType = g.attrs['solver'][:]
+        myModel.revision = g.attrs['revision'][()]
+        myModel.description = g.attrs['description'][:]
+        myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
 def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem):
     elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint64)
@@ -200,31 +226,6 @@ def getVTKElem(elpasoElemType):
         return vtk.vtkLine(), 3, 2
     else:
         return 0, 0, 0
-
-# Read setup from hdf5 file
-def readSetup(myModel, hdf5File, cub5File=0):
-    if cub5File: 
-        # Write standard values to hdf5 file
-        g = hdf5File.create_group('Analysis')
-        g.attrs['id'] = np.uint64(myModel.analysisID)
-        g.attrs['type'] = myModel.analysisType 
-        g.attrs['start'] = np.float64(myModel.freqStart)
-        g.attrs['steps'] = np.uint64(myModel.freqSteps)
-        g.attrs['delta'] = np.float64(myModel.freqDelta)
-        g.attrs['solver'] = myModel.solverType
-        g.attrs['revision'] = np.uint64(myModel.revision)
-        g.attrs['description'] = myModel.description
-    else:
-        g = hdf5File['Analysis']
-        myModel.analysisID = g.attrs['id'][()]
-        myModel.analysisType = g.attrs['type'][:]
-        myModel.freqStart = g.attrs['start'][()]
-        myModel.freqSteps = g.attrs['steps'][()]
-        myModel.freqDelta = g.attrs['delta'][()]
-        myModel.solverType = g.attrs['solver'][:]
-        myModel.revision = g.attrs['revision'][()]
-        myModel.description = g.attrs['description'][:]
-        myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
 def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
     foundInterFaceElements = []
