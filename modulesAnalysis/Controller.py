@@ -10,6 +10,7 @@ from PyQt5.QtGui import QCursor
 class Controller():
   def __init__(self, inaGui):
     self.inaGui = inaGui
+    self.vtkWindow = inaGui.vtkWindow
     self.tree = self.inaGui.dataTree
     self.tree.customContextMenuRequested.connect(self.treeWidgetItemClick)
     # Connectors 
@@ -44,8 +45,15 @@ class Controller():
   def loadHdf5(self, pathToFile):
     with h5py.File(pathToFile, 'r') as hdf5File:
       self.groupsLev1Collector.append(lev1Container(self.tree, hdf5File, pathToFile))
+      self.create3DRepresentation(self.groupsLev1Collector[-1])
       self.connectButtons(self.groupsLev1Collector[-1])
     
+  def create3DRepresentation(self, groupLev1):
+    allLev2Names = [lev2Entry.name for lev2Entry in groupLev1.groupsLev2Collector]
+    if 'Nodes' in allLev2Names:
+      groupLev1.groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodeActor = self.vtkWindow.createGrid(groupLev1.groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodes)
+        
+
   def connectButtons(self,currentLev1Container):
     currentLev1Container.closeButton.clicked.connect(self.removeLev1Entry)
     for currentLev2Container in currentLev1Container.groupsLev2Collector:

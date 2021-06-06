@@ -1,5 +1,6 @@
 
 import math
+import numpy as np
 import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtk.util.numpy_support import numpy_to_vtk
@@ -127,7 +128,34 @@ class vtkWindow(QVTKRenderWindowInteractor):
                     self.ren.RemoveActor(act)
                 elif state==1:
                     self.ren.AddActor(act)
-
+    
+    def createGrid(self, nodes):
+        self.vtkPoints = vtk.vtkPoints()
+        self.vtkPoints.SetData(numpy_to_vtk(np.array([nodes[:]['xCoords'], nodes[:]['yCoords'], nodes[:]['zCoords']]).T))
+        newGrid = vtk.vtkUnstructuredGrid()
+        newGrid.SetPoints(self.vtkPoints)
+        self.sphereSource = vtk.vtkSphereSource()
+        scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
+        self.sphereSource.SetRadius(scaleFactor*0.02)
+        self.sphereDataLoad = vtk.vtkPolyData()
+        self.sphereDataLoad.SetPoints(self.vtkPoints)
+        # Glyph for load symbol
+        glyphLoad = vtk.vtkGlyph3D()
+        glyphLoad.SetScaleModeToScaleByVector()
+        glyphLoad.SetSourceConnection(self.sphereSource.GetOutputPort())
+        glyphLoad.SetInputData(self.sphereDataLoad)
+        glyphLoad.Update()
+        # Mapper for load
+        self.sphereMapperLoad = vtk.vtkPolyDataMapper()
+        self.sphereMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
+        # Actor for load
+        self.sphereActorLoad = vtk.vtkActor()
+        self.sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
+        self.sphereActorLoad.SetMapper(self.sphereMapperLoad)
+        #List of Actors for iteration in vtkWindow
+        self.ren.AddActor(self.sphereActorLoad)
+        return self.sphereActorLoad
+        
     def updateWindow(self, myModel):
         for blockIdx in range(myModel.blockInfo.rowCount()):
             state = myModel.blockInfo.item(blockIdx,0).checkState()

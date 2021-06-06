@@ -339,13 +339,14 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                         elif matchingNodes==[3,2]: 
                             matchingNodeIdx = [3,2,1,0,6,5,4,7,8]
                         else:
-                            return 0
+                            pass
                         #
-                        foundInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:]+1]]
-                        foundInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],matchingNodeIdx[:nodeIdxOfFaces1.shape[1]]]+1]]
-                        foundInterFaceElements[-1].structElemId = np.uint64(elem2[0])
-                        foundInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
-                        foundInterFaceElements[-1].structBlockIdx = blockCombi[1]
+                        if not -1 in matchingNodeIdx:
+                            foundInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[m][1],:]+1]]
+                            foundInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[idx][1],matchingNodeIdx[:nodeIdxOfFaces1.shape[1]]]+1]]
+                            foundInterFaceElements[-1].structElemId = np.uint64(elem2[0])
+                            foundInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
+                            foundInterFaceElements[-1].structBlockIdx = blockCombi[1]
                         #print('Elem ' + str(elems[blockCombi[0]][elemAndFaceIDs1[m][0]][0]) + '(face' + str(elemAndFaceIDs1[m][1]) + ') fits elem ' + str(elems[blockCombi[1]][elemAndFaceIDs2[idx][0]][0]) + '(face' + str(elemAndFaceIDs2[idx][1]) + ')')
                     progWin.setValue(m)
                     QApplication.processEvents()
