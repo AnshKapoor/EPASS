@@ -235,56 +235,60 @@ class model(QWidget): # Saves a model
                                     else:
                                         relevantBlockCombinations.append([m,n])
             if relevantBlockCombinations:
-                foundInterFaceElements = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
-                if foundInterFaceElements: 
-                    # Add information to info block
-                    noOfInterfaceElems = len(foundInterFaceElements)
-                    self.blockInfo.insertRow(self.blockInfo.rowCount())
-                    currentRow = self.blockInfo.rowCount()-1
-                    items = [QTableWidgetItem(), QTableWidgetItem(' '), QTableWidgetItem('interface'), QTableWidgetItem(' '), QTableWidgetItem(' ')]
-                    for n, item in enumerate(items):
-                        if n==0: # Checkbox
-                            item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                            item.setCheckState(Qt.Checked)
-                        else: # Text/Info
-                            item.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
-                        item.setTextAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
-                        self.blockInfo.setItem(currentRow, n, item)
-                    # Create actors for 3D window
-                    # VTK Elements
-                    newGrid = vtk.vtkUnstructuredGrid()
-                    newGrid.SetPoints(self.vtkPoints)
-                    #
-                    vtkCells = vtk.vtkCellArray()
-                    newElem, newElemTypeId, nnodes = getVTKElem(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
-                    cells = np.zeros((noOfInterfaceElems,nnodes+1), dtype=np.int64)
-                    cells[:,0] = nnodes
-                    for elemCount in range(noOfInterfaceElems):
-                        cells[elemCount,1:] = [self.nodesInv[nodeID] for nodeID in foundInterFaceElements[elemCount].structuralNodes[:4]]
-                    vtkCells.SetCells(noOfInterfaceElems, numpy_support.numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
-                    newGrid.SetCells(newElemTypeId, vtkCells)
-                    #
-                    vtkWindow.grids.append(newGrid)
-                    # Each block gets a vtk actor and mapper
-                    vtkWindow.mappers.append(vtk.vtkDataSetMapper())
-                    vtkWindow.mappers[-1].SetInputData(vtkWindow.grids[-1])
-                    vtkWindow.actors.append(vtk.vtkActor())
-                    vtkWindow.actors[-1].SetMapper(vtkWindow.mappers[-1])
-                    vtkWindow.actors[-1].GetProperty().SetColor(0.1,0.1,0.7)
-                    vtkWindow.actors[-1].GetProperty().SetAmbient(0.9)
-                    vtkWindow.actors[-1].GetProperty().SetDiffuse(0.1)
-                    vtkWindow.actors[-1].GetProperty().SetSpecular(0.)
-                    # Each block gets another vtk actor and mapper for the edges of the grid
-                    vtkWindow.edgeMappers.append(vtk.vtkDataSetMapper())
-                    vtkWindow.edgeMappers[-1].SetInputData(vtkWindow.grids[-1])
-                    vtkWindow.edgeActors.append(vtk.vtkActor())
-                    vtkWindow.edgeActors[-1].SetMapper(vtkWindow.edgeMappers[-1])
-                    vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
-                    vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2)
-                    vtkWindow.edgeActors[-1].GetProperty().SetColor(0.1,0.1,0.1)
-                    #
-                    self.interfaceElems.append(foundInterFaceElements)
-                    messageboxOK('Success', str(noOfInterfaceElems) + ' interface elements found. \n Select appropriate materials before export!')
+                foundInterFaceElementsBlocks = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
+                totalFoundInterfaces = 0
+                for foundInterFaceElements in foundInterFaceElementsBlocks:
+                    if foundInterFaceElements: 
+                        # Add information to info block
+                        noOfInterfaceElems = len(foundInterFaceElements)
+                        self.blockInfo.insertRow(self.blockInfo.rowCount())
+                        currentRow = self.blockInfo.rowCount()-1
+                        items = [QTableWidgetItem(), QTableWidgetItem(' '), QTableWidgetItem(str(len(foundInterFaceElements))), QTableWidgetItem('inter (' + str(self.elems[foundInterFaceElements[0].structBlockIdx].attrs['Id']) + '/' + str(self.elems[foundInterFaceElements[0].fluidBlockIdx].attrs['Id']) + ')'), QTableWidgetItem(' ')]
+                        for n, item in enumerate(items):
+                            if n==0: # Checkbox
+                                item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                                item.setCheckState(Qt.Checked)
+                            else: # Text/Info
+                                item.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
+                            item.setTextAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
+                            self.blockInfo.setItem(currentRow, n, item)
+                        # Create actors for 3D window
+                        # VTK Elements
+                        newGrid = vtk.vtkUnstructuredGrid()
+                        newGrid.SetPoints(self.vtkPoints)
+                        #
+                        vtkCells = vtk.vtkCellArray()
+                        newElem, newElemTypeId, nnodes = getVTKElem(self.elems[foundInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
+                        cells = np.zeros((noOfInterfaceElems,nnodes+1), dtype=np.int64)
+                        cells[:,0] = nnodes
+                        for elemCount in range(noOfInterfaceElems):
+                            cells[elemCount,1:] = [self.nodesInv[nodeID] for nodeID in foundInterFaceElements[elemCount].structuralNodes[:4]]
+                        vtkCells.SetCells(noOfInterfaceElems, numpy_support.numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
+                        newGrid.SetCells(newElemTypeId, vtkCells)
+                        #
+                        vtkWindow.grids.append(newGrid)
+                        # Each block gets a vtk actor and mapper
+                        vtkWindow.mappers.append(vtk.vtkDataSetMapper())
+                        vtkWindow.mappers[-1].SetInputData(vtkWindow.grids[-1])
+                        vtkWindow.actors.append(vtk.vtkActor())
+                        vtkWindow.actors[-1].SetMapper(vtkWindow.mappers[-1])
+                        vtkWindow.actors[-1].GetProperty().SetColor(0.1,0.1,0.7)
+                        vtkWindow.actors[-1].GetProperty().SetAmbient(0.9)
+                        vtkWindow.actors[-1].GetProperty().SetDiffuse(0.1)
+                        vtkWindow.actors[-1].GetProperty().SetSpecular(0.)
+                        # Each block gets another vtk actor and mapper for the edges of the grid
+                        vtkWindow.edgeMappers.append(vtk.vtkDataSetMapper())
+                        vtkWindow.edgeMappers[-1].SetInputData(vtkWindow.grids[-1])
+                        vtkWindow.edgeActors.append(vtk.vtkActor())
+                        vtkWindow.edgeActors[-1].SetMapper(vtkWindow.edgeMappers[-1])
+                        vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
+                        vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2)
+                        vtkWindow.edgeActors[-1].GetProperty().SetColor(0.1,0.1,0.1)
+                        #
+                        self.interfaceElems.append(foundInterFaceElements)
+                        totalFoundInterfaces = totalFoundInterfaces + noOfInterfaceElems
+                if totalFoundInterfaces>0:
+                    messageboxOK('Success', str(totalFoundInterfaces) + ' interface elements found in total. \n Select appropriate materials before export!')
                 else:
                     messageboxOK('Error', 'No interfaces found.')
             else:
@@ -334,40 +338,46 @@ class model(QWidget): # Saves a model
                 del interfaceGroup[dataSet]
             #
             counter = 0
-            for interfaceBlock in self.interfaceElems:
-                for interFaceElem in interfaceBlock:
-                    interFaceElem.Id = np.uint64(maxElemId+1)
-                    maxElemId = maxElemId+1
-                    dataSet = interfaceGroup.create_dataset('InterfaceElement' + str(interFaceElem.Id), data=[])
-                    dataSet.attrs['Id'] = np.uint64(interFaceElem.Id)
-                    #
-                    structMatId = np.uint64(self.blockMaterialSelectors[interFaceElem.structBlockIdx].currentText())
-                    structMatIdx = self.blockMaterialSelectors[interFaceElem.structBlockIdx].currentIndex()
-                    dataSet.attrs['mats'] = structMatId
-                    #
-                    fluidMatId = np.uint64(self.blockMaterialSelectors[interFaceElem.fluidBlockIdx].currentText())
-                    fluidMatIdx = self.blockMaterialSelectors[interFaceElem.fluidBlockIdx].currentIndex()
-                    dataSet.attrs['matF'] = fluidMatId
-                    #
-                    dataSet.attrs['ori'] = interFaceElem.ori
-                    #
-                    if self.materials[structMatIdx].type[:7] == 'STR_LIN': 
-                        if self.materials[fluidMatIdx].type[:10] == 'AF_LIN_UAF': 
-                            interFaceElem.type = 'InterfaceMindlin'
-                            dataSet.attrs['type'] = 'InterfaceMindlin'
-                        elif self.materials[fluidMatIdx].type[:10] in ['AF_LIN_DAF', 'AF_LIN_EQF']: 
-                            interFaceElem.type = 'InterfaceMindlinEquiporo'
-                            dataSet.attrs['type'] = 'InterfaceMindlinEquiporo'
-                        else:
-                            return 0
+            for blockID, interfaceBlock in enumerate(self.interfaceElems):
+                #
+                noOfStructNodes= len(interfaceBlock[0].structuralNodes)
+                noOfFluidNodes = len(interfaceBlock[0].fluidNodes)
+                #
+                dataSet = interfaceGroup.create_dataset('InterfaceElements' + str(blockID), data=np.zeros((len(interfaceBlock), 2+noOfStructNodes+noOfFluidNodes), dtype=np.int64)) # Cols: Id, ori, structNodes, fluidNodes
+                dataSet.attrs['NstructNodes'] = np.uint64(noOfStructNodes)
+                dataSet.attrs['NfluidNodes'] = np.uint64(noOfFluidNodes)
+                #
+                structMatId = np.uint64(self.blockMaterialSelectors[interfaceBlock[0].structBlockIdx].currentText())
+                structMatIdx = self.blockMaterialSelectors[interfaceBlock[0].structBlockIdx].currentIndex()
+                dataSet.attrs['mats'] = structMatId
+                #
+                fluidMatId = np.uint64(self.blockMaterialSelectors[interfaceBlock[0].fluidBlockIdx].currentText())
+                fluidMatIdx = self.blockMaterialSelectors[interfaceBlock[0].fluidBlockIdx].currentIndex()
+                dataSet.attrs['matF'] = fluidMatId
+                #
+                if self.materials[structMatIdx].type[:7] == 'STR_LIN': 
+                    if self.materials[fluidMatIdx].type[:10] == 'AF_LIN_UAF': 
+                        dataSet.attrs['type'] = 'InterfaceMindlin'
+                    elif self.materials[fluidMatIdx].type[:10] in ['AF_LIN_DAF', 'AF_LIN_EQF']: 
+                        dataSet.attrs['type'] = 'InterfaceMindlinEquiporo'
                     else:
                         return 0
-                    # 
-                    dataSet.attrs['NS'] = interFaceElem.structuralNodes
-                    dataSet.attrs['NF'] = interFaceElem.fluidNodes
+                else:
+                    return 0
+                #
+                counter = counter + len(interfaceBlock)
+                #
+                for el, interFaceElem in enumerate(interfaceBlock):
+                    dataSet[el,0] = np.uint64(maxElemId+1)
+                    maxElemId = maxElemId+1
                     #
-                    counter = counter + 1
+                    dataSet[el,1] = interFaceElem.ori
+                    #
+                    dataSet[el,2:2+noOfStructNodes] = interFaceElem.structuralNodes
+                    dataSet[el,2+noOfStructNodes:] = interFaceElem.fluidNodes
+                    #
             interfaceGroup.attrs['N'] = np.uint64(counter)
             return 1
         except:
+            print('Error during export.')
             return 0

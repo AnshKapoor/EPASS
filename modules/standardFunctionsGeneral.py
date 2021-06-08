@@ -228,7 +228,7 @@ def getVTKElem(elpasoElemType):
         return 0, 0, 0
 
 def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
-    foundInterFaceElements = []
+    foundInterFaceElementsBlocks = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
     hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
     for hexaBlock in hexaBlocks:
@@ -257,6 +257,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
         # Now loop over fitting second blocks and re-use coords of (potentially larger) hexa block
         for blockCombi in blockCombinations:
             if blockCombi[0] == hexaBlock:
+                foundInterFaceElements = []
                 # change number of faces
                 nodeIdxOfFaces2 = getNodeIdxOfFaces(elems[blockCombi[1]].attrs['ElementType'])
                 # Get sizes
@@ -350,7 +351,9 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                         #print('Elem ' + str(elems[blockCombi[0]][elemAndFaceIDs1[m][0]][0]) + '(face' + str(elemAndFaceIDs1[m][1]) + ') fits elem ' + str(elems[blockCombi[1]][elemAndFaceIDs2[idx][0]][0]) + '(face' + str(elemAndFaceIDs2[idx][1]) + ')')
                     progWin.setValue(m)
                     QApplication.processEvents()
-    return foundInterFaceElements
+                if foundInterFaceElements != []:
+                    foundInterFaceElementsBlocks.append(foundInterFaceElements)
+    return foundInterFaceElementsBlocks
 
 class interfaceElement: # Define an interface element
     def __init__(self):
