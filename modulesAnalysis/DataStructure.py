@@ -13,6 +13,7 @@ class lev1Container(QTreeWidgetItem):
     self.name = pathToFile.split('/')[-1]
     # Create Widgets and add entry in tree (at level 1) of GUI
     self.createLev1TreeEntry()
+    self.setExpanded(True)
     self.tree.setItemWidget(self, 0, self.lev1TreeEntry)
     # Read available data paths
     self.groupsLev2Collector = []
@@ -35,7 +36,7 @@ class lev1Container(QTreeWidgetItem):
   def readLev2(self, hdf5File):  
     for lev2Group in hdf5File.keys(): # Level 2 loop 
       if isinstance(hdf5File[lev2Group], h5py.Group):
-        if lev2Group in ['Analysis','Nodes']:
+        if lev2Group in ['Analysis','Nodes','Elements']:
           self.groupsLev2Collector.append(lev2Container(self.tree, self, hdf5File[lev2Group], hdf5File))
    
 class lev2Container(QTreeWidgetItem):
@@ -53,6 +54,8 @@ class lev2Container(QTreeWidgetItem):
       self.fillAnalysis(hdf5File)
     elif self.name == 'Nodes':
       self.fillNodes(hdf5File)
+    elif self.name == 'Elements':
+      self.fillElements(hdf5File)
     else:
       pass
     #self.readDataSets(lev2Group)
@@ -79,6 +82,12 @@ class lev2Container(QTreeWidgetItem):
     self.lev2TreeEntry.nodeSets = []
     readNodes(self.lev2TreeEntry, hdf5File)
     self.dataSetsLev3Collector.append(lev3ContainerNodes(self.tree, self, self.lev2TreeEntry.nodes))
+    
+  def fillElements(self, hdf5File):
+    self.lev2TreeEntry.elems = []
+    self.lev2TreeEntry.elementSets = []
+    readElements(self.lev2TreeEntry, hdf5File)
+    self.dataSetsLev3Collector.append(lev3ContainerElements(self.tree, self, self.lev2TreeEntry.elems))
  
   def readDataSets(self, lev2Group):  
     for DataSet in lev2Group.keys(): # Level 2 loop 
@@ -117,6 +126,23 @@ class lev3ContainerNodes(QTreeWidgetItem):
     layout.setContentsMargins(0,0,0,0)
     self.DataSetTreeEntry.setLayout(layout)
     layout.addWidget(QLabel('#Nodes: ' + str(len(nodes))))
+
+class lev3ContainerElements(QTreeWidgetItem):
+  def __init__(self, tree, parent, elems):
+    super().__init__(parent)
+    self.tree = tree
+    # Create Widgets and add entry in tree (at level 3 / dataSet level) of GUI
+    self.createDataSetTreeEntryElemSet(elems)
+    self.tree.setItemWidget(self, 0, self.DataSetTreeEntry)
+    
+  def createDataSetTreeEntryElemSet(self, elems):
+    self.DataSetTreeEntry = QWidget()
+    layout = QVBoxLayout()
+    layout.setSpacing(0)
+    layout.setContentsMargins(0,0,0,0)
+    self.DataSetTreeEntry.setLayout(layout)
+    for block in elems:
+      layout.addWidget(QLabel('Block ' + str(block.attrs['Id']) + ' | ' + str(len(block)) + ' ' + str(block.attrs['ElementType']) + ' elements\nMaterial ' + str(block.attrs['MaterialId'])))
 
 class lev3Container(QTreeWidgetItem):
   def __init__(self, tree, parent, DataSet):

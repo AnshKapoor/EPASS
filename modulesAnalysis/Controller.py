@@ -2,7 +2,7 @@
 import os
 import h5py
 import numpy as np
-from DataStructure import lev1Container, lev2Container, lev3ContainerNodes
+from DataStructure import lev1Container, lev2Container, lev3ContainerNodes, lev3ContainerElements
 from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
 #from PyQt5.QtCore import 
 from PyQt5.QtGui import QCursor
@@ -23,15 +23,19 @@ class Controller():
     #self.loadHdf5('example.hdf5')
   
   def initSubMenus(self):
-    #
-    self.cmenuNodes = QMenu(self.inaGui)
-    self.drawActNodes = self.cmenuNodes.addAction("Draw")
-    self.highlightActNodes = self.cmenuNodes.addAction("Highlight")
     # All nodes
     self.cmenuAllNodes = QMenu(self.inaGui)
-    self.drawActNodes = self.cmenuAllNodes.addAction("Draw")
-    self.highlightActNodes = self.cmenuAllNodes.addAction("Highlight")
-    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuNodes, self.cmenuAllNodes]]
+    self.drawActNodes = self.cmenuAllNodes.addAction("Draw all nodes")
+    self.highlightActNodes = self.cmenuAllNodes.addAction("Highlight all nodes")
+    # Blocks
+    self.cmenuBlock = QMenu(self.inaGui)
+    self.drawActBlock = self.cmenuBlock.addAction("Draw block")
+    self.highlightActBlock = self.cmenuBlock.addAction("Highlight block")
+    # All blocks
+    self.cmenuAllBlocks = QMenu(self.inaGui)
+    self.drawActAllBlocks = self.cmenuAllBlocks.addAction("Draw all blocks")
+    #
+    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks]]
       
   def loadFile(self):
     options = QFileDialog.Options()
@@ -50,10 +54,11 @@ class Controller():
     
   def create3DRepresentation(self, groupLev1):
     allLev2Names = [lev2Entry.name for lev2Entry in groupLev1.groupsLev2Collector]
-    if 'Nodes' in allLev2Names:
-      groupLev1.groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodeActor = self.vtkWindow.createGrid(groupLev1.groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodes)
-        
-
+    if 'Nodes' in allLev2Names and 'Elements' in allLev2Names:
+      nodeEntry = groupLev1.groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
+      elemEntry = groupLev1.groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
+      [nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+    
   def connectButtons(self,currentLev1Container):
     currentLev1Container.closeButton.clicked.connect(self.removeLev1Entry)
     for currentLev2Container in currentLev1Container.groupsLev2Collector:
@@ -73,8 +78,12 @@ class Controller():
     if isinstance(item, lev2Container):
       if item.name == 'Nodes':
         action = self.cmenuAllNodes.exec_(QCursor.pos())
+      if item.name == 'Elements':
+        action = self.cmenuAllBlocks.exec_(QCursor.pos())
     if isinstance(item, lev3ContainerNodes):
-      action = self.cmenuNodes.exec_(QCursor.pos())
+      action = self.cmenuAllNodes.exec_(QCursor.pos())
+    if isinstance(item, lev3ContainerElements):
+      action = self.cmenuBlock.exec_(QCursor.pos())
             
   def drawData(self):
     drawButtonWhichSentSignal = self.inaGui.sender()

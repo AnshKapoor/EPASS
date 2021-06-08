@@ -7,6 +7,7 @@ from vtk.util.numpy_support import numpy_to_vtk
 from PyQt5.QtWidgets import QSizePolicy, QHBoxLayout, QCheckBox
 from PyQt5.QtCore import Qt
 from standardWidgets import resetButton
+from standardFunctionsGeneral import getVTKElem
 
 class vtkWindow(QVTKRenderWindowInteractor):
     def __init__(self, parentWidget, ak3path):
@@ -129,32 +130,65 @@ class vtkWindow(QVTKRenderWindowInteractor):
                 elif state==1:
                     self.ren.AddActor(act)
     
-    def createGrid(self, nodes):
-        self.vtkPoints = vtk.vtkPoints()
-        self.vtkPoints.SetData(numpy_to_vtk(np.array([nodes[:]['xCoords'], nodes[:]['yCoords'], nodes[:]['zCoords']]).T))
-        newGrid = vtk.vtkUnstructuredGrid()
-        newGrid.SetPoints(self.vtkPoints)
-        self.sphereSource = vtk.vtkSphereSource()
+    def createGrid(self, nodes, nodesInv, elems):
+        # Create the points based on nodes
+        vtkPoints = vtk.vtkPoints()
+        vtkPoints.SetData(numpy_to_vtk(np.array([nodes[:]['xCoords'], nodes[:]['yCoords'], nodes[:]['zCoords']]).T))
+        sphereSource = vtk.vtkSphereSource()
         scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
-        self.sphereSource.SetRadius(scaleFactor*0.02)
-        self.sphereDataLoad = vtk.vtkPolyData()
-        self.sphereDataLoad.SetPoints(self.vtkPoints)
-        # Glyph for load symbol
+        self.defineAxisLength(scaleFactor)
+        sphereSource.SetRadius(scaleFactor*0.01)
+        sphereDataLoad = vtk.vtkPolyData()
+        sphereDataLoad.SetPoints(vtkPoints)
         glyphLoad = vtk.vtkGlyph3D()
         glyphLoad.SetScaleModeToScaleByVector()
-        glyphLoad.SetSourceConnection(self.sphereSource.GetOutputPort())
-        glyphLoad.SetInputData(self.sphereDataLoad)
+        glyphLoad.SetSourceConnection(sphereSource.GetOutputPort())
+        glyphLoad.SetInputData(sphereDataLoad)
         glyphLoad.Update()
-        # Mapper for load
-        self.sphereMapperLoad = vtk.vtkPolyDataMapper()
-        self.sphereMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
-        # Actor for load
-        self.sphereActorLoad = vtk.vtkActor()
-        self.sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
-        self.sphereActorLoad.SetMapper(self.sphereMapperLoad)
-        #List of Actors for iteration in vtkWindow
-        self.ren.AddActor(self.sphereActorLoad)
-        return self.sphereActorLoad
+        sphereMapperLoad = vtk.vtkPolyDataMapper()
+        sphereMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
+        sphereActorLoad = vtk.vtkActor()
+        sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
+        sphereActorLoad.SetMapper(sphereMapperLoad)
+        self.ren.AddActor(sphereActorLoad)
+        # Create the elements
+        blockActors = []
+        blockEdgeActors = []
+        for block in elems:
+          newGrid = vtk.vtkUnstructuredGrid()
+          newGrid.SetPoints(vtkPoints)
+          vtkCells = vtk.vtkCellArray()
+          newElem, newElemTypeId, nnodes = getVTKElem(block.attrs['ElementType'])
+          cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
+          cells[:,0] = nnodes
+          for elemCount in range(block.shape[0]):
+              cells[elemCount,1:] = [nodesInv[ID] for ID in block[elemCount,1:(nnodes+1)]]
+          vtkCells.SetCells(block.shape[0], numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
+          newGrid.SetCells(newElemTypeId, vtkCells)
+          mapper = vtk.vtkDataSetMapper()
+          mapper.SetInputData(newGrid)
+          blockActors.append(vtk.vtkActor())
+          actor = blockActors[-1]
+          actor.SetMapper(mapper)
+          actor.GetProperty().SetAmbient(0.9)
+          actor.GetProperty().SetDiffuse(0.1)
+          actor.GetProperty().SetSpecular(0.)
+          actor.GetProperty().SetOpacity(0.85)
+          actor.GetProperty().SetColor(0.3,0.3,0.3)
+          edgeMapper = vtk.vtkDataSetMapper()
+          edgeMapper.SetInputData(newGrid)
+          blockEdgeActors.append(vtk.vtkActor())
+          edgeActor = blockEdgeActors[-1]
+          edgeActor.SetMapper(edgeMapper)
+          edgeActor.GetProperty().SetRepresentationToWireframe()
+          edgeActor.GetProperty().SetLineWidth(3)
+          edgeActor.GetProperty().SetColor(0.7,0.7,0.7)
+          self.ren.AddActor(actor)
+          self.ren.AddActor(edgeActor)
+          # Add actor (show everything at beginning)
+          #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
+        
+        return sphereActorLoad, blockActors, blockEdgeActors
         
     def updateWindow(self, myModel):
         for blockIdx in range(myModel.blockInfo.rowCount()):
