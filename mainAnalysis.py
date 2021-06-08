@@ -61,17 +61,6 @@ class loadGUI(QMainWindow):
                                     'Version 1.0 (2021)\n\n' +
                                     'Program to view hdf5 result files.\n')
 
-    def graphWindowClick(self, event):
-        """
-        User clicks into graph area
-        """
-        if self.myModel.name != ' - ':
-            if event.xdata:
-                self.vtkWindow.currentFrequencyStep = np.argmin(abs(np.array(self.myModel.frequencies)-event.xdata))
-                self.graphWindow.currentFrequency = self.myModel.frequencies[ self.vtkWindow.currentFrequencyStep ]
-                self.update2D()
-                self.update3D()
-
     def loadInput(self):
         """
         Open an hdf5 file (self.loadButton click event)
@@ -150,10 +139,9 @@ class loadGUI(QMainWindow):
         #
         # CREATE WIDGETS | III - 2D Graph
         self.graphWindow = graphWindow()
-        self.graphWindow.setLabels('-','-')
-        self.graphWindow.setMinimumWidth(450)
-        self.graphWindow.setMinimumHeight(250)
-        self.graphWindow.fig.canvas.mpl_connect('button_press_event', self.graphWindowClick)
+        #self.graphWindow.setLabels('-','-')
+        #self.graphWindow.setMinimumWidth(450)
+        #self.graphWindow.setMinimumHeight(250)
         # ADD TO LAYOUT
         self.mainLayoutRight.addWidget(self.graphWindow)
         self.mainLayoutRight.setStretchFactor(self.graphWindow, True)

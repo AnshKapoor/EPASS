@@ -6,21 +6,25 @@ class graphWindow(FigureCanvas):
     def __init__(self, parent=None):
         self.fig = Figure(figsize=(6, 3), dpi=100)
         FigureCanvas.__init__(self, self.fig)
+        self.fig.tight_layout()
         self.setParent(parent)
         self.axes = self.fig.add_subplot(111)
-        self.currentFrequency = 0.
-        self.clearGraphs()
-    
-    def clearGraphs(self): 
-        self.axes.cla()
-        self.axes.set_xlabel('Frequency [Hz]')
-        self.axes.set_ylabel('Mean Amplitude  [Pa]')
-        self.fig.tight_layout()
+        self.setLabels('Frequency [Hz]', 'Mean Amplitude  [Pa]')
+        self.setAxesLimits([0, 100.],[0, 1.])
+        self.axes.grid(1)
+        self.currentFrequency = 10.
+        #self.frequencyLine = self.fig.gca().plot([self.currentFrequency, self.currentFrequency+1], [0, 1], 'k', '--')
+        self.frequencyLine = self.axes.plot([self.currentFrequency, self.currentFrequency], [0, 1], linestyle='--', color='k')
         self.draw()
     
     def setLabels(self, xlabel, ylabel): 
         self.axes.set_xlabel(str(xlabel))
         self.axes.set_ylabel(str(ylabel))
+        self.draw()
+    
+    def setAxesLimits(self, xlim, ylim): 
+        self.axes.set_xlim(xlim)
+        self.axes.set_ylim(ylim)
         self.draw()
        
     def plot(self, x, y, col='k', lin='-', wid=1):
@@ -29,16 +33,22 @@ class graphWindow(FigureCanvas):
         self.draw()
         
     def updateWindow(self, myModel): 
-        self.clearGraphs()
+        for artist in self.fig.gca().lines + self.fig.gca().collections:
+            artist.remove()
         # Amplitudes of loads
         for load in myModel.loads:
             if load.drawCheck.isChecked(): 
                 [x, y, color] = load.getXYdata()
                 self.plot(x, y, color)
-        # Vertical line at current Frequency
-        self.plot([self.currentFrequency, self.currentFrequency], self.axes.get_ylim(), 'k', '--')
+        #self.setLabels('Frequency [Hz]', 'Mean Amplitude  [Pa]')
         # Set appropriate x/y limits
         self.axes.set_xlim([min(myModel.frequencies), max(myModel.frequencies)])
+        # Vertical line at current Frequency
+        self.frequencyLine = self.axes.plot([self.currentFrequency, self.currentFrequency], self.axes.get_ylim(), linestyle='--', color='k')
         # Redraw canvas
         self.draw()
     
+    def updateFrequencySelector(self):
+        self.frequencyLine.pop(0).remove()
+        self.frequencyLine = self.axes.plot([self.currentFrequency, self.currentFrequency], self.axes.get_ylim(), linestyle='--', color='k')
+        self.draw()

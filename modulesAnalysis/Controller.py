@@ -11,6 +11,8 @@ class Controller():
   def __init__(self, inaGui):
     self.inaGui = inaGui
     self.vtkWindow = inaGui.vtkWindow
+    self.graphWindow = inaGui.graphWindow
+    self.graphWindow.fig.canvas.mpl_connect('button_press_event', self.graphWindowClick)
     self.tree = self.inaGui.dataTree
     self.tree.customContextMenuRequested.connect(self.treeWidgetItemClick)
     # Connectors 
@@ -49,6 +51,7 @@ class Controller():
   def loadHdf5(self, pathToFile):
     with h5py.File(pathToFile, 'r') as hdf5File:
       self.groupsLev1Collector.append(lev1Container(self.tree, hdf5File, pathToFile))
+      self.init2DAxes(self.groupsLev1Collector[-1])
       self.create3DRepresentation(self.groupsLev1Collector[-1])
       self.connectButtons(self.groupsLev1Collector[-1])
     
@@ -95,3 +98,16 @@ class Controller():
         #
         dataSet.releaseData()
         
+  def init2DAxes(self, groupLev1):
+    allLev2Names = [lev2Entry.name for lev2Entry in groupLev1.groupsLev2Collector]
+    if 'Analysis' in allLev2Names:
+      freqs = groupLev1.groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies
+      self.graphWindow.setAxesLimits([min(freqs), max(freqs)], [0, 1])
+
+  def graphWindowClick(self, event):
+    if event.xdata:
+      self.vtkWindow.currentFrequency = event.xdata
+      self.vtkWindow.updateNumber()
+      self.graphWindow.currentFrequency = event.xdata
+      self.graphWindow.updateFrequencySelector()
+      
