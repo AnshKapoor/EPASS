@@ -184,7 +184,7 @@ class loadGUI(QMainWindow):
     def contextMenuEvent(self, event):
         cmenu = QMenu(self)
         cmenu.setStyleSheet("QMenu::item:selected { background: #abc13b; }")
-        openAct = cmenu.addAction("Open")
+        #openAct = cmenu.addAction("Open")
         quitAct = cmenu.addAction("Quit")
         action = cmenu.exec_(self.mapToGlobal(event.pos()))
 

@@ -63,6 +63,8 @@ class Controller():
         nodeEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
         elemEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
         self.create3DRepresentation(nodeEntry, elemEntry)
+        myDict = dict(sorted(nodeEntry.nodesInv.items(), key=lambda item: item[0]))
+        nodeEntry.orderIdx = [item[1] for item in myDict.items()]
         myPath = '/'.join(pathToFile.split('/')[:-1])
         myFile = pathToFile.split('/')[-1]
         pathToResultsFile = myPath + '/eGenOutput_' + myFile
@@ -73,12 +75,37 @@ class Controller():
           self.groupsLev1Collector[-1].groupsLev2Collector.append(lev2Container(self.tree, self.groupsLev1Collector[-1], hdf5ResultsFile['Solution'], hdf5ResultsFile))
           fields, fieldIndices = getFieldIndices(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
           for field, fieldIdx in zip(fields, fieldIndices):
-            self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, field, fieldIdx))
+            self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, field, fieldIdx, self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
       self.connectButtons(self.groupsLev1Collector[-1])
       
   def create3DRepresentation(self, nodeEntry, elemEntry):
-    [nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
-    
+    [nodeEntry.grid, nodeEntry.nodeActor, elemEntry.mapper, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+
+  def fieldTo3DRepresentation(self, dataSetEntry):
+    nearestFrequencyIdx = np.argmin(np.abs(np.array(dataSetEntry.frequencies)-float(self.graphWindow.currentFrequency)))
+    self.vtkWindow.currentFrequency = dataSetEntry.frequencies[nearestFrequencyIdx]
+    self.vtkWindow.updateNumber()
+    self.graphWindow.currentFrequency = dataSetEntry.frequencies[nearestFrequencyIdx]
+    self.graphWindow.updateFrequencySelector()
+    #
+    for item in dataSetEntry.hdf5ResultsFileStateGroup.attrs.items():
+      if abs(float(item[1])-float(self.vtkWindow.currentFrequency))<0.01:
+        dataSet = dataSetEntry.hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
+        boolIdx = np.zeros((len(dataSet)), dtype=np.bool_)
+        boolIdx[dataSetEntry.fieldIndices] = 1
+        myArray = np.empty((len(dataSetEntry.fieldIndices)), dtype=np.complex)
+        myArray.real = dataSet['real'][boolIdx]
+        myArray.imag = dataSet['imag'][boolIdx]
+        allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
+        nodeIdx = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.orderIdx
+        print(np.abs(myArray))
+        print(nodeIdx)
+        myArray = np.abs(myArray[nodeIdx])
+        print(myArray)
+        grid = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.grid
+        mapper = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.mapper
+        self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper)
+                            
   def connectButtons(self,currentLev1Container):
     currentLev1Container.closeButton.clicked.connect(self.removeLev1Entry)
     #for currentLev2Container in currentLev1Container.groupsLev2Collector:
@@ -109,6 +136,7 @@ class Controller():
     if action == self.drawActSolutionMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
       self.graphWindow.plot(x,y,item.field + ' (' + item.parent().parent().shortName + ')')
+      #self.fieldTo3DRepresentation(item)
             
   def drawData(self):
     drawButtonWhichSentSignal = self.inaGui.sender()

@@ -188,7 +188,19 @@ class vtkWindow(QVTKRenderWindowInteractor):
           # Add actor (show everything at beginning)
           #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
         
-        return sphereActorLoad, blockActors, blockEdgeActors
+        return newGrid, sphereActorLoad, mapper, blockActors, blockEdgeActors
+    
+    def colorplot(self, myArray, field, grid, mapper):
+        vtkArray = numpy_to_vtk(myArray)
+        vtkArray.SetName(field)
+        grid.GetPointData().AddArray(vtkArray)
+        mapper.SetLookupTable(self.lut)
+        mapper.ScalarVisibilityOn()
+        mapper.SetScalarModeToUsePointFieldData()
+        mapper.SelectColorArray(field)
+        mapper.SetScalarRange((min(myArray), max(myArray)))
+        #mapper.SetScalarRange(grid.GetScalarRange())
+        self.GetRenderWindow().Render()
         
     def updateWindow(self, myModel):
         for blockIdx in range(myModel.blockInfo.rowCount()):
