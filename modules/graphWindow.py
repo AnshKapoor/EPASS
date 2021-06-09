@@ -27,9 +27,13 @@ class graphWindow(FigureCanvas):
         self.axes.set_ylim(ylim)
         self.draw()
        
-    def plot(self, x, y, col='k', lin='-', wid=1):
-        self.axes.plot(x, y, color=col, linestyle=lin, linewidth=wid)
-        self.fig.tight_layout()
+    def plot(self, x, y, myLabel, col='k', lin='-', wid=1):
+        for artist in self.fig.gca().lines + self.fig.gca().collections:
+          artist.remove()
+        self.axes.plot(x, y, color=col, linestyle=lin, linewidth=wid, label=myLabel)
+        self.setAxesLimits([min(x), max(x)], [min(y), max(y)])
+        self.axes.legend()
+        self.frequencyLine = self.axes.plot([self.currentFrequency, self.currentFrequency], self.axes.get_ylim(), linestyle='--', color='k')
         self.draw()
         
     def updateWindow(self, myModel): 

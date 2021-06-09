@@ -130,6 +130,43 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
+def getFieldIndices(nodes, nodesInv, elems): 
+    supportedFields = getSupportedFields()
+    dofPattern = np.zeros((len(nodes), len(supportedFields)), dtype=np.bool_)
+    for block in elems: 
+      dofInElement = getElementDof(block.attrs['ElementType'])
+      dofLine = [True if dof in dofInElement else False for dof in supportedFields]
+      for element in block:
+        nodeIdx = [nodesInv[nodeId] for nodeId in element[1:]]
+        dofPattern[sorted(nodeIdx), :] = dofLine
+    dofPerNode = np.sum(dofPattern, axis=1)
+    startIdxPerNode = np.cumsum(dofPerNode)-dofPerNode[0]
+    nodesPerDof = np.sum(dofPattern, axis=0)
+    availableFields = []
+    fieldIndices = []
+    for n, field in enumerate(supportedFields): 
+      if nodesPerDof[n]>0: 
+        availableFields.append(field)
+        fieldIndices.append(startIdxPerNode[dofPattern[:,n]] + np.sum(dofPattern[:,0:n], axis=1))
+    return availableFields, fieldIndices
+
+def getSupportedFields():
+    return ['displacement x', 'displacement y', 'displacement z', 'rotation x', 'rotation y', 'rotation z', 'sound pressure']
+
+def getElementDof(elemType): 
+    if elemType in ['DSG4','DSG8','DSG9']:
+        return ['displacement z', 'rotation x', 'rotation y']
+    elif elemType in ['Disc4','Disc9']:
+        return ['displacement x', 'displacement y']
+    elif elemType in ['PlShell4','PlShell9','PlShell9pre']: 
+        return ['displacement x', 'displacement y', 'displacement z', 'rotation x', 'rotation y', 'rotation z']
+    elif elemType in ['Fluid8','Fluid27']:
+        return ['sound pressure']
+    elif elemType in ['Brick8','Brick20','Brick27']:
+        return ['displacement x', 'displacement y', 'displacement z']
+    else:
+        return []
+
 def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem):
     elemData = np.zeros((totalElems, nodesPerElem), dtype=np.uint64)
     dataSet = group.create_dataset('mtxFemElemGroup' + str(groupID), data=elemData)

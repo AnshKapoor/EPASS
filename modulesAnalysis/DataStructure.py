@@ -11,6 +11,7 @@ class lev1Container(QTreeWidgetItem):
     self.tree = tree
     self.pathToFile = pathToFile
     self.name = pathToFile.split('/')[-1]
+    self.shortName = self.name.split('.')[0]
     # Create Widgets and add entry in tree (at level 1) of GUI
     self.createLev1TreeEntry()
     self.setExpanded(True)
@@ -58,7 +59,6 @@ class lev2Container(QTreeWidgetItem):
       self.fillElements(hdf5File)
     else:
       pass
-    #self.readDataSets(lev2Group)
     self.tree.setItemWidget(self, 0, self.lev2TreeEntry)
         
   def createLev2TreeEntry(self):
@@ -88,12 +88,7 @@ class lev2Container(QTreeWidgetItem):
     self.lev2TreeEntry.elementSets = []
     readElements(self.lev2TreeEntry, hdf5File)
     self.dataSetsLev3Collector.append(lev3ContainerElements(self.tree, self, self.lev2TreeEntry.elems))
- 
-  def readDataSets(self, lev2Group):  
-    for DataSet in lev2Group.keys(): # Level 2 loop 
-      if isinstance(lev2Group[DataSet], h5py.Dataset):
-        self.dataSetsLev3Collector.append(lev3Container(self.tree, self, lev2Group[DataSet]))
-
+  
 class lev3ContainerInfo(QTreeWidgetItem):
   def __init__(self, tree, parent, info):
     super().__init__(parent)
@@ -143,6 +138,26 @@ class lev3ContainerElements(QTreeWidgetItem):
     self.DataSetTreeEntry.setLayout(layout)
     for block in elems:
       layout.addWidget(QLabel('Block ' + str(block.attrs['Id']) + ' | ' + str(len(block)) + ' ' + str(block.attrs['ElementType']) + ' elements\nMaterial ' + str(block.attrs['MaterialId'])))
+
+class lev3ContainerField(QTreeWidgetItem):
+  def __init__(self, tree, parent, hdf5ResultsFileStateGroup, field, fieldIndices):
+    super().__init__(parent)
+    self.tree = tree
+    self.hdf5ResultsFileStateGroup = hdf5ResultsFileStateGroup
+    self.field = field
+    self.fieldIndices = fieldIndices
+    # Create Widgets and add entry in tree (at level 3 / dataSet level) of GUI
+    self.createDataSetTreeEntryField(field)
+    self.tree.setItemWidget(self, 0, self.DataSetTreeEntry)
+    
+  def createDataSetTreeEntryField(self, field):
+    self.DataSetTreeEntry = QWidget()
+    layout = QVBoxLayout()
+    layout.setSpacing(0)
+    layout.setContentsMargins(0,0,0,0)
+    self.DataSetTreeEntry.setLayout(layout)
+    layout.addWidget(QLabel(field))
+
 
 class lev3Container(QTreeWidgetItem):
   def __init__(self, tree, parent, DataSet):
