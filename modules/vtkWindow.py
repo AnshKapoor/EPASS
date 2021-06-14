@@ -51,7 +51,13 @@ class vtkWindow(QVTKRenderWindowInteractor):
         [self.lut.SetTableValue(100+n, (100-n)/100., (100-n)/100., (100-n)/100., 1.0 ) for n in range(100)] # BW-Colormap
         self.lut.SetRampToLinear()
         self.lut.Build()
-
+        
+        # Lookup Table
+        colorSeries = vtk.vtkColorSeries()
+        colorSeries.SetColorScheme(vtk.vtkColorSeries.WARM)
+        self.lutColor = vtk.vtkLookupTable()
+        colorSeries.BuildLookupTable(self.lutColor, vtk.vtkColorSeries.ORDINAL)
+        
         # Scalar bar
         self.scalarBar = vtk.vtkScalarBarActor()
         self.scalarBar.SetLookupTable(self.lut)
@@ -133,7 +139,10 @@ class vtkWindow(QVTKRenderWindowInteractor):
     def createGrid(self, nodes, nodesInv, elems):
         # Create the points based on nodes
         vtkPoints = vtk.vtkPoints()
-        vtkPoints.SetData(numpy_to_vtk(np.array([nodes[:]['xCoords'], nodes[:]['yCoords'], nodes[:]['zCoords']]).T))
+        sortedNodeIdx = dict(sorted(nodesInv.items(), key=lambda item: item[0]))
+        orderIdx = [item[1] for item in sortedNodeIdx.items()]
+        vtkPoints.SetData(numpy_to_vtk(np.array([nodes[:]['xCoords'][orderIdx], nodes[:]['yCoords'][orderIdx], nodes[:]['zCoords'][orderIdx]]).T))
+        nodesToVTK = dict([[x,n] for n,x in enumerate(nodes[:]['Ids'][orderIdx])])
         sphereSource = vtk.vtkSphereSource()
         scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         self.defineAxisLength(scaleFactor)
@@ -150,7 +159,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         sphereActorLoad = vtk.vtkActor()
         sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
         sphereActorLoad.SetMapper(sphereMapperLoad)
-        self.ren.AddActor(sphereActorLoad)
+        #self.ren.AddActor(sphereActorLoad)
         # Create the elements
         blockActors = []
         blockEdgeActors = []
@@ -162,7 +171,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
           cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
           cells[:,0] = nnodes
           for elemCount in range(block.shape[0]):
-              cells[elemCount,1:] = [nodesInv[ID] for ID in block[elemCount,1:(nnodes+1)]]
+              cells[elemCount,1:] = [nodesToVTK[ID] for ID in block[elemCount,1:(nnodes+1)]]
           vtkCells.SetCells(block.shape[0], numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
           newGrid.SetCells(newElemTypeId, vtkCells)
           mapper = vtk.vtkDataSetMapper()
@@ -188,13 +197,13 @@ class vtkWindow(QVTKRenderWindowInteractor):
           # Add actor (show everything at beginning)
           #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
         
-        return newGrid, sphereActorLoad, mapper, blockActors, blockEdgeActors
+        return newGrid, nodesToVTK, sphereActorLoad, mapper, blockActors, blockEdgeActors
     
     def colorplot(self, myArray, field, grid, mapper):
         vtkArray = numpy_to_vtk(myArray)
         vtkArray.SetName(field)
         grid.GetPointData().AddArray(vtkArray)
-        mapper.SetLookupTable(self.lut)
+        mapper.SetLookupTable(self.lutColor)
         mapper.ScalarVisibilityOn()
         mapper.SetScalarModeToUsePointFieldData()
         mapper.SelectColorArray(field)

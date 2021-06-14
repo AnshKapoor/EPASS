@@ -63,8 +63,10 @@ class Controller():
         nodeEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
         elemEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
         self.create3DRepresentation(nodeEntry, elemEntry)
-        myDict = dict(sorted(nodeEntry.nodesInv.items(), key=lambda item: item[0]))
-        nodeEntry.orderIdx = [item[1] for item in myDict.items()]
+        #myDict = dict(sorted(nodeEntry.nodesInv.items(), key=lambda item: item[0]))
+        #nodeEntry.orderIdx = [item[1] for item in myDict.items()]
+        #nodeEntry.orderIdx2 = [item[1] for item in nodeEntry.nodesInv.items()]
+        #print(nodeEntry.orderIdx2)
         myPath = '/'.join(pathToFile.split('/')[:-1])
         myFile = pathToFile.split('/')[-1]
         pathToResultsFile = myPath + '/eGenOutput_' + myFile
@@ -79,7 +81,7 @@ class Controller():
       self.connectButtons(self.groupsLev1Collector[-1])
       
   def create3DRepresentation(self, nodeEntry, elemEntry):
-    [nodeEntry.grid, nodeEntry.nodeActor, elemEntry.mapper, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+    [nodeEntry.grid, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.mapper, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
 
   def fieldTo3DRepresentation(self, dataSetEntry):
     nearestFrequencyIdx = np.argmin(np.abs(np.array(dataSetEntry.frequencies)-float(self.graphWindow.currentFrequency)))
@@ -97,11 +99,12 @@ class Controller():
         myArray.real = dataSet['real'][boolIdx]
         myArray.imag = dataSet['imag'][boolIdx]
         allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
-        nodeIdx = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.orderIdx
-        print(np.abs(myArray))
-        print(nodeIdx)
-        myArray = np.abs(myArray[nodeIdx])
-        print(myArray)
+        #nodeIdx = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.orderIdx
+        #print(np.abs(myArray))
+        #print(nodeIdx)
+        #myArray = np.abs(myArray[nodeIdx])
+        #myArray = np.abs(myArray)
+        #print(myArray)
         grid = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.grid
         mapper = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.mapper
         self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper)
@@ -136,7 +139,7 @@ class Controller():
     if action == self.drawActSolutionMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
       self.graphWindow.plot(x,y,item.field + ' (' + item.parent().parent().shortName + ')')
-      #self.fieldTo3DRepresentation(item)
+      self.fieldTo3DRepresentation(item)
             
   def drawData(self):
     drawButtonWhichSentSignal = self.inaGui.sender()

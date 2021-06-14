@@ -263,7 +263,7 @@ def getVTKElem(elpasoElemType):
         return vtk.vtkLine(), 3, 2
     else:
         return 0, 0, 0
-
+    
 def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
     foundInterFaceElementsBlocks = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
