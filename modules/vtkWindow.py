@@ -10,7 +10,7 @@ from standardWidgets import resetButton
 from standardFunctionsGeneral import getVTKElem
 
 class vtkWindow(QVTKRenderWindowInteractor):
-    def __init__(self, parentWidget, ak3path):
+    def __init__(self, parentWidget, ak3path, axisSelector = 1):
         super(vtkWindow, self).__init__(parentWidget)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         #self.scalar_bar_widget = None # needs to be initialized when actual 3D data is loaded (NEVER before import of data!!!)
@@ -61,6 +61,10 @@ class vtkWindow(QVTKRenderWindowInteractor):
         # Scalar bar
         self.scalarBar = vtk.vtkScalarBarActor()
         self.scalarBar.SetLookupTable(self.lut)
+        self.scalarBar.SetWidth(0.02)
+        self.scalarBar.UnconstrainedFontSizeOff()
+        self.scalarBar.SetUnconstrainedFontSize(18)
+        self.scalarBar.SetNumberOfLabels(10)
         self.scalarBarWidget = vtk.vtkScalarBarWidget()
         self.scalarBarWidget.SetScalarBarActor(self.scalarBar)
         self.scalarBarWidget.SetInteractor(self.iren)
@@ -81,7 +85,8 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.resetViewButton.clicked.connect(self.resetView)
         # ADD TO LAYOUT
         self.selectionLayout = QHBoxLayout()
-        self.selectionLayout.addWidget(self.axisSelector)
+        if axisSelector:
+          self.selectionLayout.addWidget(self.axisSelector)
         self.selectionLayout.addStretch(1)
         self.selectionLayout.addWidget(self.resetViewButton)
 
@@ -159,7 +164,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         sphereActorLoad = vtk.vtkActor()
         sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
         sphereActorLoad.SetMapper(sphereMapperLoad)
-        #self.ren.AddActor(sphereActorLoad)
+        self.ren.AddActor(sphereActorLoad)
         # Create the elements
         blockActors = []
         blockEdgeActors = []
@@ -196,19 +201,22 @@ class vtkWindow(QVTKRenderWindowInteractor):
           self.ren.AddActor(edgeActor)
           # Add actor (show everything at beginning)
           #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
-        
+        #
         return newGrid, nodesToVTK, sphereActorLoad, mapper, blockActors, blockEdgeActors
     
-    def colorplot(self, myArray, field, grid, mapper):
+    def colorplot(self, myArray, field, grid, mapper, warp=0):
         vtkArray = numpy_to_vtk(myArray)
         vtkArray.SetName(field)
         grid.GetPointData().AddArray(vtkArray)
+        if warp:
+          print('Warp!')
         mapper.SetLookupTable(self.lutColor)
         mapper.ScalarVisibilityOn()
         mapper.SetScalarModeToUsePointFieldData()
         mapper.SelectColorArray(field)
         mapper.SetScalarRange((min(myArray), max(myArray)))
-        #mapper.SetScalarRange(grid.GetScalarRange())
+        self.scalarBar.SetLookupTable(self.lutColor)
+        self.ren.AddActor(self.scalarBar)
         self.GetRenderWindow().Render()
         
     def updateWindow(self, myModel):
@@ -238,6 +246,22 @@ class vtkWindow(QVTKRenderWindowInteractor):
             self.ren.AddActor(self.mainAxes)
         elif self.axisSelector.checkState() == 0:
             self.ren.RemoveActor(self.mainAxes)
+        self.GetRenderWindow().Render()
+
+    def axisEnable(self):
+        self.ren.AddActor(self.mainAxes)
+        self.GetRenderWindow().Render()
+    
+    def axisDisable(self):
+        self.ren.RemoveActor(self.mainAxes)
+        self.GetRenderWindow().Render()
+    
+    def warpEnable(self):
+        #self.ren.AddActor(self.mainAxes)
+        self.GetRenderWindow().Render()
+    
+    def warpDisable(self):
+        #self.ren.RemoveActor(self.mainAxes)
         self.GetRenderWindow().Render()
 
     def resetView(self):

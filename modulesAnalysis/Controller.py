@@ -5,6 +5,8 @@ import atexit
 import numpy as np
 from DataStructure import lev1Container, lev2Container, lev3ContainerNodes, lev3ContainerElements, lev3ContainerField
 from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
+from matplotlib.backend_bases import MouseButton
+from matplotlib import pyplot as plt
 #from PyQt5.QtCore import 
 from PyQt5.QtGui import QCursor
 from standardFunctionsGeneral import getFieldIndices
@@ -14,8 +16,10 @@ class Controller():
   def __init__(self, inaGui):
     self.inaGui = inaGui
     self.vtkWindow = inaGui.vtkWindow
+    self.vtkWindow.customContextMenuRequested.connect(self.vtkRightClick)
     self.graphWindow = inaGui.graphWindow
     self.graphWindow.fig.canvas.mpl_connect('button_press_event', self.graphWindowClick)
+    self.graphWindow.customContextMenuRequested.connect(self.graphRightClick)
     self.tree = self.inaGui.dataTree
     self.tree.customContextMenuRequested.connect(self.treeWidgetItemClick)
     # Connectors 
@@ -26,6 +30,8 @@ class Controller():
     self.groupsLev1Collector = []
     # Dummycode which must be addressed by button later
     #self.loadHdf5('example.hdf5')
+    #
+    self.currentPlot = 0
   
   def initSubMenus(self):
     # All nodes
@@ -42,8 +48,19 @@ class Controller():
     # Results
     self.cmenuSolution = QMenu(self.inaGui)
     self.drawActSolutionMean = self.cmenuSolution.addAction("Draw mean squared value")
+    # 3D options
+    self.cmenuVTK = QMenu(self.inaGui)
+    self.vtkActReset = self.cmenuVTK.addAction("Reset view")
+    self.vtkActAxes = self.cmenuVTK.addAction("Show axes")
+    self.vtkActAxes.setCheckable(1)
+    self.vtkActAxes.setChecked(1)
+    #self.vtkActWarp = self.cmenuVTK.addAction("Warp")
+    #self.vtkActWarp.setCheckable(1)
+    # 2D options
+    self.cmenuGraph = QMenu(self.inaGui)
+    self.vtkActSavePng = self.cmenuGraph.addAction("Save png")
     #
-    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolution]]
+    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolution, self.cmenuVTK, self.cmenuGraph]]
       
   def loadFile(self):
     options = QFileDialog.Options()
@@ -99,15 +116,13 @@ class Controller():
         myArray.real = dataSet['real'][boolIdx]
         myArray.imag = dataSet['imag'][boolIdx]
         allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
-        #nodeIdx = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.orderIdx
-        #print(np.abs(myArray))
-        #print(nodeIdx)
-        #myArray = np.abs(myArray[nodeIdx])
-        #myArray = np.abs(myArray)
-        #print(myArray)
         grid = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.grid
         mapper = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.mapper
-        self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper)
+        self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 0)
+        #if self.vtkActWarp.isChecked():
+        #  self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 1)
+        #else:
+        #  self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 0)
                             
   def connectButtons(self,currentLev1Container):
     currentLev1Container.closeButton.clicked.connect(self.removeLev1Entry)
@@ -139,8 +154,38 @@ class Controller():
     if action == self.drawActSolutionMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
       self.graphWindow.plot(x,y,item.field + ' (' + item.parent().parent().shortName + ')')
+      self.graphWindow.setLabels('Frequency [Hz]', 'Mean squared ' + str(item.field) + ' [dB ref 1.]')
+      self.currentPlot = item
       self.fieldTo3DRepresentation(item)
-            
+
+  def vtkRightClick(self):
+    action = self.cmenuVTK.exec_(QCursor.pos())
+    if action == self.vtkActReset:
+      self.vtkWindow.resetView()
+    elif action == self.vtkActAxes:
+      if self.vtkActAxes.isChecked():
+        self.vtkWindow.axisEnable()
+      else:
+        self.vtkWindow.axisDisable()
+    #elif action == self.vtkActWarp:
+    #  if self.currentPlot: 
+    #      self.fieldTo3DRepresentation(self.currentPlot)
+
+  def graphRightClick(self):
+    action = self.cmenuGraph.exec_(QCursor.pos())
+    if action == self.vtkActSavePng:
+      options = QFileDialog.Options()
+      options |= QFileDialog.DontUseNativeDialog
+      fileName, fileEnding = QFileDialog.getSaveFileName(self.inaGui,"QFileDialog.getSaveFileName()","","Picture (*.png);;Text File (*.txt)", options=options)
+      if fileEnding == 'Text File (*.txt)':
+        if not fileName[-4:] == '.txt':
+          fileName += ".txt";
+        self.graphWindow.saveDataAscii(fileName)
+      else: 
+        if not fileName[-4:] == '.png':
+          fileName += '.png';
+        self.graphWindow.saveDataPicture(fileName)
+
   def drawData(self):
     drawButtonWhichSentSignal = self.inaGui.sender()
     for currentLev1Container in self.groupsLev1Collector:
@@ -156,11 +201,15 @@ class Controller():
     if 'Analysis' in allLev2Names:
       freqs = groupLev1.groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies
       self.graphWindow.setAxesLimits([min(freqs), max(freqs)], [0, 1])
+      self.graphWindow.currentFrequency = (min(freqs) + max(freqs)) / 2.
+      self.graphWindow.updateFrequencySelector()
 
   def graphWindowClick(self, event):
-    if event.xdata:
+    if event.xdata and event.button == MouseButton.LEFT:
       self.vtkWindow.currentFrequency = event.xdata
       self.vtkWindow.updateNumber()
       self.graphWindow.currentFrequency = event.xdata
       self.graphWindow.updateFrequencySelector()
+      if self.currentPlot: 
+        self.fieldTo3DRepresentation(self.currentPlot)
       

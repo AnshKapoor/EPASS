@@ -132,16 +132,18 @@ class loadGUI(QMainWindow):
         self.vtkWindow = vtkWindow(self.vtkWindowParent, self.locPath)
         self.vtkWindow.setMinimumWidth(450)
         self.vtkWindow.setMinimumHeight(250)
+        self.vtkWindow.setContextMenuPolicy(Qt.CustomContextMenu)
         # ADD TO LAYOUT
-        self.mainLayoutRight.addLayout(self.vtkWindow.selectionLayout)
+        #self.mainLayoutRight.addLayout(self.vtkWindow.selectionLayout)
         self.mainLayoutRight.addWidget(self.vtkWindow)
         self.mainLayoutRight.setStretchFactor(self.vtkWindow, True)
         #
         # CREATE WIDGETS | III - 2D Graph
         self.graphWindow = graphWindow()
-        #self.graphWindow.setLabels('-','-')
+        self.graphWindow.setLabels('-','-')
         #self.graphWindow.setMinimumWidth(450)
         #self.graphWindow.setMinimumHeight(250)
+        self.graphWindow.setContextMenuPolicy(Qt.CustomContextMenu)
         # ADD TO LAYOUT
         self.mainLayoutRight.addWidget(self.graphWindow)
         self.mainLayoutRight.setStretchFactor(self.graphWindow, True)
