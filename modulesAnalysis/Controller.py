@@ -58,7 +58,7 @@ class Controller():
     #self.vtkActWarp.setCheckable(1)
     # 2D options
     self.cmenuGraph = QMenu(self.inaGui)
-    self.vtkActSavePng = self.cmenuGraph.addAction("Save png")
+    self.vtkActSave = self.cmenuGraph.addAction("Save")
     #
     [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolution, self.cmenuVTK, self.cmenuGraph]]
       
@@ -173,7 +173,7 @@ class Controller():
 
   def graphRightClick(self):
     action = self.cmenuGraph.exec_(QCursor.pos())
-    if action == self.vtkActSavePng:
+    if action == self.vtkActSave:
       options = QFileDialog.Options()
       options |= QFileDialog.DontUseNativeDialog
       fileName, fileEnding = QFileDialog.getSaveFileName(self.inaGui,"QFileDialog.getSaveFileName()","","Picture (*.png);;Text File (*.txt)", options=options)
