@@ -9,7 +9,7 @@ from matplotlib.backend_bases import MouseButton
 from matplotlib import pyplot as plt
 #from PyQt5.QtCore import 
 from PyQt5.QtGui import QCursor
-from standardFunctionsGeneral import getFieldIndices
+from standardFunctionsGeneral import getFieldIndices, getDerivativeName
 from standardModules import calcMeanSquared
 
 class Controller():
@@ -47,7 +47,8 @@ class Controller():
     self.drawActAllBlocks = self.cmenuAllBlocks.addAction("Draw all blocks")
     # Results
     self.cmenuSolution = QMenu(self.inaGui)
-    self.drawActSolutionMean = self.cmenuSolution.addAction("Draw mean squared value")
+    self.drawActSolutionMean = self.cmenuSolution.addAction("Mean squared value")
+    self.drawActSolutionMeanDerivative = self.cmenuSolution.addAction("Mean squared time derivative")
     # 3D options
     self.cmenuVTK = QMenu(self.inaGui)
     self.vtkActReset = self.cmenuVTK.addAction("Reset view")
@@ -153,8 +154,14 @@ class Controller():
       action = self.cmenuSolution.exec_(QCursor.pos())
     if action == self.drawActSolutionMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
-      self.graphWindow.plot(x,y,item.field + ' (' + item.parent().parent().shortName + ')')
+      self.graphWindow.plot(x,y,item.parent().parent().shortName)
       self.graphWindow.setLabels('Frequency [Hz]', 'Mean squared ' + str(item.field) + ' [dB ref 1.]')
+      self.currentPlot = item
+      self.fieldTo3DRepresentation(item)
+    if action == self.drawActSolutionMeanDerivative:
+      x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1., 1)
+      self.graphWindow.plot(x,y,item.parent().parent().shortName)
+      self.graphWindow.setLabels('Frequency [Hz]', 'Mean squared ' + getDerivativeName(str(item.field),1) + ' [dB ref 1.]')
       self.currentPlot = item
       self.fieldTo3DRepresentation(item)
 

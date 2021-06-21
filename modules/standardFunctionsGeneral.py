@@ -263,6 +263,17 @@ def getVTKElem(elpasoElemType):
         return vtk.vtkLine(), 3, 2
     else:
         return 0, 0, 0
+
+def getDerivativeName(fieldName, order):
+    if 'displacement' in fieldName and order==1:
+        return 'velocity'
+    elif 'displacement' in fieldName and order==2:
+        return 'acceleration'
+    elif order==1:
+        return 'd('+fieldName+')/dt'
+    elif order>1:
+        return 'd^'+str(order)+'('+fieldName+')/dt^'+str(order)
+      
     
 def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
     foundInterFaceElementsBlocks = []
