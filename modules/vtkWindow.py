@@ -212,7 +212,6 @@ class vtkWindow(QVTKRenderWindowInteractor):
         if warp:
           print('Warp!')
         for blockMapper in blockMappers:
-          print(blockMapper)
           blockMapper.SetLookupTable(self.lutColor)
           blockMapper.ScalarVisibilityOn()
           blockMapper.SetScalarModeToUsePointFieldData()

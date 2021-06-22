@@ -11,7 +11,7 @@ import atexit
 import numpy as np
 import h5py
 #
-from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QMainWindow, QAction, QTabWidget, QTreeWidget, QSizePolicy, QMenu,qApp
+from PyQt5.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QMainWindow, QAction, QTabWidget, QTreeWidget, QSizePolicy, QMenu,qApp
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QIcon
 #
@@ -20,7 +20,7 @@ sys.path.append(dirname + '/modules')
 sys.path.append(dirname + '/modulesAnalysis')
 #
 from standardFunctionsGeneral import readNodes, readElements, readSetup
-from standardWidgets import sepLine, saveAndExitButton, messageboxOK
+from standardWidgets import messageboxOK
 #
 from model import model
 from Controller import Controller

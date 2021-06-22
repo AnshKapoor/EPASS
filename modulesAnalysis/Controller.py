@@ -4,13 +4,14 @@ import h5py
 import atexit
 import numpy as np
 from DataStructure import lev1Container, lev2Container, lev3ContainerNodes, lev3ContainerElements, lev3ContainerField
-from PyQt5.QtWidgets import QFileDialog, QMenu, QAction
+from PyQt5.QtWidgets import QFileDialog, QMenu, QAction, QCheckBox, QHBoxLayout, QLabel, QLineEdit, QButtonGroup
 from matplotlib.backend_bases import MouseButton
 from matplotlib import pyplot as plt
 #from PyQt5.QtCore import 
 from PyQt5.QtGui import QCursor
-from standardFunctionsGeneral import getFieldIndices
-from standardModules import calcMeanSquared, calcSoundPower
+from standardFunctionsGeneral import getFieldIndices, isPlateType
+from standardWidgets import messageboxOK
+from standardModules import calcMeanSquared, calcSoundPower, setupRayleighWindow
 
 class Controller():
   def __init__(self, inaGui):
@@ -50,6 +51,7 @@ class Controller():
     self.drawActSolutionDispMean = self.cmenuSolutionDisp.addAction("Mean squared value")
     self.drawActSolutionDispMeanVelo = self.cmenuSolutionDisp.addAction("Mean squared velocity")
     self.drawActSolutionDispSoundPower = self.cmenuSolutionDisp.addAction("Radiated sound power")
+    self.drawActSolutionDispRadiationEfficiency = self.cmenuSolutionDisp.addAction("Radiation efficiency")
     self.cmenuSolutionRot = QMenu(self.inaGui)
     self.drawActSolutionRotMean = self.cmenuSolutionRot.addAction("Mean squared value")
     # 3D options
@@ -76,32 +78,54 @@ class Controller():
         self.loadHdf5(fileName)
                 
   def loadHdf5(self, pathToFile):
-    with h5py.File(pathToFile, 'r') as hdf5File:
-      self.groupsLev1Collector.append(lev1Container(self.tree, hdf5File, pathToFile))
-      self.init2DAxes(self.groupsLev1Collector[-1])
-      allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
-      if 'Nodes' in allLev2Names and 'Elements' in allLev2Names:
-        nodeEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
-        elemEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
-        self.create3DRepresentation(nodeEntry, elemEntry)
-        #myDict = dict(sorted(nodeEntry.nodesInv.items(), key=lambda item: item[0]))
-        #nodeEntry.orderIdx = [item[1] for item in myDict.items()]
-        #nodeEntry.orderIdx2 = [item[1] for item in nodeEntry.nodesInv.items()]
-        #print(nodeEntry.orderIdx2)
-        myPath = '/'.join(pathToFile.split('/')[:-1])
-        myFile = pathToFile.split('/')[-1]
-        pathToResultsFile = myPath + '/eGenOutput_' + myFile
-        if os.path.isfile(pathToResultsFile):
-          hdf5ResultsFile = h5py.File(pathToResultsFile, 'r')
-          hdf5ResultsFileStateGroup = hdf5ResultsFile['Solution/State']
-          atexit.register(hdf5ResultsFile.close)
-          self.groupsLev1Collector[-1].groupsLev2Collector.append(lev2Container(self.tree, self.groupsLev1Collector[-1], hdf5ResultsFile['Solution'], hdf5ResultsFile))
-          print('HERE')
-          fields, fieldIndices = getFieldIndices(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
-          for field, fieldIdx in zip(fields, fieldIndices):
-            self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, field, fieldIdx, self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
-      self.connectButtons(self.groupsLev1Collector[-1])
-      
+    hdf5File = h5py.File(pathToFile, 'r')
+    atexit.register(hdf5File.close)
+    self.groupsLev1Collector.append(lev1Container(self.tree, hdf5File, pathToFile))
+    self.init2DAxes(self.groupsLev1Collector[-1])
+    allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
+    if 'Nodes' in allLev2Names and 'Elements' in allLev2Names:
+      nodeEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
+      elemEntry = self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
+      self.create3DRepresentation(nodeEntry, elemEntry)
+      #myDict = dict(sorted(nodeEntry.nodesInv.items(), key=lambda item: item[0]))
+      #nodeEntry.orderIdx = [item[1] for item in myDict.items()]
+      #nodeEntry.orderIdx2 = [item[1] for item in nodeEntry.nodesInv.items()]
+      #print(nodeEntry.orderIdx2)
+      myPath = '/'.join(pathToFile.split('/')[:-1])
+      myFile = pathToFile.split('/')[-1]
+      pathToResultsFile = myPath + '/eGenOutput_' + myFile
+      if os.path.isfile(pathToResultsFile):
+        hdf5ResultsFile = h5py.File(pathToResultsFile, 'r')
+        hdf5ResultsFileStateGroup = hdf5ResultsFile['Solution/State']
+        atexit.register(hdf5ResultsFile.close)
+        self.groupsLev1Collector[-1].groupsLev2Collector.append(lev2Container(self.tree, self.groupsLev1Collector[-1], hdf5ResultsFile['Solution'], hdf5ResultsFile))
+        fields, fieldIndices, nodeEntry.startIdxPerNode = getFieldIndices(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+        for field, fieldIdx in zip(fields, fieldIndices):
+          self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, field, fieldIdx, self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
+        self.initSetupWindows()
+    self.connectButtons(self.groupsLev1Collector[-1])
+
+  def initSetupWindows(self):
+    # Rayleigh
+    self.blockCheckerRayleigh = []
+    self.setupWindow = setupRayleighWindow()
+    self.setupWindow.speedOfSound = QLineEdit('341.')
+    self.setupWindow.density = QLineEdit('1.21')
+    self.setupWindow.layout.addRow(QLabel('Speed of sound'), self.setupWindow.speedOfSound)
+    self.setupWindow.layout.addRow(QLabel('Density'), self.setupWindow.density)
+    allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
+    self.buttonGroupRayleigh = QButtonGroup()
+    for buttonIdx, block in enumerate(self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.elems):
+      self.blockCheckerRayleigh.append(QCheckBox())
+      self.buttonGroupRayleigh.addButton(self.blockCheckerRayleigh[-1], buttonIdx)
+      if not isPlateType(str(block.attrs['ElementType'])):
+        self.blockCheckerRayleigh[-1].setEnabled(False)
+      subLayout = QHBoxLayout()
+      [subLayout.addWidget(wid) for wid in [self.blockCheckerRayleigh[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
+      subLayout.addStretch()
+      self.setupWindow.blockLayout.addLayout(subLayout)
+    self.setupWindow.blockLayout.addStretch()
+
   def create3DRepresentation(self, nodeEntry, elemEntry):
     [nodeEntry.grid, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
 
@@ -159,19 +183,48 @@ class Controller():
         action = self.cmenuSolutionDisp.exec_(QCursor.pos())
       elif 'rotation' in item.field:
         action = self.cmenuSolutionRot.exec_(QCursor.pos())
+    ###
     if action == self.drawActSolutionDispMean or action == self.drawActSolutionRotMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
       yLabel = 'Mean squared ' + str(item.field) + ' [dB ref 1.]'
+      self.graphWindow.plot(x,y,item.parent().parent().shortName)
+      self.graphWindow.setLabels('Frequency [Hz]', yLabel)
+      self.currentPlot = item
+      self.fieldTo3DRepresentation(item)
     if action == self.drawActSolutionDispMeanVelo:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1., 1)
       yLabel = 'Mean squared velocity [dB ref 1.]'
-    if action == self.drawActSolutionDispSoundPower:
-      x,y = calcSoundPower(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
-      yLabel = 'Sound power [dB ref 1.]'
-    self.graphWindow.plot(x,y,item.parent().parent().shortName)
-    self.graphWindow.setLabels('Frequency [Hz]', yLabel)
-    self.currentPlot = item
-    self.fieldTo3DRepresentation(item)
+      self.graphWindow.plot(x,y,item.parent().parent().shortName)
+      self.graphWindow.setLabels('Frequency [Hz]', yLabel)
+      self.currentPlot = item
+      self.fieldTo3DRepresentation(item)
+    if action in [self.drawActSolutionDispSoundPower, self.drawActSolutionDispRadiationEfficiency]:
+      var = self.setupWindow.exec_()
+      # Check user input
+      try: 
+        speedOfSound = float(self.setupWindow.speedOfSound.text())
+        density = float(self.setupWindow.density.text())
+      except: 
+        messageboxOK('Error', 'User input for speed of sound and density \n cannot be converted to float!')
+        var = 0
+      #
+      if var == 0: 
+        pass
+      elif var == 1: 
+        allLev2Names = [lev2Entry.name for lev2Entry in item.parent().parent().groupsLev2Collector]
+        nodeEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
+        elemEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
+        x,ySoundPower,ySigma = calcSoundPower(item.hdf5ResultsFileStateGroup, item.fieldIndices, nodeEntry.nodes, nodeEntry.nodesInv, nodeEntry.orderIdx, nodeEntry.startIdxPerNode, elemEntry.elems[self.buttonGroupRayleigh.checkedId()], speedOfSound, density)
+        if action == self.drawActSolutionDispSoundPower: 
+          y = 10*np.log10(ySoundPower)
+          yLabel = 'Sound power [dB ref 1.]'
+        else:
+          y = ySigma
+          yLabel = 'Radiation efficiency [-]'
+        self.graphWindow.plot(x,y,item.parent().parent().shortName)
+        self.graphWindow.setLabels('Frequency [Hz]', yLabel)
+        self.currentPlot = item
+        self.fieldTo3DRepresentation(item)
 
   def vtkRightClick(self):
     action = self.cmenuVTK.exec_(QCursor.pos())
