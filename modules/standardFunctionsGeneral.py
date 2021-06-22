@@ -52,9 +52,12 @@ def readElements(myModel, hdf5File, cub5File=0):
         myModel.allUsedNodes = []
         g = hdf5File.create_group('Elements')
         # Prepare dictionary for faster elem id search
+        maxElemID = 0
         for coreformKey in cub5File['Mesh/Elements'].keys():
             myModel.elemsInvTags.append(coreformKey)
             elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs'][:]
+            if elemIDs.max()>maxElemID:
+                maxElemID = elemIDs.max()
             myModel.elemsInv.append(dict([[ID, n] for n, ID in enumerate(elemIDs)]))
         # Sort blocks according to ID
         groupIDs = []
@@ -73,18 +76,23 @@ def readElements(myModel, hdf5File, cub5File=0):
             N = cub5File['Simulation Model/Blocks/' + block].attrs['num_members'][()][0]
             if coreformKey != 'notSupported':
                 dataSet = createInitialBlockDataSet(g, elemType, groupID, N, M)
-                elemsInv = myModel.elemsInv[myModel.elemsInvTags.index(coreformKey)]
                 memberIDs = (cub5File['Simulation Model/Blocks/' + block + '/member ids'][:].T).tolist()[0]
-                idx = [elemsInv[elemID] for elemID in memberIDs]
-                dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
-                dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
-                if len(myModel.allUsedNodes) != 0:
-                    myModel.allUsedNodes = np.append(myModel.allUsedNodes, dataSet[:,1:].flatten())
+                if coreformKey == 'NODES': 
+                    dataSet[:,0] = np.array([x for x in range(maxElemID+1,maxElemID+1+len(memberIDs))]) # Generate new elem ids as coreform does not deliver those
+                    dataSet[:,1] = np.array(memberIDs)
+                    maxElemID = maxElemID+len(memberIDs)
                 else:
-                    myModel.allUsedNodes = dataSet[:,1:].flatten()
+                    elemsInv = myModel.elemsInv[myModel.elemsInvTags.index(coreformKey)]
+                    idx = [elemsInv[elemID] for elemID in memberIDs]
+                    dataSet[:,0] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Global IDs'][currentID] for currentID in idx])
+                    dataSet[:,1:] = np.array([cub5File['Mesh/Elements/' + coreformKey + '/Connectivity'][currentID,:] for currentID in idx])
+                    if len(myModel.allUsedNodes) != 0:
+                        myModel.allUsedNodes = np.append(myModel.allUsedNodes, dataSet[:,1:].flatten())
+                    else:
+                        myModel.allUsedNodes = dataSet[:,1:].flatten()
                 myModel.elems.append(dataSet)
-                progWin.setValue(p)
-                QApplication.processEvents()
+            progWin.setValue(p)
+            QApplication.processEvents()
         #newNodes = myModel.nodes
         # Element-/Sidesets 
         g = hdf5File.create_group('Elementsets')
@@ -138,7 +146,7 @@ def getFieldIndices(nodes, nodesInv, elems):
       dofLine = [True if dof in dofInElement else False for dof in supportedFields]
       for element in block:
         nodeIdx = [nodesInv[nodeId] for nodeId in element[1:]]
-        dofPattern[sorted(nodeIdx), :] = dofLine
+        dofPattern[sorted(nodeIdx), :] = (dofLine + dofPattern[sorted(nodeIdx), :])
     dofPerNode = np.sum(dofPattern, axis=1)
     startIdxPerNode = np.cumsum(dofPerNode)-dofPerNode[0]
     nodesPerDof = np.sum(dofPattern, axis=0)
@@ -191,6 +199,8 @@ def identifyElemType(elemType):
         return 'HEX_NODE_27', 'Fluid27', 28; 
     elif elemType[0] == 10: # 2-node Spring
         return 'EDGE_2', 'Spring', 3; 
+    elif elemType[0] == 0: # point elemenets (for bc springs or point mass)
+        return 'NODES', 'Pointmass', 2; 
     else:
         return 'notSupported', [], 0;
 
@@ -205,6 +215,8 @@ def identifyAlternativeElemTypes(elemType):
         return ['Fluid27','Brick27'];
     elif elemType in ['Spring']:
         return ['Spring'];
+    elif elemType in ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']:
+        return ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']
     else:
         return [];
 
@@ -261,20 +273,11 @@ def getVTKElem(elpasoElemType):
         return vtk.vtkHexahedron(), 12, 8
     elif elpasoElemType in ['Spring']:
         return vtk.vtkLine(), 3, 2
+    elif elpasoElemType in ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']:
+        return vtk.vtkVertex(), 1, 1
     else:
         return 0, 0, 0
-
-def getDerivativeName(fieldName, order):
-    if 'displacement' in fieldName and order==1:
-        return 'velocity'
-    elif 'displacement' in fieldName and order==2:
-        return 'acceleration'
-    elif order==1:
-        return 'd('+fieldName+')/dt'
-    elif order>1:
-        return 'd^'+str(order)+'('+fieldName+')/dt^'+str(order)
-      
-    
+   
 def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e-3):
     foundInterFaceElementsBlocks = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)

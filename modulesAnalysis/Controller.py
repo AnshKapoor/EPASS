@@ -9,8 +9,8 @@ from matplotlib.backend_bases import MouseButton
 from matplotlib import pyplot as plt
 #from PyQt5.QtCore import 
 from PyQt5.QtGui import QCursor
-from standardFunctionsGeneral import getFieldIndices, getDerivativeName
-from standardModules import calcMeanSquared
+from standardFunctionsGeneral import getFieldIndices
+from standardModules import calcMeanSquared, calcSoundPower
 
 class Controller():
   def __init__(self, inaGui):
@@ -46,9 +46,12 @@ class Controller():
     self.cmenuAllBlocks = QMenu(self.inaGui)
     self.drawActAllBlocks = self.cmenuAllBlocks.addAction("Draw all blocks")
     # Results
-    self.cmenuSolution = QMenu(self.inaGui)
-    self.drawActSolutionMean = self.cmenuSolution.addAction("Mean squared value")
-    self.drawActSolutionMeanDerivative = self.cmenuSolution.addAction("Mean squared time derivative")
+    self.cmenuSolutionDisp = QMenu(self.inaGui)
+    self.drawActSolutionDispMean = self.cmenuSolutionDisp.addAction("Mean squared value")
+    self.drawActSolutionDispMeanVelo = self.cmenuSolutionDisp.addAction("Mean squared velocity")
+    self.drawActSolutionDispSoundPower = self.cmenuSolutionDisp.addAction("Radiated sound power")
+    self.cmenuSolutionRot = QMenu(self.inaGui)
+    self.drawActSolutionRotMean = self.cmenuSolutionRot.addAction("Mean squared value")
     # 3D options
     self.cmenuVTK = QMenu(self.inaGui)
     self.vtkActReset = self.cmenuVTK.addAction("Reset view")
@@ -61,7 +64,7 @@ class Controller():
     self.cmenuGraph = QMenu(self.inaGui)
     self.vtkActSave = self.cmenuGraph.addAction("Save")
     #
-    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolution, self.cmenuVTK, self.cmenuGraph]]
+    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolutionDisp, self.cmenuSolutionRot, self.cmenuVTK, self.cmenuGraph]]
       
   def loadFile(self):
     options = QFileDialog.Options()
@@ -93,13 +96,14 @@ class Controller():
           hdf5ResultsFileStateGroup = hdf5ResultsFile['Solution/State']
           atexit.register(hdf5ResultsFile.close)
           self.groupsLev1Collector[-1].groupsLev2Collector.append(lev2Container(self.tree, self.groupsLev1Collector[-1], hdf5ResultsFile['Solution'], hdf5ResultsFile))
+          print('HERE')
           fields, fieldIndices = getFieldIndices(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
           for field, fieldIdx in zip(fields, fieldIndices):
             self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, field, fieldIdx, self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
       self.connectButtons(self.groupsLev1Collector[-1])
       
   def create3DRepresentation(self, nodeEntry, elemEntry):
-    [nodeEntry.grid, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.mapper, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+    [nodeEntry.grid, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
 
   def fieldTo3DRepresentation(self, dataSetEntry):
     nearestFrequencyIdx = np.argmin(np.abs(np.array(dataSetEntry.frequencies)-float(self.graphWindow.currentFrequency)))
@@ -118,7 +122,7 @@ class Controller():
         myArray.imag = dataSet['imag'][boolIdx]
         allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
         grid = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.grid
-        mapper = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.mapper
+        mapper = [blockActor.GetMapper() for blockActor in dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.blockActors]
         self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 0)
         #if self.vtkActWarp.isChecked():
         #  self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 1)
@@ -151,19 +155,23 @@ class Controller():
     #if isinstance(item, lev3ContainerElements):
     #  action = self.cmenuBlock.exec_(QCursor.pos())
     if isinstance(item, lev3ContainerField):
-      action = self.cmenuSolution.exec_(QCursor.pos())
-    if action == self.drawActSolutionMean:
+      if 'displacement' in item.field:
+        action = self.cmenuSolutionDisp.exec_(QCursor.pos())
+      elif 'rotation' in item.field:
+        action = self.cmenuSolutionRot.exec_(QCursor.pos())
+    if action == self.drawActSolutionDispMean or action == self.drawActSolutionRotMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
-      self.graphWindow.plot(x,y,item.parent().parent().shortName)
-      self.graphWindow.setLabels('Frequency [Hz]', 'Mean squared ' + str(item.field) + ' [dB ref 1.]')
-      self.currentPlot = item
-      self.fieldTo3DRepresentation(item)
-    if action == self.drawActSolutionMeanDerivative:
+      yLabel = 'Mean squared ' + str(item.field) + ' [dB ref 1.]'
+    if action == self.drawActSolutionDispMeanVelo:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1., 1)
-      self.graphWindow.plot(x,y,item.parent().parent().shortName)
-      self.graphWindow.setLabels('Frequency [Hz]', 'Mean squared ' + getDerivativeName(str(item.field),1) + ' [dB ref 1.]')
-      self.currentPlot = item
-      self.fieldTo3DRepresentation(item)
+      yLabel = 'Mean squared velocity [dB ref 1.]'
+    if action == self.drawActSolutionDispSoundPower:
+      x,y = calcSoundPower(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
+      yLabel = 'Sound power [dB ref 1.]'
+    self.graphWindow.plot(x,y,item.parent().parent().shortName)
+    self.graphWindow.setLabels('Frequency [Hz]', yLabel)
+    self.currentPlot = item
+    self.fieldTo3DRepresentation(item)
 
   def vtkRightClick(self):
     action = self.cmenuVTK.exec_(QCursor.pos())

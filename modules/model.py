@@ -207,6 +207,7 @@ class model(QWidget): # Saves a model
                 vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
                 vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(3)
                 vtkWindow.edgeActors[-1].GetProperty().SetColor(0.7,0.7,0.7)
+                vtkWindow.edgeActors[-1].GetProperty().SetPointSize(7)
                 progWin.setValue(m+1)
                 QApplication.processEvents()
 

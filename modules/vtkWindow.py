@@ -169,52 +169,55 @@ class vtkWindow(QVTKRenderWindowInteractor):
         blockActors = []
         blockEdgeActors = []
         for block in elems:
-          newGrid = vtk.vtkUnstructuredGrid()
-          newGrid.SetPoints(vtkPoints)
-          vtkCells = vtk.vtkCellArray()
-          newElem, newElemTypeId, nnodes = getVTKElem(block.attrs['ElementType'])
-          cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
-          cells[:,0] = nnodes
-          for elemCount in range(block.shape[0]):
+          if block.shape[1]>3: # Exclude springs, points
+            newGrid = vtk.vtkUnstructuredGrid()
+            newGrid.SetPoints(vtkPoints)
+            vtkCells = vtk.vtkCellArray()
+            newElem, newElemTypeId, nnodes = getVTKElem(block.attrs['ElementType'])
+            cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
+            cells[:,0] = nnodes
+            for elemCount in range(block.shape[0]):
               cells[elemCount,1:] = [nodesToVTK[ID] for ID in block[elemCount,1:(nnodes+1)]]
-          vtkCells.SetCells(block.shape[0], numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
-          newGrid.SetCells(newElemTypeId, vtkCells)
-          mapper = vtk.vtkDataSetMapper()
-          mapper.SetInputData(newGrid)
-          blockActors.append(vtk.vtkActor())
-          actor = blockActors[-1]
-          actor.SetMapper(mapper)
-          actor.GetProperty().SetAmbient(0.9)
-          actor.GetProperty().SetDiffuse(0.1)
-          actor.GetProperty().SetSpecular(0.)
-          actor.GetProperty().SetOpacity(0.85)
-          actor.GetProperty().SetColor(0.3,0.3,0.3)
-          edgeMapper = vtk.vtkDataSetMapper()
-          edgeMapper.SetInputData(newGrid)
-          blockEdgeActors.append(vtk.vtkActor())
-          edgeActor = blockEdgeActors[-1]
-          edgeActor.SetMapper(edgeMapper)
-          edgeActor.GetProperty().SetRepresentationToWireframe()
-          edgeActor.GetProperty().SetLineWidth(3)
-          edgeActor.GetProperty().SetColor(0.7,0.7,0.7)
-          self.ren.AddActor(actor)
-          self.ren.AddActor(edgeActor)
-          # Add actor (show everything at beginning)
-          #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
+            vtkCells.SetCells(block.shape[0], numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
+            newGrid.SetCells(newElemTypeId, vtkCells)
+            mapper = vtk.vtkDataSetMapper()
+            mapper.SetInputData(newGrid)
+            blockActors.append(vtk.vtkActor())
+            actor = blockActors[-1]
+            actor.SetMapper(mapper)
+            actor.GetProperty().SetAmbient(0.9)
+            actor.GetProperty().SetDiffuse(0.1)
+            actor.GetProperty().SetSpecular(0.)
+            actor.GetProperty().SetOpacity(0.85)
+            actor.GetProperty().SetColor(0.3,0.3,0.3)
+            edgeMapper = vtk.vtkDataSetMapper()
+            edgeMapper.SetInputData(newGrid)
+            blockEdgeActors.append(vtk.vtkActor())
+            edgeActor = blockEdgeActors[-1]
+            edgeActor.SetMapper(edgeMapper)
+            edgeActor.GetProperty().SetRepresentationToWireframe()
+            edgeActor.GetProperty().SetLineWidth(3)
+            edgeActor.GetProperty().SetColor(0.7,0.7,0.7)
+            self.ren.AddActor(actor)
+            self.ren.AddActor(edgeActor)
+            # Add actor (show everything at beginning)
+            #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
         #
-        return newGrid, nodesToVTK, sphereActorLoad, mapper, blockActors, blockEdgeActors
+        return newGrid, nodesToVTK, sphereActorLoad, blockActors, blockEdgeActors
     
-    def colorplot(self, myArray, field, grid, mapper, warp=0):
+    def colorplot(self, myArray, field, grid, blockMappers, warp=0):
         vtkArray = numpy_to_vtk(myArray)
         vtkArray.SetName(field)
         grid.GetPointData().AddArray(vtkArray)
         if warp:
           print('Warp!')
-        mapper.SetLookupTable(self.lutColor)
-        mapper.ScalarVisibilityOn()
-        mapper.SetScalarModeToUsePointFieldData()
-        mapper.SelectColorArray(field)
-        mapper.SetScalarRange((min(myArray), max(myArray)))
+        for blockMapper in blockMappers:
+          print(blockMapper)
+          blockMapper.SetLookupTable(self.lutColor)
+          blockMapper.ScalarVisibilityOn()
+          blockMapper.SetScalarModeToUsePointFieldData()
+          blockMapper.SelectColorArray(field)
+          blockMapper.SetScalarRange((min(myArray), max(myArray)))
         self.scalarBar.SetLookupTable(self.lutColor)
         self.ren.AddActor(self.scalarBar)
         self.GetRenderWindow().Render()
