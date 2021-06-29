@@ -25,19 +25,19 @@ class sepLineV(QFrame):
 
 # Button to load something
 class ak3LoadButton(QPushButton):
-    def __init__(self, ak3path):
+    def __init__(self):
         super(ak3LoadButton, self).__init__('')
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setIcon(QIcon(ak3path + '/pics/load_button.png'))
+        self.setIcon(QIcon(os.path.dirname(__file__) + '/../pics/load_button.png'))
         self.setIconSize(QSize(50, 50))
         self.setStatusTip('Load model from ak3 file')
 
 # Button to reset something
 class resetButton(QPushButton):
-    def __init__(self, ak3path):
+    def __init__(self):
         super(resetButton, self).__init__('')
         self.setStyleSheet("background-color:rgb(255,255,255)")
-        self.setIcon(QIcon(ak3path + '/pics/ref_button.png'))
+        self.setIcon(QIcon(os.path.dirname(__file__) + '/../pics/ref_button.png'))
         self.setIconSize(QSize(20, 20))
         self.setStatusTip('Reset 3D View')
         self.setMaximumWidth(23)
@@ -125,13 +125,29 @@ class solverTypeSelector(QComboBox):
         except:
             pass
 
+# Dropdown menu to select a plane
+class planeSelector(QComboBox):
+    def __init__(self):
+        super(planeSelector, self).__init__()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Select a plane')
+        self.availableTypes = ['x-plane','y-plane','z-plane']
+        self.setFixedWidth(200)
+        [self.addItem(type) for type in self.availableTypes]
+    
+    def changeTo(self, solverType):
+        try: 
+            self.setCurrentIndex(self.availableTypes.index(solverType))
+        except:
+            pass
+
 # Dropdown menu to select a load
 class loadTypeSelector(QComboBox):
     def __init__(self):
         super(loadTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a load')
-        self.availableTypes = ['Plane wave', 'Point force']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer']
+        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity']#'Turbulent Boundary Layer']#, 'Diffuse field', 'Distributed time domain load', 'Turbulent Boundary Layer']
         self.setFixedWidth(200)
         [self.addItem(load) for load in self.availableTypes]
     

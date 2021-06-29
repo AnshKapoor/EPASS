@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QScrollArea,
 import numpy as np
 import math
 from standardWidgets import progressWindow
+from standardFunctionsGeneral import getNodeIdxOfFaces
 
 # ScrollArea containing loads in bottom left part of program
 class loadInfoBox(QScrollArea):
@@ -91,6 +92,49 @@ class elemLoad(QHBoxLayout):
                     pass
         relevantBlocks = []
         nodes = 0
+        
+    def findRelevantFaces(self, plane, planeShift):
+        """
+        Find a face in selected plane
+        """
+        self.surfaceElements = []
+        self.surfaceFaces = []
+        self.surfaceFacesNormals = []
+        self.surfacePoints = []
+        relevantBlocks = []
+        nodes = self.myModel.nodes
+        for p, blockCheck in enumerate(self.blockChecker):
+            blockState = blockCheck.isChecked()
+            if blockState==1:
+                relevantBlocks.append(self.myModel.elems[p])
+        for block in relevantBlocks:
+            nodeIdxOfFaces = getNodeIdxOfFaces(block.attrs['ElementType'])
+            # Get sizes
+            noOfFaces = nodeIdxOfFaces.shape[0]
+            for elemIdx in range(block.attrs['N']):
+                elem = block[elemIdx]
+                for faceNo in range(noOfFaces): 
+                    nodeIdx = [self.myModel.nodesInv[nodeID] for nodeID in elem[nodeIdxOfFaces[faceNo,:4]+1]] # indices of nodes belonging to the face
+                    if np.all(np.abs(nodes[sorted(nodeIdx)][plane[0]+'Coords'] - planeShift) < 1e-6): # Check if all indices lie in chosen plane; Sorting necessary
+                        self.surfaceElements.append(elem[0])
+                        self.surfaceFaces.append(faceNo+1)
+                        node1 = [nodes[nodeIdx[0]]['xCoords'], nodes[nodeIdx[0]]['yCoords'], nodes[nodeIdx[0]]['zCoords']]
+                        node2 = [nodes[nodeIdx[1]]['xCoords'], nodes[nodeIdx[1]]['yCoords'], nodes[nodeIdx[1]]['zCoords']]
+                        node3 = [nodes[nodeIdx[2]]['xCoords'], nodes[nodeIdx[2]]['yCoords'], nodes[nodeIdx[2]]['zCoords']]
+                        node4 = [nodes[nodeIdx[3]]['xCoords'], nodes[nodeIdx[3]]['yCoords'], nodes[nodeIdx[3]]['zCoords']]
+                        centerX = 0.25*(node1[0]+node2[0]+node3[0]+node4[0])
+                        centerY = 0.25*(node1[1]+node2[1]+node3[1]+node4[1])
+                        centerZ = 0.25*(node1[2]+node2[2]+node3[2]+node4[2])
+                        self.surfacePoints.append([centerX, centerY, centerZ])
+                        vec1 = [ node1[0]-centerX, node1[1]-centerY, node1[2]-centerZ ] # from center to node 1
+                        vec2 = [ node2[0]-centerX, node2[1]-centerY, node2[2]-centerZ ] # from center to node 2
+                        vec3 = [ node3[0]-centerX, node3[1]-centerY, node3[2]-centerZ ] # from center to node 3
+                        vec4 = [ node4[0]-centerX, node4[1]-centerY, node4[2]-centerZ ] # from center to node 4
+                        faceNormal = 0.5 * (np.cross(vec1, vec2) + np.cross(vec3, vec4)) # Mean value of two normal vectors
+                        faceNormal = faceNormal / np.linalg.norm(faceNormal)
+                        self.surfaceFacesNormals.append(faceNormal)
+        relevantBlocks = []
+        nodes = 0
 
     def nearestNeighbor(self):
         """
@@ -114,14 +158,20 @@ class elemLoad(QHBoxLayout):
         # Exporting the load per element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nE, surfaceElem in enumerate(self.surfaceElements):
-            frequencies = self.myModel.frequencies
-            dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
-            set = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
-            set.attrs['FreqCount'] = np.uint64(len(frequencies))
-            set.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
-            set.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
-            set.attrs['LoadType'] = self.type
-            set.attrs['MethodType'] = 'FEM'
+            if not self.type == 'vn':
+              frequencies = self.myModel.frequencies
+              dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
+              dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
+              dataSet.attrs['FreqCount'] = np.uint64(len(frequencies))
+            else:
+              dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=[])
+              dataSet.attrs['Face'] = np.uint64(self.surfaceFaces[nE]) # Assign element load to element
+              dataSet.attrs['vn'] = np.float(self.amp.text()) # Assign element load to element
+              dataSet.attrs['FreqCount'] = np.uint64(0)
+            dataSet.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
+            dataSet.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
+            dataSet.attrs['LoadType'] = self.type
+            dataSet.attrs['MethodType'] = 'FEM'
             # Update progress window
             progWin.setValue(nE)
             QApplication.processEvents()

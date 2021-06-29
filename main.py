@@ -172,7 +172,7 @@ class loadGUI(QMainWindow):
         # CREATE WIDGETS | I - MODEL
         self.label1 = QLabel('Model')
         self.label1.setFont(self.myFont)
-        self.loadButton = ak3LoadButton(self.locPath)
+        self.loadButton = ak3LoadButton()
         self.loadButton.clicked.connect(self.loadInput)
         self.sepLine1 = sepLine()
         # ADD TO LAYOUT

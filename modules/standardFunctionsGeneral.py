@@ -243,6 +243,12 @@ def isPlateType(elemType):
         return 1
     else:
         return 0
+    
+def isFluid3DType(elemType):
+    if elemType in ['Fluid27','Fluid20','Fluid8']:
+        return 1
+    else:
+        return 0
 
 def getNodeIdxOfFaces(elemType):
     if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']:

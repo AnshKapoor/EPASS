@@ -6,18 +6,17 @@ import numpy as np
 import math
 import os
 from lxml import etree
-from standardWidgets import ak3LoadButton, removeButton, editButton, messageboxOK, progressWindow
+from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from loads import elemLoad
 import time
 np.random.seed(int(time.time()))
 
 # tbl load
 class tbl(elemLoad):
-    def __init__(self, ak3path, myModel, vtkWindow):
+    def __init__(self, myModel):
         super(tbl, self).__init__()
-        self.ak3path = ak3path
         self.myModel = myModel
-        self.removeButton = removeButton(self.ak3path)
+        self.removeButton = removeButton()
         self.editButton = editButton()
         self.type = 'Turbulent_Boundary_Layer'
         #
@@ -29,7 +28,7 @@ class tbl(elemLoad):
         self.flowDirZ = QLineEdit('0.')
         self.randomSelector = QComboBox()
         [self.randomSelector.addItem(x) for x in ['no', 'per data point', 'per element', 'coherence grid']]
-        self.loadButton = ak3LoadButton(self.ak3path)
+        self.loadButton = ak3LoadButton()
         self.loadButton.clicked.connect(self.getFilename)
         self.dataPoints = []
         #
@@ -42,7 +41,7 @@ class tbl(elemLoad):
         [self.addWidget(wid) for wid in [self.removeButton, self.label, self.dirLabel, self.drawCheck, self.editButton]]
         #
         self.initSetupWindow()
-        self.init3DActor(vtkWindow)
+        self.init3DActor()
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
@@ -325,7 +324,7 @@ class tbl(elemLoad):
         """
         basic objects for the individual setup window
         """
-        self.setupWindow = setupWindow(self.label.text())
+        self.setupWindow = setupLoadWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Norm-Direction X'), self.dirX)
         self.setupWindow.layout.addRow(QLabel('Norm-Direction Y'), self.dirY)

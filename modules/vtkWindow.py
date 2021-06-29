@@ -81,7 +81,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.axisSelector = QCheckBox('Axis')
         self.axisSelector.setCheckState(Qt.Checked)
         self.axisSelector.clicked.connect(self.axisChange)
-        self.resetViewButton = resetButton(self.ak3path)
+        self.resetViewButton = resetButton()
         self.resetViewButton.clicked.connect(self.resetView)
         # ADD TO LAYOUT
         self.selectionLayout = QHBoxLayout()
@@ -110,27 +110,28 @@ class vtkWindow(QVTKRenderWindowInteractor):
                                 blocksToDraw.append(p)
             # Color blocks
             if load.superType == 'elemLoad':
-                blockCounter = 0
-                for block in range(len(load.blockChecker)):
-                    if block in blocksToDraw:
-                        noOfCells = self.grids[block].GetNumberOfCells()
-                        for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
-                            self.grids[block].GetCellData().RemoveArray(arNo)
-                        phaseArray = numpy_to_vtk(load.surfacePhases[self.currentFrequencyStep, blockCounter:(blockCounter+noOfCells)])
-                        phaseArray.SetName('Phase')
-                        self.grids[block].GetCellData().AddArray(phaseArray)
-                        self.mappers[block].SetLookupTable(self.lut)
-                        self.mappers[block].ScalarVisibilityOn()
-                        self.mappers[block].SetScalarModeToUseCellFieldData()
-                        self.mappers[block].SelectColorArray('Phase')
-                        self.mappers[block].SetScalarRange((0., 2*math.pi))
-                        if blockCounter == 0:
-                            self.ren.AddActor2D(self.scalarBar)
-                        blockCounter = blockCounter + noOfCells
-                    else:
-                        self.mappers[block].ScalarVisibilityOff()
-                        for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
-                            self.grids[block].GetCellData().RemoveArray(arNo)
+                if not load.type == 'vn':
+                    blockCounter = 0
+                    for block in range(len(load.blockChecker)):
+                        if block in blocksToDraw:
+                            noOfCells = self.grids[block].GetNumberOfCells()
+                            for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
+                                self.grids[block].GetCellData().RemoveArray(arNo)
+                            phaseArray = numpy_to_vtk(load.surfacePhases[self.currentFrequencyStep, blockCounter:(blockCounter+noOfCells)])
+                            phaseArray.SetName('Phase')
+                            self.grids[block].GetCellData().AddArray(phaseArray)
+                            self.mappers[block].SetLookupTable(self.lut)
+                            self.mappers[block].ScalarVisibilityOn()
+                            self.mappers[block].SetScalarModeToUseCellFieldData()
+                            self.mappers[block].SelectColorArray('Phase')
+                            self.mappers[block].SetScalarRange((0., 2*math.pi))
+                            if blockCounter == 0:
+                                self.ren.AddActor2D(self.scalarBar)
+                            blockCounter = blockCounter + noOfCells
+                        else:
+                            self.mappers[block].ScalarVisibilityOff()
+                            for arNo in range(self.grids[block].GetCellData().GetNumberOfArrays()-1,-1,-1):
+                                self.grids[block].GetCellData().RemoveArray(arNo)
     
     def updateConstraints(self, constraints):
         for n, constraint in enumerate(constraints):
