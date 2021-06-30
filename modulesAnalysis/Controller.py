@@ -47,6 +47,8 @@ class Controller():
     self.cmenuAllBlocks = QMenu(self.inaGui)
     self.drawActAllBlocks = self.cmenuAllBlocks.addAction("Draw all blocks")
     # Results
+    self.cmenuSolutionPres = QMenu(self.inaGui)
+    self.drawActSolutionPresMean = self.cmenuSolutionPres.addAction("Mean squared value")
     self.cmenuSolutionDisp = QMenu(self.inaGui)
     self.drawActSolutionDispMean = self.cmenuSolutionDisp.addAction("Mean squared value")
     self.drawActSolutionDispMeanVelo = self.cmenuSolutionDisp.addAction("Mean squared velocity")
@@ -66,7 +68,7 @@ class Controller():
     self.cmenuGraph = QMenu(self.inaGui)
     self.vtkActSave = self.cmenuGraph.addAction("Save")
     #
-    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolutionDisp, self.cmenuSolutionRot, self.cmenuVTK, self.cmenuGraph]]
+    [x.setStyleSheet("QMenu::item:selected { background: #abc13b; }") for x in [self.cmenuAllNodes, self.cmenuBlock, self.cmenuAllBlocks, self.cmenuSolutionPres, self.cmenuSolutionDisp, self.cmenuSolutionRot, self.cmenuVTK, self.cmenuGraph]]
       
   def loadFile(self):
     options = QFileDialog.Options()
@@ -127,7 +129,7 @@ class Controller():
     self.setupWindow.blockLayout.addStretch()
 
   def create3DRepresentation(self, nodeEntry, elemEntry):
-    [nodeEntry.grid, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+    [nodeEntry.blockGrids, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
 
   def fieldTo3DRepresentation(self, dataSetEntry):
     nearestFrequencyIdx = np.argmin(np.abs(np.array(dataSetEntry.frequencies)-float(self.graphWindow.currentFrequency)))
@@ -145,9 +147,9 @@ class Controller():
         myArray.real = dataSet['real'][boolIdx]
         myArray.imag = dataSet['imag'][boolIdx]
         allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
-        grid = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.grid
-        mapper = [blockActor.GetMapper() for blockActor in dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.blockActors]
-        self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 0)
+        grids = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.blockGrids
+        mappers = [blockActor.GetMapper() for blockActor in dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.blockActors]
+        self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grids, mappers, 0)
         #if self.vtkActWarp.isChecked():
         #  self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grid, mapper, 1)
         #else:
@@ -179,12 +181,14 @@ class Controller():
     #if isinstance(item, lev3ContainerElements):
     #  action = self.cmenuBlock.exec_(QCursor.pos())
     if isinstance(item, lev3ContainerField):
-      if 'displacement' in item.field:
+      if 'sound pressure' in item.field:
+        action = self.cmenuSolutionPres.exec_(QCursor.pos())
+      elif 'displacement' in item.field:
         action = self.cmenuSolutionDisp.exec_(QCursor.pos())
       elif 'rotation' in item.field:
         action = self.cmenuSolutionRot.exec_(QCursor.pos())
     ###
-    if action == self.drawActSolutionDispMean or action == self.drawActSolutionRotMean:
+    if action == self.drawActSolutionDispMean or action == self.drawActSolutionRotMean or action == self.drawActSolutionPresMean:
       x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
       yLabel = 'Mean squared ' + str(item.field) + ' [dB ref 1.]'
       self.graphWindow.plot(x,y,item.parent().parent().shortName)

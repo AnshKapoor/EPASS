@@ -166,13 +166,15 @@ class vtkWindow(QVTKRenderWindowInteractor):
         sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
         sphereActorLoad.SetMapper(sphereMapperLoad)
         self.ren.AddActor(sphereActorLoad)
+        #
         # Create the elements
+        blockGrids = []
         blockActors = []
         blockEdgeActors = []
         for block in elems:
           if block.shape[1]>3: # Exclude springs, points
-            newGrid = vtk.vtkUnstructuredGrid()
-            newGrid.SetPoints(vtkPoints)
+            blockGrids.append(vtk.vtkUnstructuredGrid())
+            blockGrids[-1].SetPoints(vtkPoints)
             vtkCells = vtk.vtkCellArray()
             newElem, newElemTypeId, nnodes = getVTKElem(block.attrs['ElementType'])
             cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
@@ -180,9 +182,9 @@ class vtkWindow(QVTKRenderWindowInteractor):
             for elemCount in range(block.shape[0]):
               cells[elemCount,1:] = [nodesToVTK[ID] for ID in block[elemCount,1:(nnodes+1)]]
             vtkCells.SetCells(block.shape[0], numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
-            newGrid.SetCells(newElemTypeId, vtkCells)
+            blockGrids[-1].SetCells(newElemTypeId, vtkCells)
             mapper = vtk.vtkDataSetMapper()
-            mapper.SetInputData(newGrid)
+            mapper.SetInputData(blockGrids[-1])
             blockActors.append(vtk.vtkActor())
             actor = blockActors[-1]
             actor.SetMapper(mapper)
@@ -192,7 +194,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
             actor.GetProperty().SetOpacity(0.85)
             actor.GetProperty().SetColor(0.3,0.3,0.3)
             edgeMapper = vtk.vtkDataSetMapper()
-            edgeMapper.SetInputData(newGrid)
+            edgeMapper.SetInputData(blockGrids[-1])
             blockEdgeActors.append(vtk.vtkActor())
             edgeActor = blockEdgeActors[-1]
             edgeActor.SetMapper(edgeMapper)
@@ -204,20 +206,20 @@ class vtkWindow(QVTKRenderWindowInteractor):
             # Add actor (show everything at beginning)
             #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
         #
-        return newGrid, nodesToVTK, sphereActorLoad, blockActors, blockEdgeActors
+        return blockGrids, nodesToVTK, sphereActorLoad, blockActors, blockEdgeActors
     
-    def colorplot(self, myArray, field, grid, blockMappers, warp=0):
+    def colorplot(self, myArray, field, grids, blockMappers, warp=0):
         vtkArray = numpy_to_vtk(myArray)
         vtkArray.SetName(field)
-        grid.GetPointData().AddArray(vtkArray)
         if warp:
           print('Warp!')
-        for blockMapper in blockMappers:
-          blockMapper.SetLookupTable(self.lutColor)
-          blockMapper.ScalarVisibilityOn()
-          blockMapper.SetScalarModeToUsePointFieldData()
-          blockMapper.SelectColorArray(field)
-          blockMapper.SetScalarRange((min(myArray), max(myArray)))
+        for n in range(len(grids)):
+          grids[n].GetPointData().AddArray(vtkArray)
+          blockMappers[n].SetLookupTable(self.lutColor)
+          blockMappers[n].ScalarVisibilityOn()
+          blockMappers[n].SetScalarModeToUsePointFieldData()
+          blockMappers[n].SelectColorArray(field)
+          blockMappers[n].SetScalarRange((min(myArray), max(myArray)))
         self.scalarBar.SetLookupTable(self.lutColor)
         self.ren.AddActor(self.scalarBar)
         self.GetRenderWindow().Render()
