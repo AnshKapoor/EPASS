@@ -38,7 +38,7 @@ class BC_STR_FIELD(nodeConstraint):
             dataSet.attrs['MethodType'] = 'FEM'
             # Parameters 
             for n in range(len(self.parameterNames)): 
-                dataSet.attrs[self.parameterNames[n]] = self.subCheckButtons[n].isChecked()
+                dataSet.attrs[self.parameterNames[n]] = np.uint8(self.subCheckButtons[n].isChecked())
                 dataSet.attrs['val' + self.parameterNames[n]] = float(self.parameterValues[n].text())
             # Update progress window
             progWin.setValue(nN)

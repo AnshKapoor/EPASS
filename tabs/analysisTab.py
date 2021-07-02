@@ -112,9 +112,9 @@ class analysisTab(QWidget):
             g.attrs['description'] = self.description.text()
             for n, check in enumerate(self.outputChecks):
                 if check.isChecked():
-                    g.attrs[self.outputNames[n]] = True
+                    g.attrs[self.outputNames[n]] = np.uint8(1)
                 else:
-                    g.attrs[self.outputNames[n]] = False
+                    g.attrs[self.outputNames[n]] = np.uint8(0)
             return 1
         except:
             return 0
