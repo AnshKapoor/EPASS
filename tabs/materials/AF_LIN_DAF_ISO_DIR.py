@@ -28,12 +28,12 @@ class AF_LIN_DAF_ISO_DIR(material):
 
     def data2hdf5(self, materialsGroup, parametersGroup): # Overriding method as parameter calculations are conducted and equivalent fluid material is used
         # Exporting the material
-        set = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
-        set.attrs['Id'] = np.uint64(self.Id.text())
-        set.attrs['MaterialType'] = 'AF_LIN_EQF_ISO_DIR'
-        set.attrs['Name'] = self.name.text()
+        dataSet = materialsGroup.create_dataset('material' + self.Id.text(), data=[])
+        dataSet.attrs['Id'] = np.uint64(self.Id.text())
+        dataSet.attrs['MaterialType'] = 'AF_LIN_EQF_ISO_DIR'
+        dataSet.attrs['Name'] = self.name.text()
         cimag = np.imag(np.sqrt(float(self.parameterValues[0].text())**2 * (1+1j*float(self.parameterValues[3].text()))))
         newParameterNames  = [ 'cf'                           , 'rhof'                        , 't'                           , 'creal'                       , 'cimag', 'rhoreal'                     , 'rhoimag']
         newParameterValues = [ self.parameterValues[0].text() , self.parameterValues[1].text(), self.parameterValues[2].text(), self.parameterValues[0].text(), cimag  , self.parameterValues[1].text(), 0.]
         for n in range(len(newParameterNames)): 
-            set.attrs[newParameterNames[n]] = float(newParameterValues[n])
+            dataSet.attrs[newParameterNames[n]] = str(float(newParameterValues[n]))
