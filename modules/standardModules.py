@@ -23,6 +23,7 @@ def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, dB=1, ref=1.,deriva
     x[counter] = float(item[1])
     dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
     dataSetComplex = dataSet['real'][:] + 1j*dataSet['imag'][:]
+    print(fieldIndices)
     if first: 
       boolIdx = np.zeros((len(dataSet)), dtype=np.bool_)
       boolIdx[fieldIndices] = 1
@@ -38,7 +39,7 @@ def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, dB=1, ref=1.,deriva
     progWin.setValue(counter)
     QApplication.processEvents()
   idx = np.argsort(x)
-  if dB: 
+  if dB and all(y): 
     y = 10*np.log10(y/ref)
   return x[idx],y[idx]
 

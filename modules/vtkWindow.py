@@ -152,7 +152,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         sphereSource = vtk.vtkSphereSource()
         scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         self.defineAxisLength(scaleFactor)
-        sphereSource.SetRadius(scaleFactor*0.01)
+        sphereSource.SetRadius(scaleFactor*0.001)
         sphereDataLoad = vtk.vtkPolyData()
         sphereDataLoad.SetPoints(vtkPoints)
         glyphLoad = vtk.vtkGlyph3D()

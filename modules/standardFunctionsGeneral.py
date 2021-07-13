@@ -138,17 +138,17 @@ def readSetup(myModel, hdf5File, cub5File=0):
         myModel.description = g.attrs['description'][:]
         myModel.frequencies = np.array([myModel.freqStart+n*myModel.freqDelta for n in range(myModel.freqSteps)])
 
-def getFieldIndices(nodes, nodesInv, elems): 
+def getFieldIndices(nodes, orderIdx, nodesInv, elems): 
     supportedFields = getSupportedFields()
     dofPattern = np.zeros((len(nodes), len(supportedFields)), dtype=np.bool_)
     for block in elems: 
       dofInElement = getElementDof(block.attrs['ElementType'])
       dofLine = [True if dof in dofInElement else False for dof in supportedFields]
       for element in block:
-        nodeIdx = [nodesInv[nodeId] for nodeId in element[1:]]
+        nodeIdx = [orderIdx[nodeId] for nodeId in element[1:]]
         dofPattern[sorted(nodeIdx), :] = (dofLine + dofPattern[sorted(nodeIdx), :])
     dofPerNode = np.sum(dofPattern, axis=1)
-    startIdxPerNode = np.cumsum(dofPerNode)-dofPerNode[0]
+    startIdxPerNode = np.cumsum(dofPerNode)-dofPerNode
     nodesPerDof = np.sum(dofPattern, axis=0)
     availableFields = []
     fieldIndices = []
@@ -157,6 +157,8 @@ def getFieldIndices(nodes, nodesInv, elems):
       if nodesPerDof[n]>0: 
         availableFields.append(field)
         fieldIndices.append(startIdxPerNode[dofPattern[:,n]] + np.sum(dofPattern[:,0:n], axis=1)[dofPattern[:,n]])
+        print(field)
+        print(fieldIndices[-1])
         nodeIndices.append(np.nonzero(dofPattern[:,n])[0])
     return availableFields, fieldIndices, nodeIndices, startIdxPerNode
 
