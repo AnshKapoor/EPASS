@@ -104,9 +104,6 @@ class Controller():
         self.groupsLev1Collector[-1].groupsLev2Collector.append(lev2Container(self.tree, self.groupsLev1Collector[-1], hdf5ResultsFile['Solution'], hdf5ResultsFile))
         fields, fieldIndices, nodeIndices, nodeEntry.startIdxPerNode = getFieldIndices(nodeEntry.nodes, nodeEntry.orderIdx, nodeEntry.nodesInv, elemEntry.elems)
         for n in range(len(fields)):
-          print(fields[n])
-          print(fieldIndices[n])
-          print(nodeIndices[n])
           self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, fields[n], fieldIndices[n], nodeIndices[n], self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
         self.initSetupWindows()
     self.connectButtons(self.groupsLev1Collector[-1])

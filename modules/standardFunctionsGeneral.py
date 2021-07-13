@@ -157,8 +157,6 @@ def getFieldIndices(nodes, orderIdx, nodesInv, elems):
       if nodesPerDof[n]>0: 
         availableFields.append(field)
         fieldIndices.append(startIdxPerNode[dofPattern[:,n]] + np.sum(dofPattern[:,0:n], axis=1)[dofPattern[:,n]])
-        print(field)
-        print(fieldIndices[-1])
         nodeIndices.append(np.nonzero(dofPattern[:,n])[0])
     return availableFields, fieldIndices, nodeIndices, startIdxPerNode
 
