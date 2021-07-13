@@ -54,6 +54,7 @@ class Controller():
     self.drawActSolutionDispMeanVelo = self.cmenuSolutionDisp.addAction("Mean squared velocity")
     self.drawActSolutionDispSoundPower = self.cmenuSolutionDisp.addAction("Radiated sound power")
     self.drawActSolutionDispRadiationEfficiency = self.cmenuSolutionDisp.addAction("Radiation efficiency")
+    self.drawActSolutionDispTransmissionLoss = self.cmenuSolutionDisp.addAction("Transmission loss")
     self.cmenuSolutionRot = QMenu(self.inaGui)
     self.drawActSolutionRotMean = self.cmenuSolutionRot.addAction("Mean squared value")
     # 3D options
@@ -101,20 +102,20 @@ class Controller():
         hdf5ResultsFileStateGroup = hdf5ResultsFile['Solution/State']
         atexit.register(hdf5ResultsFile.close)
         self.groupsLev1Collector[-1].groupsLev2Collector.append(lev2Container(self.tree, self.groupsLev1Collector[-1], hdf5ResultsFile['Solution'], hdf5ResultsFile))
-        fields, fieldIndices, nodeEntry.startIdxPerNode = getFieldIndices(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
-        for field, fieldIdx in zip(fields, fieldIndices):
-          self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, field, fieldIdx, self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
+        fields, fieldIndices, nodeIndices, nodeEntry.startIdxPerNode = getFieldIndices(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
+        for n in range(len(fields)):
+          self.groupsLev1Collector[-1].groupsLev2Collector[-1].dataSetsLev3Collector.append(lev3ContainerField(self.tree, self.groupsLev1Collector[-1].groupsLev2Collector[-1], hdf5ResultsFileStateGroup, fields[n], fieldIndices[n], nodeIndices[n], self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Analysis')].lev2TreeEntry.frequencies))
         self.initSetupWindows()
     self.connectButtons(self.groupsLev1Collector[-1])
 
   def initSetupWindows(self):
     # Rayleigh
     self.blockCheckerRayleigh = []
-    self.setupWindow = setupRayleighWindow()
-    self.setupWindow.speedOfSound = QLineEdit('341.')
-    self.setupWindow.density = QLineEdit('1.21')
-    self.setupWindow.layout.addRow(QLabel('Speed of sound'), self.setupWindow.speedOfSound)
-    self.setupWindow.layout.addRow(QLabel('Density'), self.setupWindow.density)
+    self.setupWindowRayleigh = setupRayleighWindow()
+    self.setupWindowRayleigh.speedOfSound = QLineEdit('341.')
+    self.setupWindowRayleigh.density = QLineEdit('1.21')
+    self.setupWindowRayleigh.layout.addRow(QLabel('Speed of sound'), self.setupWindowRayleigh.speedOfSound)
+    self.setupWindowRayleigh.layout.addRow(QLabel('Density'), self.setupWindowRayleigh.density)
     allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
     self.buttonGroupRayleigh = QButtonGroup()
     for buttonIdx, block in enumerate(self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.elems):
@@ -125,8 +126,29 @@ class Controller():
       subLayout = QHBoxLayout()
       [subLayout.addWidget(wid) for wid in [self.blockCheckerRayleigh[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
       subLayout.addStretch()
-      self.setupWindow.blockLayout.addLayout(subLayout)
-    self.setupWindow.blockLayout.addStretch()
+      self.setupWindowRayleigh.blockLayout.addLayout(subLayout)
+    self.setupWindowRayleigh.blockLayout.addStretch()
+    # Rayleigh for Transmission Loss
+    self.blockCheckerTL = []
+    self.setupWindowTL = setupRayleighWindow()
+    self.setupWindowTL.speedOfSound = QLineEdit('341.')
+    self.setupWindowTL.density = QLineEdit('1.21')
+    self.setupWindowTL.inputPower = QLineEdit('1.')
+    self.setupWindowTL.layout.addRow(QLabel('Speed of sound'), self.setupWindowTL.speedOfSound)
+    self.setupWindowTL.layout.addRow(QLabel('Density'), self.setupWindowTL.density)
+    self.setupWindowTL.layout.addRow(QLabel('Input power (sender room)'), self.setupWindowTL.inputPower)
+    allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
+    self.buttonGroupTL = QButtonGroup()
+    for buttonIdx, block in enumerate(self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.elems):
+      self.blockCheckerTL.append(QCheckBox())
+      self.buttonGroupTL.addButton(self.blockCheckerTL[-1], buttonIdx)
+      if not isPlateType(str(block.attrs['ElementType'])):
+        self.blockCheckerTL[-1].setEnabled(False)
+      subLayout = QHBoxLayout()
+      [subLayout.addWidget(wid) for wid in [self.blockCheckerTL[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
+      subLayout.addStretch()
+      self.setupWindowTL.blockLayout.addLayout(subLayout)
+    self.setupWindowTL.blockLayout.addStretch()
 
   def create3DRepresentation(self, nodeEntry, elemEntry):
     [nodeEntry.blockGrids, nodeEntry.orderIdx, nodeEntry.nodeActor, elemEntry.blockActors, elemEntry.blockEdgeActors] = self.vtkWindow.createGrid(nodeEntry.nodes, nodeEntry.nodesInv, elemEntry.elems)
@@ -140,13 +162,17 @@ class Controller():
     #
     for item in dataSetEntry.hdf5ResultsFileStateGroup.attrs.items():
       if abs(float(item[1])-float(self.vtkWindow.currentFrequency))<0.01:
+        allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
+        #
         dataSet = dataSetEntry.hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
+        #
         boolIdx = np.zeros((len(dataSet)), dtype=np.bool_)
         boolIdx[dataSetEntry.fieldIndices] = 1
-        myArray = np.empty((len(dataSetEntry.fieldIndices)), dtype=np.complex)
-        myArray.real = dataSet['real'][boolIdx]
-        myArray.imag = dataSet['imag'][boolIdx]
-        allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
+        #
+        myArray = np.zeros((len(dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodes)), dtype=np.complex)
+        myArray.real[dataSetEntry.nodeIndices] = dataSet['real'][boolIdx]
+        myArray.imag[dataSetEntry.nodeIndices] = dataSet['imag'][boolIdx]
+        #
         grids = dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.blockGrids
         mappers = [blockActor.GetMapper() for blockActor in dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.blockActors]
         self.vtkWindow.colorplot(np.abs(myArray), dataSetEntry.field, grids, mappers, 0)
@@ -202,15 +228,24 @@ class Controller():
       self.graphWindow.setLabels('Frequency [Hz]', yLabel)
       self.currentPlot = item
       self.fieldTo3DRepresentation(item)
-    if action in [self.drawActSolutionDispSoundPower, self.drawActSolutionDispRadiationEfficiency]:
-      var = self.setupWindow.exec_()
-      # Check user input
-      try: 
-        speedOfSound = float(self.setupWindow.speedOfSound.text())
-        density = float(self.setupWindow.density.text())
-      except: 
-        messageboxOK('Error', 'User input for speed of sound and density \n cannot be converted to float!')
-        var = 0
+    if action in [self.drawActSolutionDispSoundPower, self.drawActSolutionDispRadiationEfficiency, self.drawActSolutionDispTransmissionLoss]:
+      if action in [self.drawActSolutionDispSoundPower, self.drawActSolutionDispRadiationEfficiency]:
+        try: 
+          var = self.setupWindowRayleigh.exec_()
+          speedOfSound = float(self.setupWindowRayleigh.speedOfSound.text())
+          density = float(self.setupWindowRayleigh.density.text())
+        except: 
+          messageboxOK('Error', 'User input for speed of sound and density \n cannot be converted to float!')
+          var = 0
+      if action == self.drawActSolutionDispTransmissionLoss:
+        try: 
+          var = self.setupWindowTL.exec_()
+          speedOfSound = float(self.setupWindowTL.speedOfSound.text())
+          density = float(self.setupWindowTL.density.text())
+          inputPower = float(self.setupWindowTL.inputPower.text())
+        except: 
+          messageboxOK('Error', 'User input for speed of sound and density \n cannot be converted to float!')
+          var = 0
       #
       if var == 0: 
         pass
@@ -222,9 +257,12 @@ class Controller():
         if action == self.drawActSolutionDispSoundPower: 
           y = 10*np.log10(ySoundPower)
           yLabel = 'Sound power [dB ref 1.]'
-        else:
+        elif action == self.drawActSolutionDispRadiationEfficiency:
           y = ySigma
           yLabel = 'Radiation efficiency [-]'
+        elif action == self.drawActSolutionDispTransmissionLoss:
+          y = 10*np.log10(np.divide(inputPower, ySoundPower))
+          yLabel = 'Transmission loss [dB]'
         self.graphWindow.plot(x,y,item.parent().parent().shortName)
         self.graphWindow.setLabels('Frequency [Hz]', yLabel)
         self.currentPlot = item

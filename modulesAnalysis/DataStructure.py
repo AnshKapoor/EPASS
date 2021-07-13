@@ -140,12 +140,13 @@ class lev3ContainerElements(QTreeWidgetItem):
       layout.addWidget(QLabel('Block ' + str(block.attrs['Id']) + ' | ' + str(len(block)) + ' ' + str(block.attrs['ElementType']) + ' elements\nMaterial ' + str(block.attrs['MaterialId'])))
 
 class lev3ContainerField(QTreeWidgetItem):
-  def __init__(self, tree, parent, hdf5ResultsFileStateGroup, field, fieldIndices, frequencies):
+  def __init__(self, tree, parent, hdf5ResultsFileStateGroup, field, fieldIndices, nodeIndices, frequencies):
     super().__init__(parent)
     self.tree = tree
     self.hdf5ResultsFileStateGroup = hdf5ResultsFileStateGroup
     self.field = field
     self.fieldIndices = fieldIndices
+    self.nodeIndices = nodeIndices
     self.frequencies = frequencies
     # Create Widgets and add entry in tree (at level 3 / dataSet level) of GUI
     self.createDataSetTreeEntryField(field)

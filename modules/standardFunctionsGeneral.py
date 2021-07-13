@@ -152,11 +152,13 @@ def getFieldIndices(nodes, nodesInv, elems):
     nodesPerDof = np.sum(dofPattern, axis=0)
     availableFields = []
     fieldIndices = []
+    nodeIndices = []
     for n, field in enumerate(supportedFields): 
       if nodesPerDof[n]>0: 
         availableFields.append(field)
-        fieldIndices.append(startIdxPerNode[dofPattern[:,n]] + np.sum(dofPattern[:,0:n], axis=1))
-    return availableFields, fieldIndices, startIdxPerNode
+        fieldIndices.append(startIdxPerNode[dofPattern[:,n]] + np.sum(dofPattern[:,0:n], axis=1)[dofPattern[:,n]])
+        nodeIndices.append(np.nonzero(dofPattern[:,n])[0])
+    return availableFields, fieldIndices, nodeIndices, startIdxPerNode
 
 def getSupportedFields():
     return ['displacement x', 'displacement y', 'displacement z', 'rotation x', 'rotation y', 'rotation z', 'sound pressure']
