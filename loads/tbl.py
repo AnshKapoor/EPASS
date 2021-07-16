@@ -1,12 +1,13 @@
 #
 import json
-from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog, QComboBox
+from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog, QComboBox, QHBoxLayout
 import vtk
 import numpy as np
 import math
 import os
 from lxml import etree
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
+from standardFunctionsGeneral import isPlateType
 from loads import elemLoad
 import time
 np.random.seed(int(time.time()))
@@ -100,7 +101,7 @@ class tbl(elemLoad):
         """
         Calculates pressure excitation on the selected blocks according to Klabes internoise 2016 (autospectrum) and Efimtsov (Wavenumber-spectrum) due to a turbulent boundary layer
         """
-        frequencies = self.myModel.calculationObjects[0].frequencies
+        frequencies = self.myModel.frequencies
         self.findRelevantPoints()
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
@@ -110,7 +111,7 @@ class tbl(elemLoad):
             else:
                 self.nearestNeighbor()
                 # Get model infos
-                #nodes = self.myModel.calculationObjects[0].nodes
+                #nodes = self.myModel.nodes
                 #center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
                 flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
                 flowDir = flowDir/np.linalg.norm(flowDir)
@@ -145,7 +146,7 @@ class tbl(elemLoad):
                     for nf, freq in enumerate(frequencies):
                         if self.randomSelector.currentText()=='coherence grid':
                             # currentGrid contains a midpoint in 2D (2 cylindrical coordinates - x for lengthwise position on aircraft skin and y for phi (radius does not matter)) and a random origin (coords 3-4)
-                            currentGrid = self.myModel.calculationObjects[0].allGrids[nf] 
+                            currentGrid = self.myModel.allGrids[nf] 
                             # find nearest midpoint in grid to current surface point
                             surfacePointCylindrical = (np.arcsin(surfacePoint[1]/self.R) * surfacePoint[2]/abs(surfacePoint[2]) * self.R)
                             midpointIdx = np.argmin(np.abs(currentGrid[:,0] - surfacePoint[0]) + np.abs(currentGrid[:,1] - surfacePointCylindrical) )
@@ -153,34 +154,34 @@ class tbl(elemLoad):
                             y0 = currentGrid[midpointIdx,3]
                         omega = 2.*math.pi*freq
                         ### Klabes 2017
-                        #gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
-                        #gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
-                        #gammaDG = gammaM*cf + gammaC
-                        #a = (TKE / 10.)**gammaDG
-                        #b = 0.5
-                        #betaDeltaL = delta * dcpdx
-                        #ReDeltaL = delta*uE/nu
-                        #c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
-                        #d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
-                        #betaDDeltaL = delta * dcpdx * (2./cf)**0.5
-                        #e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
-                        #f = 1.1
-                        #g = -0.57
-                        #h = 5.5
-                        ### Klabes 2016 internoise
-                        betaDeltaL = delta * dcpdx
-                        betaDDeltaL = (delta * dcpdx) * (2./cf)**0.5
-                        ReDeltaL = delta*uE/nu
-                        ReDDeltaL = (delta*uE/nu) * (2./cf)**0.5
-                        gammaDG = (-592.71*cf + 1.74)*ReDDeltaL**0.01
+                        gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
+                        gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
+                        gammaDG = gammaM*cf + gammaC
                         a = (TKE / 10.)**gammaDG
                         b = 0.5
-                        c = 1.35 + 3*betaDeltaL
-                        d = ReDeltaL**0.174 - 6.7
-                        e = -0.11428*betaDDeltaL + 1.55
+                        betaDeltaL = delta * dcpdx
+                        ReDeltaL = delta*uE/nu
+                        c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
+                        d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
+                        betaDDeltaL = delta * dcpdx * (2./cf)**0.5
+                        e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
                         f = 1.1
                         g = -0.57
                         h = 5.5
+                        ### Klabes 2016 internoise
+#                        betaDeltaL = delta * dcpdx
+#                        betaDDeltaL = (delta * dcpdx) * (2./cf)**0.5
+#                        ReDeltaL = delta*uE/nu
+#                        ReDDeltaL = (delta*uE/nu) * (2./cf)**0.5
+#                        gammaDG = (-592.71*cf + 1.74)*ReDDeltaL**0.01
+#                        a = (TKE / 10.)**gammaDG
+#                        b = 0.5
+#                        c = 1.35 + 3*betaDeltaL
+#                        d = ReDeltaL**0.174 - 6.7
+#                        e = -0.11428*betaDDeltaL + 1.55
+#                        f = 1.1
+#                        g = -0.57
+#                        h = 5.5
                         #
                         Rt = (delta/uE)/(nu/uTau**2.)
                         scalingFactor = ((tauW**2.)*delta)/uE
@@ -228,26 +229,26 @@ class tbl(elemLoad):
         fileName, _ = QFileDialog.getOpenFileName(None,"QFileDialog.getOpenFileName()", "","All Files (*);;json Files (*.json)", options=options)
         if fileName:
             self.filename = fileName
-        datanew = self.loadData(fileName) #calls loadData function to read the file
+        self.loadData(fileName) #calls loadData function to read the file
     #
     def getXYdata(self):
         """
         Return x, y data for plotting; for tbl load: mean amplitude per frequency
         """
-        return self.myModel.calculationObjects[0].frequencies, np.mean(self.surfaceAmps, axis=1)
+        return self.myModel.frequencies, np.mean(self.surfaceAmps, axis=1), 'tab:orange'
     #
-    def init3DActor(self, vtkWindow):
+    def init3DActor(self):
         """
-        initialize vtk objects
+        initialize vtk objects of this load
         """
         # Get model infos
-        nodes = self.myModel.calculationObjects[0].nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        nodes = self.myModel.nodes
+        center = [0.5*(max(nodes[:]['xCoords']) + min(nodes[:]['xCoords'])), 0.5*(max(nodes[:]['yCoords']) + min(nodes[:]['yCoords'])), 0.5*(max(nodes[:]['zCoords']) + min(nodes[:]['zCoords']))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
         flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
         flowDir = flowDir/np.linalg.norm(flowDir)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         # Symbol for normal direction of load
         # Calculate random directions in the plane
         direction1 = np.cross(loadNormal, [loadNormal[0]+0.11*loadNormal[1], loadNormal[1]+0.22*loadNormal[2], loadNormal[2]+0.33*loadNormal[0]])
@@ -336,9 +337,15 @@ class tbl(elemLoad):
         self.setupWindow.layout.addRow(QLabel('Load xyz input file'), self.loadButton)
         #
         self.blockChecker = []
-        for block in self.myModel.calculationObjects[0].elems:
+        for block in self.myModel.elems:
             self.blockChecker.append(QCheckBox())
-            self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block[1]) + ' (' + str(block[0]) + ')'))
+            if not isPlateType(str(block.attrs['ElementType'])):
+                self.blockChecker[-1].setEnabled(False)
+            subLayout = QHBoxLayout()
+            [subLayout.addWidget(wid) for wid in [self.blockChecker[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
+            subLayout.addStretch()
+            self.setupWindow.blockLayout.addLayout(subLayout)
+        self.setupWindow.blockLayout.addStretch()
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
     #
@@ -389,7 +396,7 @@ class tbl(elemLoad):
             self.rand_y0.append(np.random.rand()*1000.)
             self.rand_z0.append(np.random.rand()*1000.)
         # Create coherence grid according to Efimtsov coherence lengths with random origin per grid point (later used if user selects a random origin in that grid)
-        frequencies = self.myModel.calculationObjects[0].frequencies
+        frequencies = self.myModel.frequencies
         progWin = progressWindow(len(frequencies)-1, "Creating coherence grid")
         self.R = 1.76 # Radius
         startX = min([x[0] for x in self.dataPoints])
@@ -397,7 +404,7 @@ class tbl(elemLoad):
         startPhi = -2*self.R*math.pi/4.
         endPhi = 2*self.R*math.pi/4.
         totalPhi  = endPhi-startPhi
-        self.myModel.calculationObjects[0].allGrids = []
+        self.myModel.allGrids = []
         for nf, freq in enumerate(frequencies):
             currentGrid = np.empty((0,4))
             currentX = startX
@@ -427,7 +434,7 @@ class tbl(elemLoad):
                     currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
                     currentX = currentX + Lx
             #
-            self.myModel.calculationObjects[0].allGrids.append(currentGrid)
+            self.myModel.allGrids.append(currentGrid)
             progWin.setValue(nf)
             QApplication.processEvents()    
     #
@@ -474,14 +481,17 @@ class tbl(elemLoad):
             self.changeSwitch.setChecked(1)
     #
     def update3DActor(self):
+        """
+        updates the vtk actors
+        """
         # Get model infos
-        nodes = self.myModel.calculationObjects[0].nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        nodes = self.myModel.nodes
+        center = [0.5*(max(nodes[:]['xCoords']) + min(nodes[:]['xCoords'])), 0.5*(max(nodes[:]['yCoords']) + min(nodes[:]['yCoords'])), 0.5*(max(nodes[:]['zCoords']) + min(nodes[:]['zCoords']))]
         loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
         loadNormal = loadNormal/np.linalg.norm(loadNormal)
         flowDir = [float(self.flowDirX.text()), float(self.flowDirY.text()), float(self.flowDirZ.text())]
         flowDir = flowDir/np.linalg.norm(flowDir)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         # Symbol for plane wave
         # Calculate random directions in the plane
         direction1 = np.cross(loadNormal, [loadNormal[0]+0.11*loadNormal[1], loadNormal[1]+0.22*loadNormal[2], loadNormal[2]+0.33*loadNormal[0]])
@@ -507,52 +517,3 @@ class tbl(elemLoad):
         [arrowVectorsLoad.InsertNextTuple([-0.1*scaleFactor*vec[0], -0.1*scaleFactor*vec[1], -0.1*scaleFactor*vec[2]]) for vec in self.surfaceElementNormals]
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
-    #
-    def writeXML(self, exportAK3, name, cluster):
-        elemLoads = exportAK3.find('ElemLoads')
-        oldNoOfLoads = elemLoads.get('N')
-        elemLoads.set('N', str(int(oldNoOfLoads) + len(self.surfaceElements)))
-        loadedElems = exportAK3.find('LoadedElems')
-        # Create a directory for load dat files
-        loadDir = '/'.join(self.myModel.path.split('/')[0:-1]) + '/' + name + '_' + self.type + '_load_' + str(self.removeButton.id+1)
-        if not os.path.exists(loadDir):
-            os.mkdir(loadDir)
-        else: # Clean directory
-            for filename in os.listdir(loadDir):
-                os.remove(loadDir + '/' + filename)
-        # Save loads for each element
-        progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
-        for nE, surfaceElem in enumerate(self.surfaceElements):
-            # One load per element
-            newLoad = etree.Element('ElemLoad', Type='structurefrq')
-            newLoad.tail = '\n'
-            newLoadID = etree.Element('Id')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # The id is a concatanation by the load id and the elem id
-            newLoad.append(newLoadID)
-            newFile = etree.Element('File')
-            if cluster == 1:
-                strhead = '../../'
-            else:
-                strhead = '../'
-            newFile.text = strhead + name + '_' + self.type + '_load_' + str(self.removeButton.id+1) + '/elemLoad' + newLoadID.text + '.dat'
-            newLoad.append(newFile)
-            elemLoads.append(newLoad)
-            # Save one file per load
-            frequencies = self.myModel.calculationObjects[0].frequencies
-            f = open(loadDir + '/elemLoad' + str(newLoadID.text) + '.dat', 'w')
-            f.write(str(len(frequencies)) + '\n')
-            [f.write(str(frequencies[nf]) + ' ' + str(-1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][0]) + ' ' + str(-1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][1]) + ' ' + str(-1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][2]) + ' ' + str(self.surfacePhases[nf,nE]) + '\n') for nf in range(len(frequencies))]
-            f.close()
-            # Apply load to element
-            newLoadedElem = etree.Element('LoadedElem')
-            newLoadedElem.tail = '\n'
-            newElemID = etree.Element('Id')
-            newElemID.text = str(surfaceElem) # Element ID
-            newLoadedElem.append(newElemID)
-            newLoadID = etree.Element('Load')
-            newLoadID.text = str(self.removeButton.id+1) + str(surfaceElem) # Load ID
-            newLoadedElem.append(newLoadID)
-            loadedElems.append(newLoadedElem)
-            # Update progress window
-            progWin.setValue(nE)
-            QApplication.processEvents()

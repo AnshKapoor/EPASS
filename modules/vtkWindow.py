@@ -27,8 +27,10 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.loadActors = []
 
         # Create Renderer
+        colors = vtk.vtkNamedColors()
         self.ren = vtk.vtkRenderer()
         self.ren.UseFXAAOn()
+        #self.ren.SetBackground(colors.GetColor3d('White'))
         self.GetRenderWindow().AddRenderer(self.ren)
 
         # Create Interactor
@@ -152,7 +154,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
         sphereSource = vtk.vtkSphereSource()
         scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         self.defineAxisLength(scaleFactor)
-        sphereSource.SetRadius(scaleFactor*0.001)
+        sphereSource.SetRadius(scaleFactor*0.005)
         sphereDataLoad = vtk.vtkPolyData()
         sphereDataLoad.SetPoints(vtkPoints)
         glyphLoad = vtk.vtkGlyph3D()

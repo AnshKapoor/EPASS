@@ -158,16 +158,21 @@ class elemLoad(QHBoxLayout):
         # Exporting the load per element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nE, surfaceElem in enumerate(self.surfaceElements):
-            if not self.type == 'vn':
+            if self.type == 'Turbulent_Boundary_Layer':
               frequencies = self.myModel.frequencies
-              dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
+              dataArray = [[frequencies[nf], -1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][0], -1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][1], -1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
               dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
               dataSet.attrs['FreqCount'] = np.uint64(len(frequencies))
-            else:
+            elif self.type == 'vn':
               dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=[])
               dataSet.attrs['Face'] = np.uint64(self.surfaceFaces[nE]) # Assign element load to element
               dataSet.attrs['vn'] = np.float(self.amp.text()) # Assign element load to element
               dataSet.attrs['FreqCount'] = np.uint64(0)
+            else:
+              frequencies = self.myModel.frequencies
+              dataArray = [[frequencies[nf], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][0], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][1], -1.*float(self.amp.text())*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
+              dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))
+              dataSet.attrs['FreqCount'] = np.uint64(len(frequencies))
             dataSet.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
             dataSet.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
             dataSet.attrs['LoadType'] = self.type

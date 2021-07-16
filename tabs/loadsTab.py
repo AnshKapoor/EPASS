@@ -7,7 +7,7 @@ from planeWave import planeWave
 from normVelo import normVelo
 #from diffuseField import diffuseField
 #from timeVarDat import timeVarDat
-#from tbl import tbl
+from tbl import tbl
 from pointForce import pointForce
 
 class loadsTab(QWidget):
@@ -50,8 +50,8 @@ class loadsTab(QWidget):
                 # myModel.loads.append(diffuseField(myModel))
             # if self.loadSelector.currentText() == 'Distributed time domain load':
                 # myModel.loads.append(timeVarDat(myModel))
-            #if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
-                #myModel.loads.append(tbl(myModel))
+            if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
+                myModel.loads.append(tbl(myModel))
             # Refresh layout
             self.loadInfo.updateLayout(myModel.loads)
             return 1
