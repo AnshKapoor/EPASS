@@ -251,6 +251,12 @@ def isFluid3DType(elemType):
         return 1
     else:
         return 0
+    
+def isStructure3DType(elemType):
+    if elemType in ['Brick27','Brick20','Brick8']:
+        return 1
+    else:
+        return 0
 
 def getNodeIdxOfFaces(elemType):
     if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']:

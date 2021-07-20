@@ -9,13 +9,22 @@ import numpy as np
 import math
 from standardWidgets import progressWindow
 
-def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, dB=1, ref=1.,derivative=0):
+def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, orderIdx, startIdxPerNode, elemBlock, noOfNodesPerElem, derivative=0):
+  dofIdxOfElemNodes = np.zeros((elemBlock.attrs['N'],noOfNodesPerElem), dtype=np.int)
+  progWin = progressWindow(elemBlock.attrs['N']-1, 'Calculating areas and normals of block ' + str(elemBlock.attrs['Id']))
+  for elemIdx in range(elemBlock.attrs['N']):
+    #elemID = block[elemIdx,0]
+    for n, node in enumerate(elemBlock[elemIdx,1:noOfNodesPerElem+1]): # Saves the idx of according first dof of patch/element
+      tempStartIdxOfNode = startIdxPerNode[orderIdx[node]]
+      if tempStartIdxOfNode in fieldIndices:
+        dofIdxOfElemNodes[elemIdx,n] = tempStartIdxOfNode 
+      else:
+        dofIdxOfElemNodes[elemIdx,n] = fieldIndices[np.argmax(fieldIndices>tempStartIdxOfNode)]
   noOfStateResults = len(hdf5ResultsFileStateGroup.keys())
   x = np.zeros((noOfStateResults), dtype=np.float)
   y = np.zeros((noOfStateResults), dtype=np.float)
-  first = 1
   counter = 0
-  if derivative>0:
+  if derivative==0:
     progWin = progressWindow(noOfStateResults-1, 'Calculating mean squared values')
   else:
     progWin = progressWindow(noOfStateResults-1, 'Calculating mean squared derivative of order ' + str(derivative))
@@ -23,23 +32,14 @@ def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, dB=1, ref=1.,deriva
     x[counter] = float(item[1])
     dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
     dataSetComplex = dataSet['real'][:] + 1j*dataSet['imag'][:]
-    if first: 
-      boolIdx = np.zeros((len(dataSet)), dtype=np.bool_)
-      boolIdx[fieldIndices] = 1
-      first = 0
-    #myArray = np.empty((len(fieldIndices)), dtype=np.complex)
-    #myArray.real = dataSet['real'][boolIdx]
-    #myArray.imag = dataSet['imag'][boolIdx]
-    myArray = dataSetComplex[boolIdx]
     if derivative>0:
-      myArray = np.multiply((1j*2*math.pi*x[counter])**derivative, myArray)
-    y[counter] = np.sum(np.power(np.abs(myArray),2)) / len(fieldIndices)
+      dataSetComplex = np.multiply((1j*2*math.pi*x[counter])**derivative, dataSetComplex)
+    myArray = [np.mean(np.power(np.abs(dataSetComplex[sorted(dofIdxOfElemNodes[n,:])]), 2)) for n in range(elemBlock.attrs['N'])]
+    y[counter] = np.mean(myArray)
     counter = counter + 1
     progWin.setValue(counter)
     QApplication.processEvents()
   idx = np.argsort(x)
-  if dB and all(y): 
-    y = 10*np.log10(y/ref)
   return x[idx],y[idx]
 
 class setupRayleighWindow(QDialog):

@@ -9,7 +9,7 @@ from matplotlib.backend_bases import MouseButton
 from matplotlib import pyplot as plt
 #from PyQt5.QtCore import 
 from PyQt5.QtGui import QCursor
-from standardFunctionsGeneral import getFieldIndices, isPlateType
+from standardFunctionsGeneral import getFieldIndices, isPlateType, isFluid3DType, isStructure3DType, getElementDof
 from standardWidgets import messageboxOK
 from standardModules import calcMeanSquared, calcSoundPower, setupRayleighWindow
 
@@ -109,6 +109,20 @@ class Controller():
     self.connectButtons(self.groupsLev1Collector[-1])
 
   def initSetupWindows(self):
+    # mean
+    self.blockCheckerMean = []
+    self.setupWindowMean = setupRayleighWindow()
+    self.setupWindowMean.layout.addRow(QLabel('Select block.'), QLabel(' '))
+    allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
+    self.buttonGroupMean = QButtonGroup()
+    for buttonIdx, block in enumerate(self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.elems):
+      self.blockCheckerMean.append(QCheckBox())
+      self.buttonGroupMean.addButton(self.blockCheckerMean[-1], buttonIdx)
+      subLayout = QHBoxLayout()
+      [subLayout.addWidget(wid) for wid in [self.blockCheckerMean[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
+      subLayout.addStretch()
+      self.setupWindowMean.blockLayout.addLayout(subLayout)
+    self.setupWindowMean.blockLayout.addStretch()
     # Rayleigh
     self.blockCheckerRayleigh = []
     self.setupWindowRayleigh = setupRayleighWindow()
@@ -215,19 +229,59 @@ class Controller():
         action = self.cmenuSolutionRot.exec_(QCursor.pos())
     ###
     if action == self.drawActSolutionDispMean or action == self.drawActSolutionRotMean or action == self.drawActSolutionPresMean:
-      x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1.)
-      yLabel = 'Mean squared ' + str(item.field) + ' [dB ref 1.]'
-      self.graphWindow.plot(x,y,item.parent().parent().shortName)
-      self.graphWindow.setLabels('Frequency [Hz]', yLabel)
-      self.currentPlot = item
-      self.fieldTo3DRepresentation(item)
+      var = self.setupWindowMean.exec_()
+      if var == 0: 
+        pass
+      elif var == 1: 
+        allLev2Names = [lev2Entry.name for lev2Entry in item.parent().parent().groupsLev2Collector]
+        nodeEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
+        elemEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
+        #
+        elemType = str(elemEntry.elems[self.buttonGroupMean.checkedId()].attrs['ElementType'])
+        if item.field in getElementDof(elemType):
+          if isFluid3DType(elemType) or isStructure3DType(elemType):
+            noOfNodesPerElem = 8
+          else:
+            noOfNodesPerElem = 4
+          x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, nodeEntry.nodes, nodeEntry.nodesInv, nodeEntry.orderIdx, nodeEntry.startIdxPerNode, elemEntry.elems[self.buttonGroupMean.checkedId()], noOfNodesPerElem)
+          if all(y): 
+            y = 10*np.log10(y)
+            yLabel = 'Mean squared ' + str(item.field) + ' [dB ref 1.]'
+          else:
+            yLabel = 'Mean squared ' + str(item.field)
+          self.graphWindow.plot(x,y,item.parent().parent().shortName)
+          self.graphWindow.setLabels('Frequency [Hz]', yLabel)
+          self.currentPlot = item
+          self.fieldTo3DRepresentation(item)
+        else:
+          messageboxOK('Error', 'Field not available in chosen block!')
     if action == self.drawActSolutionDispMeanVelo:
-      x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, 1, 1., 1)
-      yLabel = 'Mean squared velocity [dB ref 1.]'
-      self.graphWindow.plot(x,y,item.parent().parent().shortName)
-      self.graphWindow.setLabels('Frequency [Hz]', yLabel)
-      self.currentPlot = item
-      self.fieldTo3DRepresentation(item)
+      var = self.setupWindowMean.exec_()
+      if var == 0: 
+        pass
+      elif var == 1: 
+        allLev2Names = [lev2Entry.name for lev2Entry in item.parent().parent().groupsLev2Collector]
+        nodeEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry
+        elemEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
+        #
+        elemType = str(elemEntry.elems[self.buttonGroupMean.checkedId()].attrs['ElementType'])
+        if item.field in getElementDof(elemType):
+          if isFluid3DType(str(elemEntry.elems[self.buttonGroupMean.checkedId()].attrs['ElementType'])) or isStructure3DType(str(elemEntry.elems[self.buttonGroupMean.checkedId()].attrs['ElementType'])):
+            noOfNodesPerElem = 8
+          else:
+            noOfNodesPerElem = 4
+          x,y = calcMeanSquared(item.hdf5ResultsFileStateGroup, item.fieldIndices, nodeEntry.nodes, nodeEntry.nodesInv, nodeEntry.orderIdx, nodeEntry.startIdxPerNode, elemEntry.elems[self.buttonGroupMean.checkedId()], noOfNodesPerElem, 1)
+          if all(y): 
+            y = 10*np.log10(y)
+            yLabel = 'Mean squared velocity [dB ref 1.]'
+          else:
+            yLabel = 'Mean squared velocity'
+          self.graphWindow.plot(x,y,item.parent().parent().shortName)
+          self.graphWindow.setLabels('Frequency [Hz]', yLabel)
+          self.currentPlot = item
+          self.fieldTo3DRepresentation(item)
+        else:
+          messageboxOK('Error', 'Field not available in chosen block!')
     if action in [self.drawActSolutionDispSoundPower, self.drawActSolutionDispRadiationEfficiency, self.drawActSolutionDispTransmissionLoss]:
       if action in [self.drawActSolutionDispSoundPower, self.drawActSolutionDispRadiationEfficiency]:
         try: 
@@ -255,13 +309,19 @@ class Controller():
         elemEntry = item.parent().parent().groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry
         x,ySoundPower,ySigma = calcSoundPower(item.hdf5ResultsFileStateGroup, item.fieldIndices, nodeEntry.nodes, nodeEntry.nodesInv, nodeEntry.orderIdx, nodeEntry.startIdxPerNode, elemEntry.elems[self.buttonGroupRayleigh.checkedId()], speedOfSound, density)
         if action == self.drawActSolutionDispSoundPower: 
-          y = 10*np.log10(ySoundPower)
+          if all(ySoundPower): 
+            y = 10*np.log10(ySoundPower)
+          else: 
+            y = ySoundPower
           yLabel = 'Sound power [dB ref 1.]'
         elif action == self.drawActSolutionDispRadiationEfficiency:
           y = ySigma
           yLabel = 'Radiation efficiency [-]'
         elif action == self.drawActSolutionDispTransmissionLoss:
-          y = 10*np.log10(np.divide(inputPower, ySoundPower))
+          if all(ySoundPower): 
+            y = 10*np.log10(np.divide(inputPower, ySoundPower))
+          else: 
+            y = inputPower
           yLabel = 'Transmission loss [dB]'
         self.graphWindow.plot(x,y,item.parent().parent().shortName)
         self.graphWindow.setLabels('Frequency [Hz]', yLabel)
