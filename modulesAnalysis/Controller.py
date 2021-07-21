@@ -63,6 +63,11 @@ class Controller():
     self.vtkActAxes = self.cmenuVTK.addAction("Show axes")
     self.vtkActAxes.setCheckable(1)
     self.vtkActAxes.setChecked(1)
+    self.vtkActNodes = self.cmenuVTK.addAction("Show nodes")
+    self.vtkActNodes.setCheckable(1)
+    self.vtkActNodes.setChecked(1)
+    self.vtkActColor = self.cmenuVTK.addAction("Change background color")
+    self.vtkActColor.setCheckable(0)
     #self.vtkActWarp = self.cmenuVTK.addAction("Warp")
     #self.vtkActWarp.setCheckable(1)
     # 2D options
@@ -337,6 +342,13 @@ class Controller():
         self.vtkWindow.axisEnable()
       else:
         self.vtkWindow.axisDisable()
+    elif action == self.vtkActNodes:
+      if self.vtkActNodes.isChecked():
+        self.vtkWindow.nodesEnable()
+      else:
+        self.vtkWindow.nodesDisable()
+    elif action == self.vtkActColor:
+      self.vtkWindow.changeBackgroundColor()
     #elif action == self.vtkActWarp:
     #  if self.currentPlot: 
     #      self.fieldTo3DRepresentation(self.currentPlot)

@@ -25,12 +25,15 @@ class vtkWindow(QVTKRenderWindowInteractor):
         self.actors = []
         self.edgeActors = []
         self.loadActors = []
+        self.sphereActorLoads = []
 
         # Create Renderer
-        colors = vtk.vtkNamedColors()
         self.ren = vtk.vtkRenderer()
         self.ren.UseFXAAOn()
-        #self.ren.SetBackground(colors.GetColor3d('White'))
+        self.colors = vtk.vtkNamedColors()
+        self.myBackgroundColors = [self.colors.GetColor3d('Black'), self.colors.GetColor3d('Grey'), self.colors.GetColor3d('White')]
+        self.colorCounter = 0
+        self.ren.SetBackground(self.myBackgroundColors[self.colorCounter])
         self.GetRenderWindow().AddRenderer(self.ren)
 
         # Create Interactor
@@ -45,7 +48,11 @@ class vtkWindow(QVTKRenderWindowInteractor):
         prop.SetFontSize(1)
         [axis.SetCaptionTextProperty(prop) for axis in myAxes]
         self.ren.AddActor(self.mainAxes)
-
+        
+        # Sphere source
+        self.sphereSource = vtk.vtkSphereSource()
+        self.sphereSource.SetRadius(0.02)
+        
         # Lookup Table
         self.lut = vtk.vtkLookupTable()
         self.lut.SetNumberOfTableValues(200)
@@ -151,23 +158,21 @@ class vtkWindow(QVTKRenderWindowInteractor):
         orderIdx = [item[1] for item in sortedNodeIdx.items()]
         vtkPoints.SetData(numpy_to_vtk(np.array([nodes[:]['xCoords'][orderIdx], nodes[:]['yCoords'][orderIdx], nodes[:]['zCoords'][orderIdx]]).T))
         nodesToVTK = dict([[x,n] for n,x in enumerate(nodes[:]['Ids'][orderIdx])])
-        sphereSource = vtk.vtkSphereSource()
         scaleFactor = max( [abs(max(nodes[:]['xCoords'])-min(nodes[:]['xCoords'])), abs(max(nodes[:]['yCoords'])-min(nodes[:]['yCoords'])), abs(max(nodes[:]['zCoords'])-min(nodes[:]['zCoords']))] )
         self.defineAxisLength(scaleFactor)
-        sphereSource.SetRadius(scaleFactor*0.005)
         sphereDataLoad = vtk.vtkPolyData()
         sphereDataLoad.SetPoints(vtkPoints)
         glyphLoad = vtk.vtkGlyph3D()
         glyphLoad.SetScaleModeToScaleByVector()
-        glyphLoad.SetSourceConnection(sphereSource.GetOutputPort())
+        glyphLoad.SetSourceConnection(self.sphereSource.GetOutputPort())
         glyphLoad.SetInputData(sphereDataLoad)
         glyphLoad.Update()
         sphereMapperLoad = vtk.vtkPolyDataMapper()
         sphereMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
-        sphereActorLoad = vtk.vtkActor()
-        sphereActorLoad.GetProperty().SetColor(0.7, 0.7, 0.7)
-        sphereActorLoad.SetMapper(sphereMapperLoad)
-        self.ren.AddActor(sphereActorLoad)
+        self.sphereActorLoads.append(vtk.vtkActor())
+        self.sphereActorLoads[-1].GetProperty().SetColor(0.7, 0.7, 0.7)
+        self.sphereActorLoads[-1].SetMapper(sphereMapperLoad)
+        self.ren.AddActor(self.sphereActorLoads[-1])
         #
         # Create the elements
         blockGrids = []
@@ -208,7 +213,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
             # Add actor (show everything at beginning)
             #self.ren.AddActor(actor) for actor in [sphereActorLoad]]
         #
-        return blockGrids, nodesToVTK, sphereActorLoad, blockActors, blockEdgeActors
+        return blockGrids, nodesToVTK, self.sphereActorLoads[-1], blockActors, blockEdgeActors
     
     def colorplot(self, myArray, field, grids, blockMappers, warp=0):
         vtkArray = numpy_to_vtk(myArray)
@@ -261,6 +266,21 @@ class vtkWindow(QVTKRenderWindowInteractor):
     
     def axisDisable(self):
         self.ren.RemoveActor(self.mainAxes)
+        self.GetRenderWindow().Render()
+    
+    def nodesEnable(self):
+        [self.ren.AddActor(actor) for actor in self.sphereActorLoads]
+        self.GetRenderWindow().Render()
+    
+    def nodesDisable(self):
+        [self.ren.RemoveActor(actor) for actor in self.sphereActorLoads]
+        self.GetRenderWindow().Render()
+        
+    def changeBackgroundColor(self):
+        self.colorCounter = self.colorCounter + 1
+        if self.colorCounter > len(self.myBackgroundColors)-1: 
+          self.colorCounter = 0
+        self.ren.SetBackground(self.myBackgroundColors[self.colorCounter])
         self.GetRenderWindow().Render()
     
     def warpEnable(self):

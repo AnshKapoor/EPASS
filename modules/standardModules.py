@@ -11,7 +11,6 @@ from standardWidgets import progressWindow
 
 def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, orderIdx, startIdxPerNode, elemBlock, noOfNodesPerElem, derivative=0):
   dofIdxOfElemNodes = np.zeros((elemBlock.attrs['N'],noOfNodesPerElem), dtype=np.int)
-  progWin = progressWindow(elemBlock.attrs['N']-1, 'Calculating areas and normals of block ' + str(elemBlock.attrs['Id']))
   for elemIdx in range(elemBlock.attrs['N']):
     #elemID = block[elemIdx,0]
     for n, node in enumerate(elemBlock[elemIdx,1:noOfNodesPerElem+1]): # Saves the idx of according first dof of patch/element
@@ -40,7 +39,7 @@ def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, or
     progWin.setValue(counter)
     QApplication.processEvents()
   idx = np.argsort(x)
-  return x[idx],y[idx]
+  return x[idx], y[idx]
 
 class setupRayleighWindow(QDialog):
     def __init__(self):
