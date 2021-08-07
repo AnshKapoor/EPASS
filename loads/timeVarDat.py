@@ -1,35 +1,36 @@
+#
 import json
-from PyQt5.QtWidgets import QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog
+from PyQt5.QtWidgets import QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog, QHBoxLayout
 import vtk
 import numpy as np
 import h5py
 import cmath
-from standardWidgets import ak3LoadButton, removeButton, editButton, messageboxOK, 
-from loads import elemLoad, loadInfoBox
+from standardWidgets import ak3LoadButton, removeButton, editButton, messageboxOK, setupLoadWindow
+from standardFunctionsGeneral import isPlateType
+from loads import elemLoad
 
-
+# distributed time domain load
 class timeVarDat(elemLoad):
     """
     class for distributed time domain loads. Provides methods for loading, saving and processing data.
     """
-    def __init__(self, ak3path, myModel, vtkWindow):
+    def __init__(self, myModel):
         """
         initialise basic load dependent GUI objects
         """
         super(timeVarDat, self).__init__()
-        self.ak3path = ak3path
         self.myModel = myModel
-        self.removeButton = removeButton(self.ak3path)
+        self.removeButton = removeButton()
         self.editButton = editButton()
         self.type = 'timeVarDat'
         #
-        self.amp = QLineEdit('1.')
-        self.dirX = QLineEdit('0.')
-        self.dirY = QLineEdit('0.')
-        self.dirZ = QLineEdit('1.')
+        #self.amp = QLineEdit('1.')
+        #self.dirX = QLineEdit('0.')
+        #self.dirY = QLineEdit('0.')
+        #self.dirZ = QLineEdit('1.')
         self.ffttime = QLineEdit('1024')
         #
-        self.loadButton = ak3LoadButton(self.ak3path)
+        self.loadButton = ak3LoadButton()
         self.loadButton.clicked.connect(self.getFilename)
         self.dataPoints = []
         #
@@ -41,7 +42,7 @@ class timeVarDat(elemLoad):
         [self.addWidget(wid) for wid in [self.removeButton, self.label, self.drawCheck, self.editButton]]
         #
         self.initSetupWindow()
-        self.init3DActor(vtkWindow)
+        #self.init3DActor()
         # A switch indicating a new setup within this load
         self.changeSwitch = QCheckBox()
         self.changeSwitch.setChecked(0)
@@ -49,9 +50,8 @@ class timeVarDat(elemLoad):
         self.editButton.clicked.connect(self.showEdit)
         var = self.showEdit()
         if var == 0: # is the case if the initial setup window is canceled by the user
-            #self.generatePressure()
             self.generatePressure()
-            self.update3DActor()
+            #self.update3DActor()
 
 
     def clearLayout(self):
@@ -73,34 +73,33 @@ class timeVarDat(elemLoad):
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(None,"QFileDialog.getOpenFileName()", "","All Files (*);;json Files (*.json)", options=options)
         if fileName:
-            self.filename = fileName
-        datanew = self.loadData(fileName) #calls loadData function to read the file
-
+          self.filename = fileName
+          self.loadData(fileName) #calls loadData function to read the file
 
     def generatePressure(self):
         """
         combines nearest points and data: writes into a list of length of the element list
         """
-        frequencies = self.myModel.calculationObjects[0].frequencies
+        frequencies = self.myModel.frequencies
         self.findRelevantPoints()
-        self.FreqData = [0 for x in self.surfacePoints]
-        self.yfDataSq = [0 for x in self.surfacePoints]
+        #self.FreqData = [0 for x in self.surfacePoints]
+        #self.yfDataSq = [0 for x in self.surfacePoints]
         if self.surfacePoints is not []:
             self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
-            if self.dataPoints==[]:
-                msg = messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
+            self.surfaceAmps = np.zeros((len(frequencies),len(self.surfacePoints)))
+            if self.dataPoints == []:
+                messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
             else:
                 self.nearestNeighbor()
-                self.timeToFreq()
-
-                i=0
-                for x in self.euclNearest:
-                    self.FreqData[i] = self.FreqValues[x]
-                    self.yfDataSq[i] = self.AbsFreqValuesSq[x]
-                    #self.surfaceAmps
-                    i+=1
-
-                self.getPhases()
+                #self.timeToFreq()
+                #
+                #i=0
+                #for x in self.euclNearest:
+                #    self.FreqData[i] = self.FreqValues[x]
+                #    self.yfDataSq[i] = self.AbsFreqValuesSq[x]
+                #    #self.surfaceAmps
+                #    i+=1
+                #self.getPhases()
 
 
     def getPhases(self):
@@ -140,10 +139,10 @@ class timeVarDat(elemLoad):
         """
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
-        loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
-        loadNormal = loadNormal/np.linalg.norm(loadNormal)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        #center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        #loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
+        #loadNormal = loadNormal/np.linalg.norm(loadNormal)
+        #scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
 
 
         arrowSource = vtk.vtkArrowSource()
@@ -174,39 +173,43 @@ class timeVarDat(elemLoad):
         """
         initialisation of setup popup window for parameter/file path input
         """
-        self.setupWindow = setupWindow(self.label.text())
+        self.setupWindow = setupLoadWindow(self.label.text())
         # ADD TO LAYOUT
         self.setupWindow.layout.addRow(QLabel('Sample Rate'), self.ffttime)
-        self.setupWindow.layout.addWidget(self.loadButton)
+        self.setupWindow.layout.addRow(QLabel('Load time data input file'), self.loadButton)
         #
         self.blockChecker = []
-        for block in self.myModel.calculationObjects[0].elems:
+        for block in self.myModel.elems:
             self.blockChecker.append(QCheckBox())
-            self.setupWindow.blockLayout.addRow(self.blockChecker[-1], QLabel('Block ' + str(block[1]) + ' (' + str(block[0]) + ')'))
+            if not isPlateType(str(block.attrs['ElementType'])):
+                self.blockChecker[-1].setEnabled(False)
+            subLayout = QHBoxLayout()
+            [subLayout.addWidget(wid) for wid in [self.blockChecker[-1], QLabel('Block ' + str(block.attrs['Id']) + ' (' + str(block.attrs['ElementType']) + ')')]]
+            subLayout.addStretch()
+            self.setupWindow.blockLayout.addLayout(subLayout)
+        self.setupWindow.blockLayout.addStretch()
         #
         self.setupWindow.setFixedSize(self.setupWindow.mainLayout.sizeHint())
 
-
-    def loadDataOld(self, filename):
-        """
-        loads file with x,y,z data. must be .json and must be a dict like:
-        {"pointdata":[
-            {"coord":[0.0,1.7,0.0],"timedata":[0.0, 0.5407014555870047, -0.9596090131296847, 1.164619243635656]},
-            {"coord":[0.2,1.7,0.0],"timedata":[-1.0813793556840758, 1.154942901919569, -0.9819364679621521]}
-        """
-        with open(filename) as f:
-            ld = json.load(f)
-        self.dataPoints = []
-        self.timeValues = []
-
-        for point in ld.get('pointdata'):
-            self.dataPoints.append(point.get('coord'))
-            self.timeValues.append(point.get('timedata'))
-
+    #def loadDataOld(self, filename):
+    #    """
+    #    loads file with x,y,z data. must be .json and must be a dict like:
+    #    {"pointdata":[
+    #        {"coord":[0.0,1.7,0.0],"timedata":[0.0, 0.5407014555870047, -0.9596090131296847, 1.164619243635656]},
+    #        {"coord":[0.2,1.7,0.0],"timedata":[-1.0813793556840758, 1.154942901919569, -0.9819364679621521]}
+    #    """
+    #    with open(filename) as f:
+    #        ld = json.load(f)
+    #    self.dataPoints = []
+    #    self.timeValues = []
+    #
+    #    for point in ld.get('pointdata'):
+    #        self.dataPoints.append(point.get('coord'))
+    #        self.timeValues.append(point.get('timedata'))
 
     def loadData(self, filename):
         """
-
+        Method to load time domain data from hdf5
         """
         f = h5py.File(filename,'r')
         coord = f.get('ACoord')
@@ -215,7 +218,6 @@ class timeVarDat(elemLoad):
         self.timeValues = np.array(data)
         self.dataPoints.tolist()
         self.timeValues.tolist()
-
 
     def resetValues(self):
         """
@@ -234,13 +236,8 @@ class timeVarDat(elemLoad):
         if var == 0: # reset values
             self.resetValues()
         elif var == 1: # set new values
-            #try:
-            #if float(self.radius.text()) == 0. and float(self.samples.text()) == 0.:
-                #raise Exception
-            self.ffttime.setText(str(float(self.ffttime.text())))
-            #c = float(self.c.text()) # It's just a check, variable is not used here
             self.generatePressure()
-            self.update3DActor()
+            #self.update3DActor()
             self.switch()
             #except: # if input is wrong, show message and reset values
                 # messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
@@ -277,10 +274,10 @@ class timeVarDat(elemLoad):
         """
         # Get model infos
         nodes = self.myModel.calculationObjects[0].nodes
-        center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
-        loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
-        loadNormal = loadNormal/np.linalg.norm(loadNormal)
-        scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
+        #center = [0.5*(max(nodes[:,1]) + min(nodes[:,1])), 0.5*(max(nodes[:,2]) + min(nodes[:,2])), 0.5*(max(nodes[:,3]) + min(nodes[:,3]))]
+        #loadNormal = [float(self.dirX.text()), float(self.dirY.text()), float(self.dirZ.text())]
+        #loadNormal = loadNormal/np.linalg.norm(loadNormal)
+        #scaleFactor = max( [abs(max(nodes[:,1])-min(nodes[:,1])), abs(max(nodes[:,2])-min(nodes[:,2])), abs(max(nodes[:,3])-min(nodes[:,3]))] )
 
         # Update load
         arrowPointLoad = vtk.vtkPoints()

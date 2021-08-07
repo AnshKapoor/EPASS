@@ -4,8 +4,6 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineE
 import vtk
 import numpy as np
 import math
-import os
-from lxml import etree
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from standardFunctionsGeneral import isPlateType
 from loads import elemLoad
@@ -244,8 +242,8 @@ class tbl(elemLoad):
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(None,"QFileDialog.getOpenFileName()", "","All Files (*);;json Files (*.json)", options=options)
         if fileName:
-            self.filename = fileName
-        self.loadData(fileName) #calls loadData function to read the file
+          self.filename = fileName
+          self.loadData(fileName) #calls loadData function to read the file
     #
     def getXYdata(self):
         """
