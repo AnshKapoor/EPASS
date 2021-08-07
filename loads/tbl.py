@@ -11,6 +11,9 @@ from standardFunctionsGeneral import isPlateType
 from loads import elemLoad
 import time
 np.random.seed(int(time.time()))
+import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 16})
+from matplotlib.colors import LogNorm
 
 # tbl load
 class tbl(elemLoad):
@@ -154,34 +157,34 @@ class tbl(elemLoad):
                             y0 = currentGrid[midpointIdx,3]
                         omega = 2.*math.pi*freq
                         ### Klabes 2017
-                        gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
-                        gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
-                        gammaDG = gammaM*cf + gammaC
+                        #gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
+                        #gammaC = -1.3845*MA - 0.7182 - 4.5031e-5*FL**2 + 2.7361e-2*FL
+                        #gammaDG = gammaM*cf + gammaC
+                        #a = (TKE / 10.)**gammaDG
+                        #b = 0.5
+                        #betaDeltaL = delta * dcpdx
+                        #ReDeltaL = delta*uE/nu
+                        #c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
+                        #d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
+                        #betaDDeltaL = delta * dcpdx * (2./cf)**0.5
+                        #e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
+                        #f = 1.1
+                        #g = -0.57
+                        #h = 5.5
+                        ### Klabes 2016 internoise
+                        betaDeltaL = delta * dcpdx
+                        betaDDeltaL = (delta * dcpdx) * (2./cf)**0.5
+                        ReDeltaL = delta*uE/nu
+                        ReDDeltaL = (delta*uE/nu) * (2./cf)**0.5
+                        gammaDG = (-592.71*cf + 1.74)*ReDDeltaL**0.01
                         a = (TKE / 10.)**gammaDG
                         b = 0.5
-                        betaDeltaL = delta * dcpdx
-                        ReDeltaL = delta*uE/nu
-                        c = 2.7 + 3*betaDeltaL - (6e-10*(0.7*ReDeltaL**0.6 - 2700.)**3. + 0.02)
-                        d = 12. + 2.39*math.log(ReDeltaL**0.53 * betaDeltaL**2., 10.)
-                        betaDDeltaL = delta * dcpdx * (2./cf)**0.5
-                        e = 0.675 + 0.11428*betaDDeltaL + (7e-11*(ReDeltaL**0.6 - 3750.)**3. - 0.01)
+                        c = 1.35 + 3*betaDeltaL
+                        d = ReDeltaL**0.174 - 6.7
+                        e = -0.11428*betaDDeltaL + 1.55
                         f = 1.1
                         g = -0.57
                         h = 5.5
-                        ### Klabes 2016 internoise
-#                        betaDeltaL = delta * dcpdx
-#                        betaDDeltaL = (delta * dcpdx) * (2./cf)**0.5
-#                        ReDeltaL = delta*uE/nu
-#                        ReDDeltaL = (delta*uE/nu) * (2./cf)**0.5
-#                        gammaDG = (-592.71*cf + 1.74)*ReDDeltaL**0.01
-#                        a = (TKE / 10.)**gammaDG
-#                        b = 0.5
-#                        c = 1.35 + 3*betaDeltaL
-#                        d = ReDeltaL**0.174 - 6.7
-#                        e = -0.11428*betaDDeltaL + 1.55
-#                        f = 1.1
-#                        g = -0.57
-#                        h = 5.5
                         #
                         Rt = (delta/uE)/(nu/uTau**2.)
                         scalingFactor = ((tauW**2.)*delta)/uE
@@ -196,9 +199,9 @@ class tbl(elemLoad):
                         Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
                         #
                         kC = omega/uC
-                        steps = 100
+                        steps = 200
                         dK = 20*kC/(steps-1)
-                        kRange = np.linspace(-10*kC,10*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
+                        kRange = np.linspace(-5*kC,5*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
                         #
                         eX = np.tile(np.exp(1j*kRange*(surfacePoint[0]-x0)), (len(kRange), 1))
                         if self.randomSelector.currentText()=='coherence grid': 
@@ -208,6 +211,19 @@ class tbl(elemLoad):
                         phaseMatrix = eX+eY
                         #
                         densMatrix = self.calcEfimtsovIntensity(kRange, kRange, omega, uC, Lx, Ly)
+#                        globMin = np.amin(np.amin(densMatrix))
+#                        print(globMin)
+#                        globMax = np.amax(np.amax(densMatrix))
+#                        print(globMax)
+#                        print(freq)
+#                        plt.figure(figsize=(10,7))
+#                        plt.pcolor(kRange/kC, kRange/kC, densMatrix, norm=LogNorm(), cmap='Greys', vmin=globMin, vmax=globMax)
+#                        plt.colorbar(label='$\Phi_{norm}$')
+#                        plt.xlabel('$k_x$/$k_\omega$')
+#                        plt.ylabel('$k_y$/$k_\omega$')
+#                        plt.savefig('C:\scratch\AP2\plotWaveSpec'+str(freq)+'.png')
+                        #plt.show()
+                        #print(C)
                         superimpWave = densMatrix * phaseMatrix
                         #
                         phase = np.angle(np.sum(np.sum(superimpWave)))
