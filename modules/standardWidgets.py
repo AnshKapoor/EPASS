@@ -147,7 +147,7 @@ class loadTypeSelector(QComboBox):
         super(loadTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a load')
-        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity', 'Turbulent Boundary Layer', 'Distributed time domain load']#, 'Diffuse field', 'Turbulent Boundary Layer']
+        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity', 'Turbulent Boundary Layer', 'Distributed frequency domain data']#, 'Diffuse field', 'Turbulent Boundary Layer']
         self.setFixedWidth(200)
         [self.addItem(load) for load in self.availableTypes]
     

@@ -136,14 +136,28 @@ class elemLoad(QHBoxLayout):
         relevantBlocks = []
         nodes = 0
 
-    def nearestNeighbor(self):
+    def nearestNeighbor(self, dropTol=1.e9):
         """
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
         self.euclNearest = []
+        idxToKeep = np.ones((len(self.surfacePoints), 1), dtype=np.bool)
+        progWin = progressWindow(len(self.surfacePoints)-1, 'Searching nearest neighbors in dataset')
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
             # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
-            self.euclNearest.append(np.argmin([np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]))
+            dist = np.sum(np.square(np.array(self.dataPoints) - surfPoint), axis=1)
+            #dist = [np.sum(np.square(dataPoint - surfPoint)) for n, dataPoint in enumerate(np.array(self.dataPoints))]
+            idxMin = np.argmin(dist)
+            if dist[idxMin]<dropTol:
+              self.euclNearest.append(idxMin)
+            else:
+              idxToKeep[m] = 0
+            # Update progress window
+            progWin.setValue(m)
+            QApplication.processEvents()
+        self.surfacePoints = np.array(self.surfacePoints)[idxToKeep.T[0], :]
+        self.surfaceElements = np.array(self.surfaceElements)[idxToKeep.T[0]]
+        self.surfaceElementNormals  = np.array(self.surfaceElementNormals)[idxToKeep.T[0], :]
 
     def switch(self):
         """
@@ -158,7 +172,7 @@ class elemLoad(QHBoxLayout):
         # Exporting the load per element
         progWin = progressWindow(len(self.surfaceElements)-1, 'Exporting ' + self.type + ' load ' + str(self.removeButton.id+1))
         for nE, surfaceElem in enumerate(self.surfaceElements):
-            if self.type == 'Turbulent_Boundary_Layer':
+            if self.type == 'Turbulent_Boundary_Layer' or self.type == 'freqVarDat':
               frequencies = self.myModel.frequencies
               dataArray = [[frequencies[nf], -1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][0], -1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][1], -1.*float(self.surfaceAmps[nf,nE])*self.surfaceElementNormals[nE][2], self.surfacePhases[nf,nE]] for nf in range(len(frequencies))]
               dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=(dataArray))

@@ -119,7 +119,7 @@ class vtkWindow(QVTKRenderWindowInteractor):
                                 blocksToDraw.append(p)
             # Color blocks
             if load.superType == 'elemLoad':
-                if not load.type == 'vn':
+                if not load.type == 'vn' and not load.type == 'freqVarDat':
                     blockCounter = 0
                     for block in range(len(load.blockChecker)):
                         if block in blocksToDraw:

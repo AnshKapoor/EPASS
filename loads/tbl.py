@@ -249,7 +249,7 @@ class tbl(elemLoad):
         """
         Return x, y data for plotting; for tbl load: mean amplitude per frequency
         """
-        return self.myModel.frequencies, np.mean(self.surfaceAmps, axis=1), 'tab:orange'
+        return self.myModel.frequencies, np.mean(self.surfaceAmps, axis=1), 'TBL'
     #
     def init3DActor(self):
         """
