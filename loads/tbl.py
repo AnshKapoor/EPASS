@@ -412,7 +412,7 @@ class tbl(elemLoad):
         # Create coherence grid according to Efimtsov coherence lengths with random origin per grid point (later used if user selects a random origin in that grid)
         frequencies = self.myModel.frequencies
         progWin = progressWindow(len(frequencies)-1, "Creating coherence grid")
-        self.R = 1.76 # Radius
+        self.R = 1.78 # Radius
         startX = min([x[0] for x in self.dataPoints])
         endX = max([x[0] for x in self.dataPoints])
         startPhi = -2*self.R*math.pi/4.
