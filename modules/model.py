@@ -8,7 +8,7 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 from standardWidgets import progressWindow, addButton, addInterfaceWindow, messageboxOK
-from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, getPossibleInterfacePartner, identifyOrientationTypes, isPlateType
+from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, searchNCInterfaceElemsPlane, getPossibleInterfacePartner, identifyOrientationTypes, isPlateType
 
 # Saves a model, objects created by readModels()
 class model(QWidget): # Saves a model
@@ -26,11 +26,15 @@ class model(QWidget): # Saves a model
         self.hdf5File = 0
         self.cluster = 0
         self.nodes = 0
+        self.interNodesIds = []
+        self.interNodesMaxId = 0
+        self.interNodesCoords = []
         self.nodeSets = []
         self.elems = []
         self.elemsInv = []
         self.elemsInvTags = []
         self.interfaceElems = []
+        self.NCinterfaceElems = []
         self.elementSets = []
         self.loads = []
         self.materials = []
@@ -131,6 +135,7 @@ class model(QWidget): # Saves a model
         if self.name != ' - ':
             # Update Infobox
             self.updateModelSetup()
+            #
             self.interfaceDialogWindow = addInterfaceWindow()
             self.interfaceblockChecker = []
             # VTK Points
@@ -236,7 +241,15 @@ class model(QWidget): # Saves a model
                                     else:
                                         relevantBlockCombinations.append([m,n])
             if relevantBlockCombinations:
-                foundInterFaceElementsBlocks = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
+                if self.interfaceDialogWindow.methodSelector.currentText() == 'Matching nodes': 
+                  foundInterFaceElementsBlocks = searchInterfaceElems(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0))
+                  foundNCInterFaceElementsBlocks = []
+                elif self.interfaceDialogWindow.methodSelector.currentText() == 'Non-conform in plane': 
+                  foundInterFaceElementsBlocks = []
+                  foundNCInterFaceElementsBlocks = searchNCInterfaceElemsPlane(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0), self.interNodesMaxId)
+                else:
+                  foundInterFaceElementsBlocks = []
+                  foundNCInterFaceElementsBlocks = []
                 totalFoundInterfaces = 0
                 for foundInterFaceElements in foundInterFaceElementsBlocks:
                     if foundInterFaceElements: 
@@ -288,6 +301,60 @@ class model(QWidget): # Saves a model
                         #
                         self.interfaceElems.append(foundInterFaceElements)
                         totalFoundInterfaces = totalFoundInterfaces + noOfInterfaceElems
+                for foundNCInterFaceElementsBlock in foundNCInterFaceElementsBlocks:
+                    foundNCInterFaceElements = foundNCInterFaceElementsBlock[0]
+                    if foundNCInterFaceElements: 
+                        [self.interNodesIds.append(interNodeId) for interNodeId in foundNCInterFaceElementsBlock[1]]
+                        self.interNodesMaxId = max(self.interNodesIds)
+                        [self.interNodesCoords.append(interNodeCoords) for interNodeCoords in foundNCInterFaceElementsBlock[2]]
+                        # Add information to info block
+                        noOfNCInterfaceElems = len(foundNCInterFaceElements)
+                        self.blockInfo.insertRow(self.blockInfo.rowCount())
+                        currentRow = self.blockInfo.rowCount()-1
+                        items = [QTableWidgetItem(), QTableWidgetItem(' '), QTableWidgetItem(str(len(foundNCInterFaceElements))), QTableWidgetItem('inter (' + str(self.elems[foundNCInterFaceElements[0].structBlockIdx].attrs['Id']) + '/' + str(self.elems[foundNCInterFaceElements[0].fluidBlockIdx].attrs['Id']) + ')'), QTableWidgetItem(' ')]
+                        for n, item in enumerate(items):
+                            if n==0: # Checkbox
+                                item.setFlags( Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                                item.setCheckState(Qt.Checked)
+                            else: # Text/Info
+                                item.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
+                            item.setTextAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
+                            self.blockInfo.setItem(currentRow, n, item)
+                        # Create actors for 3D window
+                        # VTK Elements
+                        newGrid = vtk.vtkUnstructuredGrid()
+                        newGrid.SetPoints(self.vtkPoints)
+                        #
+                        vtkCells = vtk.vtkCellArray()
+                        newElem, newElemTypeId, nnodes = getVTKElem(self.elems[foundNCInterFaceElements[-1].structBlockIdx].attrs['ElementType'])
+                        cells = np.zeros((noOfNCInterfaceElems,nnodes+1), dtype=np.int64)
+                        cells[:,0] = nnodes
+                        for elemCount in range(noOfNCInterfaceElems):
+                            cells[elemCount,1:] = [self.nodesInv[nodeID] for nodeID in foundNCInterFaceElements[elemCount].structuralNodes[:4]]
+                        vtkCells.SetCells(noOfNCInterfaceElems, numpy_support.numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
+                        newGrid.SetCells(newElemTypeId, vtkCells)
+                        #
+                        vtkWindow.grids.append(newGrid)
+                        # Each block gets a vtk actor and mapper
+                        vtkWindow.mappers.append(vtk.vtkDataSetMapper())
+                        vtkWindow.mappers[-1].SetInputData(vtkWindow.grids[-1])
+                        vtkWindow.actors.append(vtk.vtkActor())
+                        vtkWindow.actors[-1].SetMapper(vtkWindow.mappers[-1])
+                        vtkWindow.actors[-1].GetProperty().SetColor(0.1,0.1,0.7)
+                        vtkWindow.actors[-1].GetProperty().SetAmbient(0.9)
+                        vtkWindow.actors[-1].GetProperty().SetDiffuse(0.1)
+                        vtkWindow.actors[-1].GetProperty().SetSpecular(0.)
+                        # Each block gets another vtk actor and mapper for the edges of the grid
+                        vtkWindow.edgeMappers.append(vtk.vtkDataSetMapper())
+                        vtkWindow.edgeMappers[-1].SetInputData(vtkWindow.grids[-1])
+                        vtkWindow.edgeActors.append(vtk.vtkActor())
+                        vtkWindow.edgeActors[-1].SetMapper(vtkWindow.edgeMappers[-1])
+                        vtkWindow.edgeActors[-1].GetProperty().SetRepresentationToWireframe()
+                        vtkWindow.edgeActors[-1].GetProperty().SetLineWidth(2)
+                        vtkWindow.edgeActors[-1].GetProperty().SetColor(0.1,0.1,0.1)
+                        #
+                        self.NCinterfaceElems.append(foundNCInterFaceElements)
+                        totalFoundInterfaces = totalFoundInterfaces + noOfNCInterfaceElems
                 if totalFoundInterfaces>0:
                     messageboxOK('Success', str(totalFoundInterfaces) + ' interface elements found in total. \n Select appropriate materials before export!')
                 else:
@@ -330,14 +397,23 @@ class model(QWidget): # Saves a model
                         self.hdf5File['Parameters'].create_dataset('orient' + str(self.hdf5File['Elements/' + block].attrs['Id']), data=np.array(myData, dtype=np.float64))
                     else:
                         return 0
-            # Export interfaces
+            # Export interfaces; conform
             if not 'InterfaceElements' in self.hdf5File.keys():
                 self.hdf5File.create_group('InterfaceElements')
             interfaceGroup = self.hdf5File['InterfaceElements']
+            # non-conform
+            if not 'NCInterfaceElements' in self.hdf5File.keys():
+                self.hdf5File.create_group('NCInterfaceElements')
+            NCinterfaceGroup = self.hdf5File['NCInterfaceElements']
+            if not 'InterNodes' in self.hdf5File.keys():
+                self.hdf5File.create_group('InterNodes')
+            interNodesGroup = self.hdf5File['InterNodes']
             #
             for dataSet in interfaceGroup.keys():
                 del interfaceGroup[dataSet]
-            #
+            for dataSet in NCinterfaceGroup.keys():
+                del NCinterfaceGroup[dataSet]
+            # matching nodes
             counter = 0
             for blockID, interfaceBlock in enumerate(self.interfaceElems):
                 #
@@ -368,16 +444,67 @@ class model(QWidget): # Saves a model
                 #
                 counter = counter + len(interfaceBlock)
                 #
-                for el, interFaceElem in enumerate(interfaceBlock):
+                for el, interfaceElem in enumerate(interfaceBlock):
                     dataSet[el,0] = np.uint64(maxElemId+1)
                     maxElemId = maxElemId+1
                     #
-                    dataSet[el,1] = interFaceElem.ori
+                    dataSet[el,1] = interfaceElem.ori
                     #
-                    dataSet[el,2:2+noOfStructNodes] = interFaceElem.structuralNodes
-                    dataSet[el,2+noOfStructNodes:] = interFaceElem.fluidNodes
+                    dataSet[el,2:2+noOfStructNodes] = interfaceElem.structuralNodes
+                    dataSet[el,2+noOfStructNodes:] = interfaceElem.fluidNodes
                     #
             interfaceGroup.attrs['N'] = np.uint64(counter)
+            # non-conform
+            comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
+            dataSet = interNodesGroup.create_dataset('mtxFemInterNodes', (len(self.interNodesCoords),), comp_type)
+            self.interNodesCoords = np.array(self.interNodesCoords, dtype=np.float64)
+            dataSet[:,'Ids'] = np.array(self.interNodesIds, dtype=np.uint64)
+            dataSet[:,'xCoords'] = self.interNodesCoords[:,0]
+            dataSet[:,'yCoords'] = self.interNodesCoords[:,1]
+            dataSet[:,'zCoords'] = self.interNodesCoords[:,2]
+            counter = 0
+            for blockID, NCinterfaceBlock in enumerate(self.NCinterfaceElems):
+                #
+                noOfInterNodes= len(NCinterfaceBlock[0].interNodes)
+                noOfStructNodes= len(NCinterfaceBlock[0].structuralNodes)
+                noOfFluidNodes = len(NCinterfaceBlock[0].fluidNodes)
+                #
+                dataSet = NCinterfaceGroup.create_dataset('InterfaceElements' + str(blockID), data=np.zeros((len(NCinterfaceBlock), 2+noOfInterNodes+noOfStructNodes+noOfFluidNodes), dtype=np.int64)) # Cols: Id, ori, structNodes, fluidNodes
+                dataSet.attrs['NinterNodes'] = np.uint64(noOfInterNodes)
+                dataSet.attrs['NstructNodes'] = np.uint64(noOfStructNodes)
+                dataSet.attrs['NfluidNodes'] = np.uint64(noOfFluidNodes)
+                #
+                structMatId = np.uint64(self.blockMaterialSelectors[NCinterfaceBlock[0].structBlockIdx].currentText())
+                structMatIdx = self.blockMaterialSelectors[NCinterfaceBlock[0].structBlockIdx].currentIndex()
+                dataSet.attrs['mats'] = structMatId
+                #
+                fluidMatId = np.uint64(self.blockMaterialSelectors[NCinterfaceBlock[0].fluidBlockIdx].currentText())
+                fluidMatIdx = self.blockMaterialSelectors[NCinterfaceBlock[0].fluidBlockIdx].currentIndex()
+                dataSet.attrs['matF'] = fluidMatId
+                #
+                if self.materials[structMatIdx].type[:7] == 'STR_LIN': 
+                    if self.materials[fluidMatIdx].type[:10] == 'AF_LIN_UAF': 
+                        dataSet.attrs['type'] = 'InterfaceMindlin'
+                    elif self.materials[fluidMatIdx].type[:10] in ['AF_LIN_DAF', 'AF_LIN_EQF']: 
+                        dataSet.attrs['type'] = 'InterfaceMindlinEquiporo'
+                    else:
+                        return 0
+                else:
+                    return 0
+                #
+                counter = counter + len(NCinterfaceBlock)
+                #
+                for el, NCinterfaceElem in enumerate(NCinterfaceBlock):
+                    dataSet[el,0] = np.uint64(maxElemId+1)
+                    maxElemId = maxElemId+1
+                    #
+                    dataSet[el,1] = NCinterfaceElem.ori
+                    #
+                    dataSet[el,2:2+noOfInterNodes] = NCinterfaceElem.interNodes
+                    dataSet[el,2+noOfInterNodes:2+noOfInterNodes+noOfStructNodes] = NCinterfaceElem.structuralNodes
+                    dataSet[el,2+noOfInterNodes+noOfStructNodes:] = NCinterfaceElem.fluidNodes
+                    #
+            NCinterfaceGroup.attrs['N'] = np.uint64(counter)
             return 1
         except:
             print('Error during export.')

@@ -227,6 +227,11 @@ class addInterfaceWindow(QDialog):
         self.formGroupBoxBlocks.setWidgetResizable(True)
         self.formGroupBoxBlocks.setMaximumHeight(400)
         self.blockLayout = QVBoxLayout(self.contWidget)
+        self.methodSelector = QComboBox()
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Select an interface type')
+        [self.methodSelector.addItem(method) for method in ['Matching nodes','Non-conform in plane']]
+        self.blockLayout.addWidget(self.methodSelector)
         #
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addWidget(self.formGroupBoxBlocks)

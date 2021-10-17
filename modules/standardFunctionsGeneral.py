@@ -5,8 +5,10 @@
 #
 from PyQt5.QtWidgets import QApplication
 import numpy as np
+import scipy.spatial.distance
 import vtk
 from standardWidgets import progressWindow, messageboxOK
+from itertools import compress
 
 # Read Nodes from cub5 and save them into hdf5 OR only read nodes directly from hdf5
 def readNodes(myModel, hdf5File, cub5File=0):
@@ -420,6 +422,228 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                     foundInterFaceElementsBlocks.append(foundInterFaceElements)
     return foundInterFaceElementsBlocks
 
+def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, tolerance=1e-3):
+    foundNCInterFaceElementsBlocks = []
+    # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
+    hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
+    for hexaBlock in hexaBlocks:
+        # change number of faces
+        nodeIdxOfFaces1 = getNodeIdxOfFaces(elems[hexaBlock].attrs['ElementType'])
+        # Get sizes
+        noOfElems1 = len(elems[hexaBlock])
+        noOfFaces1 = nodeIdxOfFaces1.shape[0]
+        noOfTotalFaces1 = noOfElems1 * noOfFaces1
+        # Init arrays containing all coordinates
+        elemAndFaceIDs1 = []
+        #xCoords1 = np.zeros((noOfTotalFaces1,4))
+        #yCoords1 = np.zeros((noOfTotalFaces1,4))
+        #zCoords1 = np.zeros((noOfTotalFaces1,4))
+        # Loops to collect coordinates in block 1
+        progWin = progressWindow(len(elems[hexaBlock])-1, 'Collecting coordinates of block' + str(elems[hexaBlock].attrs['Id']))
+        for m, elem1 in enumerate(elems[hexaBlock]):
+            for faceNo1 in range(noOfFaces1): 
+                #nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[faceNo1,:4]+1]] # indices of nodes belonging to the face
+                #xCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['xCoords']) # Sorting necessary
+                #yCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['yCoords'])
+                #zCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['zCoords'])
+                elemAndFaceIDs1.append([m, faceNo1])
+            progWin.setValue(m)
+            QApplication.processEvents()
+        # Now loop over fitting second blocks and re-use coords of (potentially larger) hexa block
+        interNodeCounter = 0
+        for blockCombi in blockCombinations:
+            if blockCombi[0] == hexaBlock:
+                foundNCInterFaceElements = []
+                generatedInterNodesIds = []
+                generatedInterNodesCoords = []
+                # change number of faces
+                nodeIdxOfFaces2 = getNodeIdxOfFaces(elems[blockCombi[1]].attrs['ElementType'])
+                # Get sizes
+                noOfElems2 = len(elems[blockCombi[1]])
+                noOfFaces2 = nodeIdxOfFaces2.shape[0]
+                noOfTotalFaces2 = noOfElems2 * noOfFaces2
+                # Init arrays containing all coordinates
+                elemAndFaceIDs2 = []
+                xCoords2 = np.zeros((noOfTotalFaces2,4))
+                yCoords2 = np.zeros((noOfTotalFaces2,4))
+                zCoords2 = np.zeros((noOfTotalFaces2,4))
+                # Loops to collect coordinates in block 2
+                progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[1]].attrs['Id']))
+                for m, elem2 in enumerate(elems[blockCombi[1]]): 
+                    for faceNo2 in range(noOfFaces2):
+                        nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[faceNo2,:4]+1]] # indices of nodes belonging to the face
+                        xCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['xCoords'])
+                        yCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['yCoords'])
+                        zCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['zCoords'])
+                        elemAndFaceIDs2.append([m, faceNo2])
+                    progWin.setValue(m)
+                    QApplication.processEvents()
+                # Compute shell block plane based on first face
+                elem2 = elems[blockCombi[1]][elemAndFaceIDs2[0][0]]
+                nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[0][1],:4]+1]]
+                elem2x = [nodes[idx]['xCoords'] for idx in nodeIdx2]
+                elem2y = [nodes[idx]['yCoords'] for idx in nodeIdx2]
+                elem2z = [nodes[idx]['zCoords'] for idx in nodeIdx2]
+                a2 = [elem2x[1] - elem2x[0], elem2y[1] - elem2y[0], elem2z[1] - elem2z[0]]
+                b2 = [elem2x[3] - elem2x[0], elem2y[3] - elem2y[0], elem2z[3] - elem2z[0]]
+                planeNormal = np.cross(a2,b2)
+                planeNormal = planeNormal / np.linalg.norm(planeNormal)
+                planeOrigin = np.array([elem2x[0], elem2y[0], elem2z[0]])
+                planeOriginDistance = np.dot(planeNormal, planeOrigin)
+                # Check if all shell block faces are within this plane
+                for faceIdx in range(noOfTotalFaces2):
+                    elem2 = elems[blockCombi[1]][elemAndFaceIDs2[faceIdx][0]]
+                    nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[elemAndFaceIDs2[faceIdx][1],:4]+1]]
+                    elem2x = [nodes[idx]['xCoords'] for idx in nodeIdx2]
+                    elem2y = [nodes[idx]['yCoords'] for idx in nodeIdx2]
+                    elem2z = [nodes[idx]['zCoords'] for idx in nodeIdx2]
+                    a2 = [elem2x[1] - elem2x[0], elem2y[1] - elem2y[0], elem2z[1] - elem2z[0]]
+                    b2 = [elem2x[3] - elem2x[0], elem2y[3] - elem2y[0], elem2z[3] - elem2z[0]]
+                    normal2 = np.cross(a2,b2)
+                    normal2 = normal2 / np.linalg.norm(normal2)
+                    if not abs(abs(np.dot(planeNormal, normal2))-1.)<1e-9: 
+                        messageboxOK('Error', 'The nodes of block ' + str(elems[blockCombi[1]].attrs['Id']) + ' are not within a plane!.')
+                        return []
+                # Find faces of hexa block in the shell plane
+                relevantElemAndFaceIDs1 = []
+                relevantElemAndFaceIDs2  = elemAndFaceIDs2
+                for faceIdx in range(noOfTotalFaces1):
+                    elem1 = elems[blockCombi[0]][elemAndFaceIDs1[faceIdx][0]]
+                    nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[faceIdx][1],:4]+1]]
+                    elem1x = [nodes[idx]['xCoords'] for idx in nodeIdx1]
+                    elem1y = [nodes[idx]['yCoords'] for idx in nodeIdx1]
+                    elem1z = [nodes[idx]['zCoords'] for idx in nodeIdx1]
+                    a2 = [elem1x[1] - elem1x[0], elem1y[1] - elem1y[0], elem1z[1] - elem1z[0]]
+                    b2 = [elem1x[3] - elem1x[0], elem1y[3] - elem1y[0], elem1z[3] - elem1z[0]]
+                    normal1 = np.cross(a2,b2)
+                    normal1 = normal1 / np.linalg.norm(normal1)
+                    # Check if normals are equal
+                    if not abs(abs(np.dot(planeNormal, normal1))-1.)<1e-9: 
+                        pass
+                    else:
+                        # Check distance to plane
+                        if abs(np.dot(planeNormal, [elem1x[0], elem1y[0], elem1z[0]]) - planeOriginDistance)<1e-9:
+                            relevantElemAndFaceIDs1.append(elemAndFaceIDs1[faceIdx])
+                # Identify corners of rectangle (nodes of relevant faces, which are included in one face only)   
+                noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
+                noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
+                relevantNodes1 = []
+                relevantNodes2 = []
+                for faceIdx in range(noOfTotalRelevantFaces1):
+                    elem1 = elems[blockCombi[0]][relevantElemAndFaceIDs1[faceIdx][0]]
+                    [relevantNodes1.append(nodeID) for nodeID in elem1[nodeIdxOfFaces1[relevantElemAndFaceIDs1[faceIdx][1],:4]+1]]
+                for faceIdx in range(noOfTotalRelevantFaces2):
+                    elem2 = elems[blockCombi[1]][relevantElemAndFaceIDs2[faceIdx][0]]
+                    [relevantNodes2.append(nodeID) for nodeID in elem2[nodeIdxOfFaces2[relevantElemAndFaceIDs2[faceIdx][1],:4]+1]]
+                edgeNodesIdx1 = [nodesInv[relevantNodes1[idx]] for idx, count in enumerate([relevantNodes1.count(nodeID) for nodeID in relevantNodes1]) if count == 1]
+                #edgeNodesIdx2 = [nodesInv[relevantNodes2[idx]] for idx, count in enumerate([relevantNodes2.count(nodeID) for nodeID in relevantNodes2]) if count == 1]
+                relevantNodesIdx1 = [nodesInv[nodeID] for nodeID in relevantNodes1]
+                relevantNodesIdx2 = [nodesInv[nodeID] for nodeID in relevantNodes2]
+                # Compute local coordinate system with rectangular limits of interface
+                edgeNodes1Coords = np.array([[nodes[idx]['xCoords'],nodes[idx]['yCoords'],nodes[idx]['zCoords']] for idx in edgeNodesIdx1])
+                distMatrix1 = scipy.spatial.distance.cdist(edgeNodes1Coords,edgeNodes1Coords)
+                originRectangle1 = edgeNodes1Coords[0,:] # Origin of the rectangular coordinate system
+                coordSysNodesIdx1 = edgeNodesIdx1[1:]
+                coordSysNodesIdx1.pop(np.argmax(distMatrix1[1:,:])) # This list now contains the two nearest edge nodes, which span the rectangular shape correctly
+                coordSysNodesCoords = np.array([[nodes[idx]['xCoords'],nodes[idx]['yCoords'],nodes[idx]['zCoords']] for idx in coordSysNodesIdx1])
+                axis1Rectangle1 = coordSysNodesCoords[0,:] - originRectangle1
+                axis1Rectangle1 = axis1Rectangle1 / np.linalg.norm(axis1Rectangle1)
+                axis2Rectangle1 = coordSysNodesCoords[1,:] - originRectangle1
+                axis2Rectangle1 = axis2Rectangle1 / np.linalg.norm(axis2Rectangle1)
+                axis3Rectangle1 = np.cross(axis1Rectangle1,axis2Rectangle1)
+                axis3Rectangle1 = axis3Rectangle1 / np.linalg.norm(axis3Rectangle1) # The third axis / normal
+                T = np.array([axis1Rectangle1, axis2Rectangle1, axis3Rectangle1]).T # Transition matrix (global to in-plane coordinate system)
+                Tinv = np.linalg.inv(T)
+                # Compute local coordinates of all relevant nodes
+                relevantNodes1Coords = np.array([T.dot([nodes[idx]['xCoords']-originRectangle1[0],nodes[idx]['yCoords']-originRectangle1[1],nodes[idx]['zCoords']-originRectangle1[2]]) for idx in relevantNodesIdx1])
+                #print(relevantNodes1Coords)
+                #print(np.array([[nodes[idx]['xCoords'],nodes[idx]['yCoords'],nodes[idx]['zCoords']] for idx in relevantNodesIdx1]))
+                #print(Tinv.dot(relevantNodes1Coords[0,:]) + originRectangle1)
+                relevantNodes2Coords = np.array([T.dot([nodes[idx]['xCoords']-originRectangle1[0],nodes[idx]['yCoords']-originRectangle1[1],nodes[idx]['zCoords']-originRectangle1[2]]) for idx in relevantNodesIdx2])
+                limitsFaces1 = np.zeros((len(relevantElemAndFaceIDs1), 4)) # 2 min; 2 max (1 min /1 max per local axis)
+                limitsFaces2 = np.zeros((len(relevantElemAndFaceIDs2), 4)) 
+                midFaces1 = np.zeros((len(relevantElemAndFaceIDs1), 2)) 
+                midFaces2 = np.zeros((len(relevantElemAndFaceIDs2), 2)) 
+                elems1 = np.zeros((len(relevantElemAndFaceIDs1), 5), dtype=np.int64) # One ID, 4 node IDs
+                elems2 = np.zeros((len(relevantElemAndFaceIDs2), 5), dtype=np.int64)
+                for idx1, ElemFaceCombi1 in enumerate(relevantElemAndFaceIDs1):
+                    elems1[idx1,0] = elems[blockCombi[0]][ElemFaceCombi1[0],0]
+                    elems1[idx1,1:] = [elems[blockCombi[0]][ElemFaceCombi1[0],n+1] for n in nodeIdxOfFaces1[ElemFaceCombi1[1],:4]]
+                    myCoords1 = relevantNodes1Coords[idx1*4:(idx1*4+4),:2] # Reuse coords and exclude z as its not important in plane
+                    limitsFaces1[idx1, :2] = np.min(myCoords1, axis=0)
+                    limitsFaces1[idx1, 2:] = np.max(myCoords1, axis=0)
+                    midFaces1[idx1, :] = 0.5*(limitsFaces1[idx1, :2] + limitsFaces1[idx1, 2:])
+                for idx2, ElemFaceCombi2 in enumerate(relevantElemAndFaceIDs2):
+                    elems2[idx2,0] = elems[blockCombi[1]][ElemFaceCombi2[0],0]
+                    elems2[idx2,1:] = [elems[blockCombi[1]][ElemFaceCombi2[0],n+1] for n in nodeIdxOfFaces2[ElemFaceCombi2[1],:4]]
+                    myCoords2 = relevantNodes2Coords[idx2*4:(idx2*4+4),:2] # Reuse coords and exclude z as its not important in plane
+                    limitsFaces2[idx2, :2] = np.min(myCoords2, axis=0)
+                    limitsFaces2[idx2, 2:] = np.max(myCoords2, axis=0)
+                    midFaces2[idx2, :] = 0.5*(limitsFaces2[idx2, :2] + limitsFaces2[idx2, 2:])
+                for idx1, face1 in enumerate(limitsFaces1): 
+                    partnerFace2 = np.invert(np.logical_or(np.logical_or(limitsFaces2[:,0]>face1[2], limitsFaces2[:,1]>face1[3]) , np.logical_or(limitsFaces2[:,2]<face1[0], limitsFaces2[:,3]<face1[1]))) # Check for elements outside limits; Invertion gives us the overlapping partners
+                    print('\n ### New hex element: ' + str(elems1[idx1,0]) + ' with limits: ' + str(face1))
+                    partnerFace2Idx = np.where(partnerFace2)[0]
+                    for idx2 in partnerFace2Idx: 
+                        print('# New Partner shell element: ' + str(elems2[idx2,0]))
+                        #print('Limits:' + str(limitsFaces2[idx2]))
+                        localCommonLimits = [max([face1[0], limitsFaces2[idx2][0]]), max([face1[1], limitsFaces2[idx2][1]]), min([face1[2], limitsFaces2[idx2][2]]), min([face1[3], limitsFaces2[idx2][3]])]
+                        #print('Common local limits: ' + str(localCommonLimits))
+                        localInterNodeCoords = np.array([[localCommonLimits[0],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[3],0],[localCommonLimits[0],localCommonLimits[3],0]])
+                        #print('Local inter node coords: ' + str(localInterNodeCoords))
+                        globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + originRectangle1
+                        #print('Global inter node coords: ' + str(globalInterNodeCoords))
+                        #elem1IntegrationLimits = [2*(commonLimits[0]-face1[0])/abs(face1[2]-face1[0])-1, 2*(commonLimits[1]-face1[1])/abs(face1[3]-face1[1])-1, 2*(commonLimits[2]-face1[0])/abs(face1[2]-face1[0])-1, 2*(commonLimits[3]-face1[1])/abs(face1[3]-face1[1])-1]
+                        #print('Local elements ' + str(elems1[idx1,0]) + ' integration limits:' + str(elem1IntegrationLimits))
+                        #elem2IntegrationLimits = [2*(commonLimits[0]-limitsFaces2[idx2][0])/abs(limitsFaces2[idx2][2]-limitsFaces2[idx2][0])-1, 2*(commonLimits[1]-limitsFaces2[idx2][1])/abs(limitsFaces2[idx2][3]-limitsFaces2[idx2][1])-1, 2*(commonLimits[2]-limitsFaces2[idx2][0])/abs(limitsFaces2[idx2][2]-limitsFaces2[idx2][0])-1, 2*(commonLimits[3]-limitsFaces2[idx2][1])/abs(limitsFaces2[idx2][3]-limitsFaces2[idx2][1])-1]
+                        #print('Local elements ' + str(elems2[idx2,0]) + ' integration limits:' + str(elem2IntegrationLimits))
+                        #print(relevantNodes1Coords[idx1*4:(idx1*4+4),:2])
+                        #print(midFaces1[idx1])
+                        localCoords1 = relevantNodes1Coords[idx1*4:(idx1*4+4),:]
+                        localCoords2 = relevantNodes2Coords[idx2*4:(idx2*4+4),:]
+                        globalCoords1 = (Tinv @ localCoords1.T).T + originRectangle1
+                        globalCoords2 = (Tinv @ localCoords2.T).T + originRectangle1
+                        smaller1 = localCoords1[:,:2] < midFaces1[idx1]
+                        larger1 = localCoords1[:,:2] > midFaces1[idx1]
+                        smaller2 = localCoords2[:,:2] < midFaces2[idx2]
+                        larger2 = localCoords2[:,:2] > midFaces2[idx2]
+                        #print(relevantNodes2Coords[idx2*4:(idx2*4+4),:2])
+                        pseudoMatchingNodes1 = [elems1[idx1,nodeIdx+1] for nodeIdx in [ np.argwhere(np.multiply.reduce(smaller1, axis=1))[0][0], np.argwhere(smaller1[:,1]*larger1[:,0])[0][0], np.argwhere(np.multiply.reduce(larger1, axis=1))[0][0], np.argwhere(smaller1[:,0]*larger1[:,1])[0][0] ]]
+                        pseudoMatchingNodes2 = [elems2[idx2,nodeIdx+1] for nodeIdx in [ np.argwhere(np.multiply.reduce(smaller2, axis=1))[0][0], np.argwhere(smaller2[:,1]*larger2[:,0])[0][0], np.argwhere(np.multiply.reduce(larger2, axis=1))[0][0], np.argwhere(smaller2[:,0]*larger2[:,1])[0][0] ]]
+                        print('Matching elements ' + str(elems1[idx1,0]) + ' nodes: ' + str(pseudoMatchingNodes1))
+                        print('Matching elements ' + str(elems2[idx2,0]) + ' nodes: ' + str(pseudoMatchingNodes2))
+                        # Compute normal of elem 1 using original order 
+                        a1 = [globalCoords1[1,0] - globalCoords1[0,0], globalCoords1[1,1] - globalCoords1[0,1], globalCoords1[1,2] - globalCoords1[0,2]] 
+                        b1 = [globalCoords1[3,0] - globalCoords1[0,0], globalCoords1[3,1] - globalCoords1[0,1], globalCoords1[3,2] - globalCoords1[0,2]]
+                        normal1 = np.cross(a1,b1)
+                        normal1 = normal1 / np.linalg.norm(normal1)
+                        # Compute normal of elem 2
+                        a2 = [globalCoords2[1,0] - globalCoords2[0,0], globalCoords2[1,1] - globalCoords2[0,1], globalCoords2[1,2] - globalCoords2[0,2]] 
+                        b2 = [globalCoords2[3,0] - globalCoords2[0,0], globalCoords2[3,1] - globalCoords2[0,1], globalCoords2[3,2] - globalCoords2[0,2]]
+                        normal2 = np.cross(a2,b2)
+                        normal2 = normal2 / np.linalg.norm(normal2)
+                        # Identify orientation
+                        cosineOfAngle = np.dot(normal1, normal2)
+                        if cosineOfAngle > 0: # Normal vector show in equal direction
+                            ori = -1
+                        else:
+                            ori = 1
+                        foundNCInterFaceElements.append(NCinterfaceElement())
+                        foundNCInterFaceElements[-1].ori = ori
+                        [generatedInterNodesIds.append(np.uint64(nodeId + interNodesMaxId + interNodeCounter)) for nodeId in [1,2,3,4]]
+                        [generatedInterNodesCoords.append(list(coords)) for coords in globalInterNodeCoords]
+                        foundNCInterFaceElements[-1].interNodes = [np.uint64(nodeId + interNodesMaxId + interNodeCounter) for nodeId in [1,2,3,4]]
+                        interNodeCounter += 4
+                        foundNCInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes2]
+                        foundNCInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes1]
+                        foundNCInterFaceElements[-1].fluidElemId = np.uint64(elems2[idx2,0])
+                        foundNCInterFaceElements[-1].structElemId = np.uint64(elems1[idx1,0])
+                        foundNCInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
+                        foundNCInterFaceElements[-1].structBlockIdx = blockCombi[1]
+                if foundNCInterFaceElements != []:
+                    foundNCInterFaceElementsBlocks.append([foundNCInterFaceElements, generatedInterNodesIds, generatedInterNodesCoords])
+    return foundNCInterFaceElementsBlocks
+
 class interfaceElement: # Define an interface element
     def __init__(self):
         self.Id = np.uint64(0)
@@ -432,4 +656,19 @@ class interfaceElement: # Define an interface element
         self.fluidNodes = []
         self.fluidMaterialId = np.uint64(0)
         self.structuralMaterialId = np.uint64(0)
+
+class NCinterfaceElement: # Define an interface element
+    def __init__(self):
+        self.Id = np.uint64(0)
+        self.type = 'undefined'
+        self.ori = np.int64(0)
+        self.structBlockIdx = np.uint64(0)
+        self.fluidBlockIdx = np.uint64(0)
+        self.structElemId = np.uint64(0)
+        self.fluidElemId = np.uint64(0)
+        self.structuralNodes = []
+        self.fluidNodes = []
+        self.fluidMaterialId = np.uint64(0)
+        self.structuralMaterialId = np.uint64(0)
+        self.interNodes = []
         
