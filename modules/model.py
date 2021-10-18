@@ -455,13 +455,14 @@ class model(QWidget): # Saves a model
                     #
             interfaceGroup.attrs['N'] = np.uint64(counter)
             # non-conform
-            comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
-            dataSet = interNodesGroup.create_dataset('mtxFemInterNodes', (len(self.interNodesCoords),), comp_type)
-            self.interNodesCoords = np.array(self.interNodesCoords, dtype=np.float64)
-            dataSet[:,'Ids'] = np.array(self.interNodesIds, dtype=np.uint64)
-            dataSet[:,'xCoords'] = self.interNodesCoords[:,0]
-            dataSet[:,'yCoords'] = self.interNodesCoords[:,1]
-            dataSet[:,'zCoords'] = self.interNodesCoords[:,2]
+            if self.interNodesCoords:
+                comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
+                dataSet = interNodesGroup.create_dataset('mtxFemInterNodes', (len(self.interNodesCoords),), comp_type)
+                self.interNodesCoords = np.array(self.interNodesCoords, dtype=np.float64)
+                dataSet[:,'Ids'] = np.array(self.interNodesIds, dtype=np.uint64)
+                dataSet[:,'xCoords'] = self.interNodesCoords[:,0]
+                dataSet[:,'yCoords'] = self.interNodesCoords[:,1]
+                dataSet[:,'zCoords'] = self.interNodesCoords[:,2]
             counter = 0
             for blockID, NCinterfaceBlock in enumerate(self.NCinterfaceElems):
                 #
