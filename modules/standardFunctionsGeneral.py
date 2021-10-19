@@ -634,8 +634,8 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                         [generatedInterNodesCoords.append(list(coords)) for coords in globalInterNodeCoords]
                         foundNCInterFaceElements[-1].interNodes = [np.uint64(nodeId + interNodesMaxId + interNodeCounter) for nodeId in [1,2,3,4]]
                         interNodeCounter += 4
-                        foundNCInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes2]
-                        foundNCInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes1]
+                        foundNCInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes1]
+                        foundNCInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes2]
                         foundNCInterFaceElements[-1].fluidElemId = np.uint64(elems2[idx2,0])
                         foundNCInterFaceElements[-1].structElemId = np.uint64(elems1[idx1,0])
                         foundNCInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
