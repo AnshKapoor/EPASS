@@ -422,7 +422,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                     foundInterFaceElementsBlocks.append(foundInterFaceElements)
     return foundInterFaceElementsBlocks
 
-def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, tolerance=1e-3):
+def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, tolerance=1e-9):
     foundNCInterFaceElementsBlocks = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
     hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
@@ -556,9 +556,6 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                 Tinv = np.linalg.inv(T)
                 # Compute local coordinates of all relevant nodes
                 relevantNodes1Coords = np.array([T.dot([nodes[idx]['xCoords']-originRectangle1[0],nodes[idx]['yCoords']-originRectangle1[1],nodes[idx]['zCoords']-originRectangle1[2]]) for idx in relevantNodesIdx1])
-                #print(relevantNodes1Coords)
-                #print(np.array([[nodes[idx]['xCoords'],nodes[idx]['yCoords'],nodes[idx]['zCoords']] for idx in relevantNodesIdx1]))
-                #print(Tinv.dot(relevantNodes1Coords[0,:]) + originRectangle1)
                 relevantNodes2Coords = np.array([T.dot([nodes[idx]['xCoords']-originRectangle1[0],nodes[idx]['yCoords']-originRectangle1[1],nodes[idx]['zCoords']-originRectangle1[2]]) for idx in relevantNodesIdx2])
                 limitsFaces1 = np.zeros((len(relevantElemAndFaceIDs1), 4)) # 2 min; 2 max (1 min /1 max per local axis)
                 limitsFaces2 = np.zeros((len(relevantElemAndFaceIDs2), 4)) 
@@ -582,23 +579,20 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                     midFaces2[idx2, :] = 0.5*(limitsFaces2[idx2, :2] + limitsFaces2[idx2, 2:])
                 for idx1, face1 in enumerate(limitsFaces1): 
                     partnerFace2 = np.invert(np.logical_or(np.logical_or(limitsFaces2[:,0]>face1[2], limitsFaces2[:,1]>face1[3]) , np.logical_or(limitsFaces2[:,2]<face1[0], limitsFaces2[:,3]<face1[1]))) # Check for elements outside limits; Invertion gives us the overlapping partners
-                    print('\n ### New hex element: ' + str(elems1[idx1,0]) + ' with limits: ' + str(face1))
+                    #print('\n ### New hex element: ' + str(elems1[idx1,0]) + ' with limits: ' + str(face1))
                     partnerFace2Idx = np.where(partnerFace2)[0]
+                    # Loop over potential partners
                     for idx2 in partnerFace2Idx: 
-                        print('# New Partner shell element: ' + str(elems2[idx2,0]))
-                        #print('Limits:' + str(limitsFaces2[idx2]))
+                        #print('# New Partner shell element: ' + str(elems2[idx2,0]))
                         localCommonLimits = [max([face1[0], limitsFaces2[idx2][0]]), max([face1[1], limitsFaces2[idx2][1]]), min([face1[2], limitsFaces2[idx2][2]]), min([face1[3], limitsFaces2[idx2][3]])]
-                        #print('Common local limits: ' + str(localCommonLimits))
+                        # Skip this interface as area is almost zero
+                        area = abs(localCommonLimits[2]-localCommonLimits[0])*abs(localCommonLimits[3]-localCommonLimits[1])
+                        if area < tolerance:
+                            continue 
+                        # Compute new interface nodes
                         localInterNodeCoords = np.array([[localCommonLimits[0],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[3],0],[localCommonLimits[0],localCommonLimits[3],0]])
-                        #print('Local inter node coords: ' + str(localInterNodeCoords))
                         globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + originRectangle1
-                        #print('Global inter node coords: ' + str(globalInterNodeCoords))
-                        #elem1IntegrationLimits = [2*(commonLimits[0]-face1[0])/abs(face1[2]-face1[0])-1, 2*(commonLimits[1]-face1[1])/abs(face1[3]-face1[1])-1, 2*(commonLimits[2]-face1[0])/abs(face1[2]-face1[0])-1, 2*(commonLimits[3]-face1[1])/abs(face1[3]-face1[1])-1]
-                        #print('Local elements ' + str(elems1[idx1,0]) + ' integration limits:' + str(elem1IntegrationLimits))
-                        #elem2IntegrationLimits = [2*(commonLimits[0]-limitsFaces2[idx2][0])/abs(limitsFaces2[idx2][2]-limitsFaces2[idx2][0])-1, 2*(commonLimits[1]-limitsFaces2[idx2][1])/abs(limitsFaces2[idx2][3]-limitsFaces2[idx2][1])-1, 2*(commonLimits[2]-limitsFaces2[idx2][0])/abs(limitsFaces2[idx2][2]-limitsFaces2[idx2][0])-1, 2*(commonLimits[3]-limitsFaces2[idx2][1])/abs(limitsFaces2[idx2][3]-limitsFaces2[idx2][1])-1]
-                        #print('Local elements ' + str(elems2[idx2,0]) + ' integration limits:' + str(elem2IntegrationLimits))
-                        #print(relevantNodes1Coords[idx1*4:(idx1*4+4),:2])
-                        #print(midFaces1[idx1])
+                        # Compute local and global coords of pseudo matching nodes (required for integration / assembly)
                         localCoords1 = relevantNodes1Coords[idx1*4:(idx1*4+4),:]
                         localCoords2 = relevantNodes2Coords[idx2*4:(idx2*4+4),:]
                         globalCoords1 = (Tinv @ localCoords1.T).T + originRectangle1
@@ -607,11 +601,10 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                         larger1 = localCoords1[:,:2] > midFaces1[idx1]
                         smaller2 = localCoords2[:,:2] < midFaces2[idx2]
                         larger2 = localCoords2[:,:2] > midFaces2[idx2]
-                        #print(relevantNodes2Coords[idx2*4:(idx2*4+4),:2])
                         pseudoMatchingNodes1 = [elems1[idx1,nodeIdx+1] for nodeIdx in [ np.argwhere(np.multiply.reduce(smaller1, axis=1))[0][0], np.argwhere(smaller1[:,1]*larger1[:,0])[0][0], np.argwhere(np.multiply.reduce(larger1, axis=1))[0][0], np.argwhere(smaller1[:,0]*larger1[:,1])[0][0] ]]
                         pseudoMatchingNodes2 = [elems2[idx2,nodeIdx+1] for nodeIdx in [ np.argwhere(np.multiply.reduce(smaller2, axis=1))[0][0], np.argwhere(smaller2[:,1]*larger2[:,0])[0][0], np.argwhere(np.multiply.reduce(larger2, axis=1))[0][0], np.argwhere(smaller2[:,0]*larger2[:,1])[0][0] ]]
-                        print('Matching elements ' + str(elems1[idx1,0]) + ' nodes: ' + str(pseudoMatchingNodes1))
-                        print('Matching elements ' + str(elems2[idx2,0]) + ' nodes: ' + str(pseudoMatchingNodes2))
+                        #print('Matching elements ' + str(elems1[idx1,0]) + ' nodes: ' + str(pseudoMatchingNodes1))
+                        #print('Matching elements ' + str(elems2[idx2,0]) + ' nodes: ' + str(pseudoMatchingNodes2))
                         # Compute normal of elem 1 using original order 
                         a1 = [globalCoords1[1,0] - globalCoords1[0,0], globalCoords1[1,1] - globalCoords1[0,1], globalCoords1[1,2] - globalCoords1[0,2]] 
                         b1 = [globalCoords1[3,0] - globalCoords1[0,0], globalCoords1[3,1] - globalCoords1[0,1], globalCoords1[3,2] - globalCoords1[0,2]]
@@ -628,6 +621,7 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                             ori = -1
                         else:
                             ori = 1
+                        # Save everything
                         foundNCInterFaceElements.append(NCinterfaceElement())
                         foundNCInterFaceElements[-1].ori = ori
                         [generatedInterNodesIds.append(np.uint64(nodeId + interNodesMaxId + interNodeCounter)) for nodeId in [1,2,3,4]]
