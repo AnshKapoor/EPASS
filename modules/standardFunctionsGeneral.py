@@ -422,7 +422,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                     foundInterFaceElementsBlocks.append(foundInterFaceElements)
     return foundInterFaceElementsBlocks
 
-def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, tolerance=1e-9):
+def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, mode='plane', tolerance=1e-9):
     foundNCInterFaceElementsBlocks = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
     hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
@@ -435,17 +435,10 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
         noOfTotalFaces1 = noOfElems1 * noOfFaces1
         # Init arrays containing all coordinates
         elemAndFaceIDs1 = []
-        #xCoords1 = np.zeros((noOfTotalFaces1,4))
-        #yCoords1 = np.zeros((noOfTotalFaces1,4))
-        #zCoords1 = np.zeros((noOfTotalFaces1,4))
         # Loops to collect coordinates in block 1
         progWin = progressWindow(len(elems[hexaBlock])-1, 'Collecting coordinates of block' + str(elems[hexaBlock].attrs['Id']))
         for m, elem1 in enumerate(elems[hexaBlock]):
             for faceNo1 in range(noOfFaces1): 
-                #nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[faceNo1,:4]+1]] # indices of nodes belonging to the face
-                #xCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['xCoords']) # Sorting necessary
-                #yCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['yCoords'])
-                #zCoords1[m*noOfFaces1 + faceNo1,:] = np.sort(nodes[sorted(nodeIdx1)]['zCoords'])
                 elemAndFaceIDs1.append([m, faceNo1])
             progWin.setValue(m)
             QApplication.processEvents()
@@ -464,17 +457,17 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                 noOfTotalFaces2 = noOfElems2 * noOfFaces2
                 # Init arrays containing all coordinates
                 elemAndFaceIDs2 = []
-                xCoords2 = np.zeros((noOfTotalFaces2,4))
-                yCoords2 = np.zeros((noOfTotalFaces2,4))
-                zCoords2 = np.zeros((noOfTotalFaces2,4))
+                #xCoords2 = np.zeros((noOfTotalFaces2,4))
+                #yCoords2 = np.zeros((noOfTotalFaces2,4))
+                #zCoords2 = np.zeros((noOfTotalFaces2,4))
                 # Loops to collect coordinates in block 2
                 progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[1]].attrs['Id']))
                 for m, elem2 in enumerate(elems[blockCombi[1]]): 
                     for faceNo2 in range(noOfFaces2):
-                        nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[faceNo2,:4]+1]] # indices of nodes belonging to the face
-                        xCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['xCoords'])
-                        yCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['yCoords'])
-                        zCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['zCoords'])
+                        #nodeIdx2 = [nodesInv[nodeID] for nodeID in elem2[nodeIdxOfFaces2[faceNo2,:4]+1]] # indices of nodes belonging to the face
+                        #xCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['xCoords'])
+                        #yCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['yCoords'])
+                        #zCoords2[m*noOfFaces2 + faceNo2,:] = np.sort(nodes[sorted(nodeIdx2)]['zCoords'])
                         elemAndFaceIDs2.append([m, faceNo2])
                     progWin.setValue(m)
                     QApplication.processEvents()
@@ -507,6 +500,7 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                 # Find faces of hexa block in the shell plane
                 relevantElemAndFaceIDs1 = []
                 relevantElemAndFaceIDs2  = elemAndFaceIDs2
+                progWin = progressWindow(noOfTotalFaces1-1, 'Finding faces of hexa block in the plane')
                 for faceIdx in range(noOfTotalFaces1):
                     elem1 = elems[blockCombi[0]][elemAndFaceIDs1[faceIdx][0]]
                     nodeIdx1 = [nodesInv[nodeID] for nodeID in elem1[nodeIdxOfFaces1[elemAndFaceIDs1[faceIdx][1],:4]+1]]
@@ -524,6 +518,8 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                         # Check distance to plane
                         if abs(np.dot(planeNormal, [elem1x[0], elem1y[0], elem1z[0]]) - planeOriginDistance)<1e-9:
                             relevantElemAndFaceIDs1.append(elemAndFaceIDs1[faceIdx])
+                    progWin.setValue(faceIdx)
+                    QApplication.processEvents()
                 # Identify corners of rectangle (nodes of relevant faces, which are included in one face only)   
                 noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
                 noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
@@ -577,6 +573,7 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                     limitsFaces2[idx2, :2] = np.min(myCoords2, axis=0)
                     limitsFaces2[idx2, 2:] = np.max(myCoords2, axis=0)
                     midFaces2[idx2, :] = 0.5*(limitsFaces2[idx2, :2] + limitsFaces2[idx2, 2:])
+                progWin = progressWindow(noOfTotalRelevantFaces1-1, 'Searching non-conform interfaces between block' + str(elems[blockCombi[0]].attrs['Id']) + ' and ' + str(elems[blockCombi[1]].attrs['Id']))
                 for idx1, face1 in enumerate(limitsFaces1): 
                     partnerFace2 = np.invert(np.logical_or(np.logical_or(limitsFaces2[:,0]>face1[2], limitsFaces2[:,1]>face1[3]) , np.logical_or(limitsFaces2[:,2]<face1[0], limitsFaces2[:,3]<face1[1]))) # Check for elements outside limits; Invertion gives us the overlapping partners
                     #print('\n ### New hex element: ' + str(elems1[idx1,0]) + ' with limits: ' + str(face1))
@@ -634,6 +631,8 @@ def searchNCInterfaceElemsPlane(nodes, nodesInv, elems, blockCombinations, inter
                         foundNCInterFaceElements[-1].structElemId = np.uint64(elems1[idx1,0])
                         foundNCInterFaceElements[-1].fluidBlockIdx = blockCombi[0]
                         foundNCInterFaceElements[-1].structBlockIdx = blockCombi[1]
+                    progWin.setValue(idx1)
+                    QApplication.processEvents()
                 if foundNCInterFaceElements != []:
                     foundNCInterFaceElementsBlocks.append([foundNCInterFaceElements, generatedInterNodesIds, generatedInterNodesCoords])
     return foundNCInterFaceElementsBlocks
