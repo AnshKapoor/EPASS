@@ -247,6 +247,9 @@ class model(QWidget): # Saves a model
                 elif self.interfaceDialogWindow.methodSelector.currentText() == 'Non-conform in plane': 
                   foundInterFaceElementsBlocks = []
                   foundNCInterFaceElementsBlocks = searchNCInterfaceElemsSurface(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0), self.interNodesMaxId, 'plane')
+                elif self.interfaceDialogWindow.methodSelector.currentText() == 'Non-conform in cylinder':
+                  foundInterFaceElementsBlocks = []
+                  foundNCInterFaceElementsBlocks = searchNCInterfaceElemsSurface(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0), self.interNodesMaxId, 'cylinder')
                 else:
                   foundInterFaceElementsBlocks = []
                   foundNCInterFaceElementsBlocks = []
