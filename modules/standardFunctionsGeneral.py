@@ -445,7 +445,7 @@ def searchInterfaceElems(nodes, nodesInv, elems, blockCombinations, tolerance=1e
                     foundInterFaceElementsBlocks.append(foundInterFaceElements)
     return foundInterFaceElementsBlocks
 
-def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, mode='plane', tolerance=1e-9):
+def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, interNodesMaxId, mode='plane', tolerance=1e-6):
     foundNCInterFaceElementsBlocks = []
     # Collect all hexa (first) blocks for speed up (just collecting coordinates once)
     hexaBlocks = list(set([blockCombi[0] for blockCombi in blockCombinations]))
@@ -746,18 +746,22 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                             globalCoords1 = (Tinv @ localCoords1.T).T + originRectangle1
                             globalCoords2 = (Tinv @ localCoords2.T).T + originRectangle1
                         elif mode == "cylinder": 
-                            localInterNodeCoords = np.array([[surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[0]],
-                                                             [surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[2]],
-                                                             [surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[2]],
-                                                             [surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[0]]])
-                            globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + cylinderOrigin
                             # Compute local and global coords of pseudo matching nodes (required for integration / assembly)
                             if wrap: 
+                              localInterNodeCoords = np.array([[-1.*surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[0]],
+                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[2]],
+                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[2]],
+                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[0]]])
                               localCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhiShifted[idx1*4:(idx1*4+4)]]).T
                               localCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhiShifted[idx2*4:(idx2*4+4)]]).T
                             else: 
+                              localInterNodeCoords = np.array([[surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[0]],
+                                                              [surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[2]],
+                                                              [surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[2]],
+                                                              [surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[0]]])
                               localCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhi[idx1*4:(idx1*4+4)]]).T
                               localCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhi[idx2*4:(idx2*4+4)]]).T
+                            globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + cylinderOrigin
                             globalCoords1 = (Tinv @ relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),:].T).T + cylinderOrigin
                             globalCoords2 = (Tinv @ relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),:].T).T + cylinderOrigin
                         if (wrap) and (mode=='cylinder'): 
