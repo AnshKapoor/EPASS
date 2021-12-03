@@ -748,10 +748,10 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                         elif mode == "cylinder": 
                             # Compute local and global coords of pseudo matching nodes (required for integration / assembly)
                             if wrap: 
-                              localInterNodeCoords = np.array([[-1.*surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[0]],
-                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[1]),surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[2]],
-                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[2]],
-                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[3]),surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[0]]])
+                              localInterNodeCoords = np.array([[-1.*surfaceRadius*np.cos(localCommonLimits[1]),-1.*surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[0]],
+                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[1]),-1.*surfaceRadius*np.sin(localCommonLimits[1]),localCommonLimits[2]],
+                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[3]),-1.*surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[2]],
+                                                              [-1.*surfaceRadius*np.cos(localCommonLimits[3]),-1.*surfaceRadius*np.sin(localCommonLimits[3]),localCommonLimits[0]]])
                               localCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhiShifted[idx1*4:(idx1*4+4)]]).T
                               localCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhiShifted[idx2*4:(idx2*4+4)]]).T
                             else: 
@@ -762,8 +762,11 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                               localCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhi[idx1*4:(idx1*4+4)]]).T
                               localCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhi[idx2*4:(idx2*4+4)]]).T
                             globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + cylinderOrigin
+                            print('Inter: ' + str(globalInterNodeCoords))
                             globalCoords1 = (Tinv @ relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),:].T).T + cylinderOrigin
+                            print('coords1: ' + str(globalCoords1))
                             globalCoords2 = (Tinv @ relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),:].T).T + cylinderOrigin
+                            print('coords2: ' + str(globalCoords2))
                         if (wrap) and (mode=='cylinder'): 
                             smaller1 = localCoords1[:,:2] < midFaces1Shifted[idx1]
                             larger1 = localCoords1[:,:2] > midFaces1Shifted[idx1]
