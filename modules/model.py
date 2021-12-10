@@ -8,7 +8,7 @@ import vtk
 from vtk.util import numpy_support
 import numpy as np
 from standardWidgets import progressWindow, addButton, addInterfaceWindow, messageboxOK
-from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, searchNCInterfaceElemsPlane, getPossibleInterfacePartner, identifyOrientationTypes, isPlateType
+from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, searchNCInterfaceElemsSurface, getPossibleInterfacePartner, identifyOrientationTypes, isPlateType
 
 # Saves a model, objects created by readModels()
 class model(QWidget): # Saves a model
@@ -246,7 +246,10 @@ class model(QWidget): # Saves a model
                   foundNCInterFaceElementsBlocks = []
                 elif self.interfaceDialogWindow.methodSelector.currentText() == 'Non-conform in plane': 
                   foundInterFaceElementsBlocks = []
-                  foundNCInterFaceElementsBlocks = searchNCInterfaceElemsPlane(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0), self.interNodesMaxId)
+                  foundNCInterFaceElementsBlocks = searchNCInterfaceElemsSurface(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0), self.interNodesMaxId, 'plane')
+                elif self.interfaceDialogWindow.methodSelector.currentText() == 'Non-conform in cylinder':
+                  foundInterFaceElementsBlocks = []
+                  foundNCInterFaceElementsBlocks = searchNCInterfaceElemsSurface(self.nodes, self.nodesInv, self.elems, np.unique(np.array(relevantBlockCombinations), axis=0), self.interNodesMaxId, 'cylinder')
                 else:
                   foundInterFaceElementsBlocks = []
                   foundNCInterFaceElementsBlocks = []
