@@ -71,7 +71,7 @@ class materialsTab(QWidget):
             if self.materialSelector.currentText() == 'STRUCT linear visco iso':
                 myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear visco ort':
-                myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
+                myModel.materials.append(STR_LIN_VIS_ORT_DIR(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear visco ort pre':
                 myModel.materials.append(STR_LIN_VIS_ORT_LAM(self.getFreeId(myModel.materials)))
             if self.materialSelector.currentText() == 'STRUCT linear pointmass':

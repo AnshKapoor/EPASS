@@ -179,7 +179,7 @@ class constraintTypeSelector(QComboBox):
         super(constraintTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a constraint')
-        self.availableTypes = ['BC | Structure | Fieldvalue']
+        self.availableTypes = ['BC | Structure | Fieldvalue','BC | Acoustic | Fieldvalue']
         self.setFixedWidth(200)
         [self.addItem(load) for load in self.availableTypes]
     

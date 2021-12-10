@@ -4,6 +4,7 @@ from standardWidgets import constraintTypeSelector, addButton, messageboxOK
 from constraints import constraintInfoBox
 
 from BC_STR_FIELD import BC_STR_FIELD
+from BC_AF_FIELD import BC_AF_FIELD
 
 class constraintsTab(QWidget):
     def __init__(self, parent = None):
@@ -37,6 +38,8 @@ class constraintsTab(QWidget):
         if myModel.hdf5File:
             if self.constraintSelector.currentText() == 'BC | Structure | Fieldvalue':
                 myModel.constraints.append(BC_STR_FIELD(self.getFreeId(myModel.constraints), myModel))
+            elif self.constraintSelector.currentText() == 'BC | Acoustic | Fieldvalue':
+                myModel.constraints.append(BC_AF_FIELD(self.getFreeId(myModel.constraints), myModel))
             # Refresh layout
             self.constraintInfo.updateLayout(myModel.constraints)
             return 1

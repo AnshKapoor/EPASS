@@ -1,6 +1,10 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\modules",
+    "\\modulesAnalysis",
+    "\\tabs"
   ],
+  "SelectedNode": "\\tabs\\constraints",
   "PreviewInSolutionExplorer": false
 }
