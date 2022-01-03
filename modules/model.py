@@ -458,6 +458,7 @@ class model(QWidget): # Saves a model
                     #
             interfaceGroup.attrs['N'] = np.uint64(counter)
             # non-conform
+            print('HERE')
             if self.interNodesCoords:
                 comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
                 dataSet = interNodesGroup.create_dataset('mtxFemInterNodes', (len(self.interNodesCoords),), comp_type)

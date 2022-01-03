@@ -455,6 +455,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
         # Get sizes
         noOfElems1 = len(elems[hexaBlock])
         noOfFaces1 = nodeIdxOfFaces1.shape[0]
+        noOfFaceNodes = nodeIdxOfFaces1.shape[1]
         noOfTotalFaces1 = noOfElems1 * noOfFaces1
         # Init arrays containing all coordinates
         elemAndFaceIDs1 = []
@@ -538,7 +539,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                                 relevantElemAndFaceIDs1.append(elemAndFaceIDs1[faceIdx])
                         progWin.setValue(faceIdx)
                         QApplication.processEvents()
-                    # Identify corners of rectangle (nodes of relevant faces, which are included in one face only)   
+                    # Identify corners of rectangle (nodes of relevant faces, which are included in one face only)
                     noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
                     relevantNodes1 = []
@@ -575,18 +576,18 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     limitsFaces2 = np.zeros((len(relevantElemAndFaceIDs2), 4)) 
                     midFaces1 = np.zeros((len(relevantElemAndFaceIDs1), 2)) 
                     midFaces2 = np.zeros((len(relevantElemAndFaceIDs2), 2)) 
-                    elems1 = np.zeros((len(relevantElemAndFaceIDs1), 5), dtype=np.int64) # One ID, 4 node IDs
-                    elems2 = np.zeros((len(relevantElemAndFaceIDs2), 5), dtype=np.int64)
+                    elems1 = np.zeros((len(relevantElemAndFaceIDs1), noOfFaceNodes+1), dtype=np.int64) # One ID, 4 or 9 node IDs
+                    elems2 = np.zeros((len(relevantElemAndFaceIDs2), noOfFaceNodes+1), dtype=np.int64)
                     for idx1, ElemFaceCombi1 in enumerate(relevantElemAndFaceIDs1):
                         elems1[idx1,0] = elems[blockCombi[0]][ElemFaceCombi1[0],0]
-                        elems1[idx1,1:] = [elems[blockCombi[0]][ElemFaceCombi1[0],n+1] for n in nodeIdxOfFaces1[ElemFaceCombi1[1],:4]]
+                        elems1[idx1,1:noOfFaceNodes+1] = [elems[blockCombi[0]][ElemFaceCombi1[0],n+1] for n in nodeIdxOfFaces1[ElemFaceCombi1[1],:noOfFaceNodes]]
                         myCoords1 = relevantNodes1Coords[idx1*4:(idx1*4+4),:2] # Reuse coords and exclude z as its not important in plane
                         limitsFaces1[idx1, :2] = np.min(myCoords1, axis=0)
                         limitsFaces1[idx1, 2:] = np.max(myCoords1, axis=0)
                         midFaces1[idx1, :] = 0.5*(limitsFaces1[idx1, :2] + limitsFaces1[idx1, 2:])
                     for idx2, ElemFaceCombi2 in enumerate(relevantElemAndFaceIDs2):
                         elems2[idx2,0] = elems[blockCombi[1]][ElemFaceCombi2[0],0]
-                        elems2[idx2,1:] = [elems[blockCombi[1]][ElemFaceCombi2[0],n+1] for n in nodeIdxOfFaces2[ElemFaceCombi2[1],:4]]
+                        elems2[idx2,1:noOfFaceNodes+1] = [elems[blockCombi[1]][ElemFaceCombi2[0],n+1] for n in nodeIdxOfFaces2[ElemFaceCombi2[1],:noOfFaceNodes]]
                         myCoords2 = relevantNodes2Coords[idx2*4:(idx2*4+4),:2] # Reuse coords and exclude z as its not important in plane
                         limitsFaces2[idx2, :2] = np.min(myCoords2, axis=0)
                         limitsFaces2[idx2, 2:] = np.max(myCoords2, axis=0)
@@ -665,11 +666,11 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     limitsFaces2Shifted = np.zeros((len(relevantElemAndFaceIDs2), 4)) 
                     midFaces1Shifted = np.zeros((len(relevantElemAndFaceIDs1), 2)) 
                     midFaces2Shifted = np.zeros((len(relevantElemAndFaceIDs2), 2)) 
-                    elems1 = np.zeros((len(relevantElemAndFaceIDs1), 5), dtype=np.int64) # One ID, 4 node IDs
-                    elems2 = np.zeros((len(relevantElemAndFaceIDs2), 5), dtype=np.int64)
+                    elems1 = np.zeros((len(relevantElemAndFaceIDs1), noOfFaceNodes+1), dtype=np.int64) # One ID, 4 or 9 node IDs
+                    elems2 = np.zeros((len(relevantElemAndFaceIDs2), noOfFaceNodes+1), dtype=np.int64)
                     for idx1, ElemFaceCombi1 in enumerate(relevantElemAndFaceIDs1):
                         elems1[idx1,0] = elems[blockCombi[0]][ElemFaceCombi1[0],0]
-                        elems1[idx1,1:] = [elems[blockCombi[0]][ElemFaceCombi1[0],n+1] for n in nodeIdxOfFaces1[ElemFaceCombi1[1],:4]]
+                        elems1[idx1,1:noOfFaceNodes+1] = [elems[blockCombi[0]][ElemFaceCombi1[0],n+1] for n in nodeIdxOfFaces1[ElemFaceCombi1[1],:noOfFaceNodes]]
                         myCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhi[idx1*4:(idx1*4+4)]]).T # Reuse coords from above
                         myCoords1Shifted = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhiShifted[idx1*4:(idx1*4+4)]]).T # Reuse coords from above
                         limitsFaces1[idx1, :2] = np.min(myCoords1, axis=0)
@@ -686,7 +687,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                             midFaces1Shifted[idx1, 1] = midFaces1Shifted[idx1, 1] + 2*np.pi # correction to 0 ... 2pi
                     for idx2, ElemFaceCombi2 in enumerate(relevantElemAndFaceIDs2):
                         elems2[idx2,0] = elems[blockCombi[1]][ElemFaceCombi2[0],0]
-                        elems2[idx2,1:] = [elems[blockCombi[1]][ElemFaceCombi2[0],n+1] for n in nodeIdxOfFaces2[ElemFaceCombi2[1],:4]]
+                        elems2[idx2,1:noOfFaceNodes+1] = [elems[blockCombi[1]][ElemFaceCombi2[0],n+1] for n in nodeIdxOfFaces2[ElemFaceCombi2[1],:noOfFaceNodes]]
                         myCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhi[idx2*4:(idx2*4+4)]]).T # Reuse coords from above
                         myCoords2Shifted = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhiShifted[idx2*4:(idx2*4+4)]]).T # Reuse coords from above
                         limitsFaces2[idx2, :2] = np.min(myCoords2, axis=0)
@@ -738,8 +739,12 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                             continue 
                         # Compute new interface nodes
                         if mode == "plane": 
-                            localInterNodeCoords = np.array([[localCommonLimits[0],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[3],0],[localCommonLimits[0],localCommonLimits[3],0]])
-                            globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + originRectangle1
+                            localMidX = 0.5*(localCommonLimits[0] + localCommonLimits[2])
+                            localMidY = 0.5*(localCommonLimits[1] + localCommonLimits[3])
+                            localInterNodeCoords = np.array([[localCommonLimits[0],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[1],0],[localCommonLimits[2],localCommonLimits[3],0],[localCommonLimits[0],localCommonLimits[3],0], 
+                                                             [localMidX,localCommonLimits[1],0],           [localCommonLimits[2],localMidY,0],           [localMidX,localCommonLimits[3],0],           [localCommonLimits[0],localMidY,0],
+                                                             [localMidX,localMidY,0]])
+                            globalInterNodeCoords = (Tinv @ localInterNodeCoords[:noOfFaceNodes,:].T).T + originRectangle1
                             # Compute local and global coords of pseudo matching nodes (required for integration / assembly)
                             localCoords1 = relevantNodes1Coords[idx1*4:(idx1*4+4),:]
                             localCoords2 = relevantNodes2Coords[idx2*4:(idx2*4+4),:]
@@ -762,11 +767,11 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                               localCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhi[idx1*4:(idx1*4+4)]]).T
                               localCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhi[idx2*4:(idx2*4+4)]]).T
                             globalInterNodeCoords = (Tinv @ localInterNodeCoords.T).T + cylinderOrigin
-                            print('Inter: ' + str(globalInterNodeCoords))
+                            #print('Inter: ' + str(globalInterNodeCoords))
                             globalCoords1 = (Tinv @ relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),:].T).T + cylinderOrigin
-                            print('coords1: ' + str(globalCoords1))
+                            #print('coords1: ' + str(globalCoords1))
                             globalCoords2 = (Tinv @ relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),:].T).T + cylinderOrigin
-                            print('coords2: ' + str(globalCoords2))
+                            #print('coords2: ' + str(globalCoords2))
                         if (wrap) and (mode=='cylinder'): 
                             smaller1 = localCoords1[:,:2] < midFaces1Shifted[idx1]
                             larger1 = localCoords1[:,:2] > midFaces1Shifted[idx1]
@@ -777,8 +782,20 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                             larger1 = localCoords1[:,:2] > midFaces1[idx1]
                             smaller2 = localCoords2[:,:2] < midFaces2[idx2]
                             larger2 = localCoords2[:,:2] > midFaces2[idx2]
-                        pseudoMatchingNodes1 = [elems1[idx1,nodeIdx+1] for nodeIdx in [ np.argwhere(np.multiply.reduce(smaller1, axis=1))[0][0], np.argwhere(smaller1[:,1]*larger1[:,0])[0][0], np.argwhere(np.multiply.reduce(larger1, axis=1))[0][0], np.argwhere(smaller1[:,0]*larger1[:,1])[0][0] ]]
-                        pseudoMatchingNodes2 = [elems2[idx2,nodeIdx+1] for nodeIdx in [ np.argwhere(np.multiply.reduce(smaller2, axis=1))[0][0], np.argwhere(smaller2[:,1]*larger2[:,0])[0][0], np.argwhere(np.multiply.reduce(larger2, axis=1))[0][0], np.argwhere(smaller2[:,0]*larger2[:,1])[0][0] ]]
+                        #
+                        nodeIdxOrder1 = [ np.argwhere(np.multiply.reduce(smaller1, axis=1))[0][0], np.argwhere(smaller1[:,1]*larger1[:,0])[0][0], np.argwhere(np.multiply.reduce(larger1, axis=1))[0][0], np.argwhere(smaller1[:,0]*larger1[:,1])[0][0] ]
+                        if nodeIdxOrder1 in [[0,1,2,3],[1,2,3,0],[2,3,0,1],[3,0,1,2]]:
+                            nodeIdxOrder1 = nodeIdxOrder1 + [[4,5,6,7][nodeIdx] for nodeIdx in nodeIdxOrder1] + [8]
+                        else: 
+                            nodeIdxOrder1 = nodeIdxOrder1 + [[7,4,5,6][nodeIdx] for nodeIdx in nodeIdxOrder1] + [8]
+                        pseudoMatchingNodes1 = [elems1[idx1,nodeIdx+1] for nodeIdx in nodeIdxOrder1[:noOfFaceNodes]]
+                        #
+                        nodeIdxOrder2 = [ np.argwhere(np.multiply.reduce(smaller2, axis=1))[0][0], np.argwhere(smaller2[:,1]*larger2[:,0])[0][0], np.argwhere(np.multiply.reduce(larger2, axis=1))[0][0], np.argwhere(smaller2[:,0]*larger2[:,1])[0][0] ]
+                        if nodeIdxOrder2 in [[0,1,2,3],[1,2,3,0],[2,3,0,1],[3,0,1,2]]:
+                            nodeIdxOrder2 = nodeIdxOrder2 + [[4,5,6,7][nodeIdx] for nodeIdx in nodeIdxOrder2] + [8]
+                        else: 
+                            nodeIdxOrder2 = nodeIdxOrder2 + [[7,4,5,6][nodeIdx] for nodeIdx in nodeIdxOrder2] + [8]
+                        pseudoMatchingNodes2 = [elems2[idx2,nodeIdx+1] for nodeIdx in nodeIdxOrder2[:noOfFaceNodes]]
                         # Compute normal of elem 1 using original order 
                         a1 = [globalCoords1[1,0] - globalCoords1[0,0], globalCoords1[1,1] - globalCoords1[0,1], globalCoords1[1,2] - globalCoords1[0,2]] 
                         b1 = [globalCoords1[3,0] - globalCoords1[0,0], globalCoords1[3,1] - globalCoords1[0,1], globalCoords1[3,2] - globalCoords1[0,2]]
@@ -798,10 +815,10 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                         # Save everything
                         foundNCInterFaceElements.append(NCinterfaceElement())
                         foundNCInterFaceElements[-1].ori = ori
-                        [generatedInterNodesIds.append(np.uint64(nodeId + interNodesMaxId + interNodeCounter)) for nodeId in [1,2,3,4]]
+                        [generatedInterNodesIds.append(np.uint64(nodeId + interNodesMaxId + interNodeCounter)) for nodeId in range(1,noOfFaceNodes+1)]
                         [generatedInterNodesCoords.append(list(coords)) for coords in globalInterNodeCoords]
-                        foundNCInterFaceElements[-1].interNodes = [np.uint64(nodeId + interNodesMaxId + interNodeCounter) for nodeId in [1,2,3,4]]
-                        interNodeCounter += 4
+                        foundNCInterFaceElements[-1].interNodes = [np.uint64(nodeId + interNodesMaxId + interNodeCounter) for nodeId in range(1,noOfFaceNodes+1)]
+                        interNodeCounter += noOfFaceNodes
                         foundNCInterFaceElements[-1].fluidNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes1]
                         foundNCInterFaceElements[-1].structuralNodes = [np.uint64(nodeID) for nodeID in pseudoMatchingNodes2]
                         foundNCInterFaceElements[-1].fluidElemId = np.uint64(elems1[idx1,0])
