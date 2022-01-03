@@ -781,7 +781,6 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                               localCoords1 = np.array([relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),2],relevantNodes1CylinderPhi[idx1*4:(idx1*4+4)]]).T
                               localCoords2 = np.array([relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),2],relevantNodes2CylinderPhi[idx2*4:(idx2*4+4)]]).T
                             globalInterNodeCoords = (Tinv @ localInterNodeCoords[:noOfFaceNodes,:].T).T + cylinderOrigin
-                            print(globalInterNodeCoords)
                             globalCoords1 = (Tinv @ relevantNodes1CartesianCoords[idx1*4:(idx1*4+4),:].T).T + cylinderOrigin
                             globalCoords2 = (Tinv @ relevantNodes2CartesianCoords[idx2*4:(idx2*4+4),:].T).T + cylinderOrigin
                         if (wrap) and (mode=='cylinder'): 
