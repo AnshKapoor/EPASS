@@ -176,6 +176,8 @@ def getElementDof(elemType):
         return ['sound pressure']
     elif elemType in ['Brick8','Brick20','Brick27']:
         return ['displacement x', 'displacement y', 'displacement z']
+    elif elemType in ['BeamBernoulli', 'BeamTimoshenko']:
+        return ['displacement x', 'displacement y','rotation z']
     else:
         return []
 
@@ -205,6 +207,8 @@ def identifyElemType(elemType):
         return 'EDGE_2', 'Spring', 3; 
     elif elemType[0] == 0: # point elemenets (for bc springs or point mass)
         return 'NODES', 'Pointmass', 2; 
+    elif elemType[0] == 4: # beam elements
+        return 'EDGE_2', 'BeamBernoulli', 3;
     else:
         return 'notSupported', [], 0;
 
@@ -221,6 +225,8 @@ def identifyAlternativeElemTypes(elemType):
         return ['Spring'];
     elif elemType in ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']:
         return ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']
+    elif elemType in ['Beam','BeamBernoulli','BeamBernoulli10','BeamBernoulli12','BeamTimoshenko', 'BeamTimoshenko10', 'BeamTimoshenko12']:
+        return ['Beam','BeamBernoulli','BeamBernoulli10','BeamBernoulli12','BeamTimoshenko', 'BeamTimoshenko10', 'BeamTimoshenko12']
     else:
         return [];
 
@@ -287,7 +293,7 @@ def getVTKElem(elpasoElemType):
         return vtk.vtkQuad(), 9, 4
     elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
         return vtk.vtkHexahedron(), 12, 8
-    elif elpasoElemType in ['Spring']:
+    elif elpasoElemType in ['Spring','Beam','BeamBernoulli','BeamBernoulli10','BeamBernoulli12','BeamTimoshenko', 'BeamTimoshenko10', 'BeamTimoshenko12']:
         return vtk.vtkLine(), 3, 2
     elif elpasoElemType in ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']:
         return vtk.vtkVertex(), 1, 1
