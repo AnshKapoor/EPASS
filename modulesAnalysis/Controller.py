@@ -183,7 +183,7 @@ class Controller():
       if abs(float(item[1])-float(self.vtkWindow.currentFrequency))<0.01:
         allLev2Names = [lev2Entry.name for lev2Entry in dataSetEntry.parent().parent().groupsLev2Collector]
         #
-        dataSet = dataSetEntry.hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
+        dataSet = dataSetEntry.hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:]))]
         #
         boolIdx = np.zeros((len(dataSet)), dtype=np.bool_)
         boolIdx[dataSetEntry.fieldIndices] = 1

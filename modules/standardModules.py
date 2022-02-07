@@ -29,7 +29,7 @@ def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, or
     progWin = progressWindow(noOfStateResults-1, 'Calculating mean squared derivative of order ' + str(derivative))
   for item in hdf5ResultsFileStateGroup.attrs.items():
     x[counter] = float(item[1])
-    dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
+    dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:]))]
     dataSetComplex = dataSet['real'][:] + 1j*dataSet['imag'][:]
     if derivative>0:
       dataSetComplex = np.multiply((1j*2*math.pi*x[counter])**derivative, dataSetComplex)
@@ -128,7 +128,7 @@ def calcSoundPower(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, ord
     x[counter] = float(item[1])
     omega = 2 * math.pi * float(item[1])
     k = omega / speedOfSound
-    dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:])+1)]
+    dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:]))]
     dataSetComplex = dataSet['real'][:] + 1j*dataSet['imag'][:]
     #
     effDispOfPatches = np.empty((noOfPatches), dtype=np.complex)
