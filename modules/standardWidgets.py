@@ -163,7 +163,7 @@ class materialTypeSelector(QComboBox):
         super(materialTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a material')
-        self.availableTypes = ['STRUCT linear elastic iso', 'STRUCT linear visco iso', 'STRUCT linear visco ort', 'STRUCT linear visco ort pre', 'STRUCT linear spring', 'STRUCT linear pointmass', 'ACOUS undamped fluid iso', 'ACOUS damped fluid iso', 'ACOUS equivalent fluid iso']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
+        self.availableTypes = ['STRUCT linear elastic iso', 'STRUCT linear visco iso', 'STRUCT linear visco ort', 'STRUCT linear visco ort no prestress', 'STRUCT linear visco ort pre', 'STRUCT linear spring', 'STRUCT linear pointmass', 'ACOUS undamped fluid iso', 'ACOUS damped fluid iso', 'ACOUS equivalent fluid iso']#, 'Orthotropic', 'viscoorthotropic', 'Fluid', 'Viscoelastic', 'CLD:Cremer/Heckl', 'CLD:Ross/Kerwin/Ungar', 'Fluidloss', 'EquivalentFluidDirect', 'Cloaking', 'Poro3d', 'Viscofreq', 'Viscofreqparam', 'Spring','Pointmass']
         self.setFixedWidth(200)
         [self.addItem(mat) for mat in self.availableTypes]
     
