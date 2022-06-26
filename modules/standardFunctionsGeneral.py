@@ -466,7 +466,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
         # Init arrays containing all coordinates
         elemAndFaceIDs1 = []
         # Loops to collect coordinates in block 1
-        progWin = progressWindow(len(elems[hexaBlock])-1, 'Collecting coordinates of block' + str(elems[hexaBlock].attrs['Id']))
+        progWin = progressWindow(len(elems[hexaBlock])-1, 'Collecting coordinates of block ' + str(elems[hexaBlock].attrs['Id']))
         for m, elem1 in enumerate(elems[hexaBlock]):
             for faceNo1 in range(noOfFaces1): 
                 elemAndFaceIDs1.append([m, faceNo1])
@@ -488,7 +488,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                 # Init arrays containing all coordinates
                 elemAndFaceIDs2 = []
                 # Loops to collect coordinates in block 2
-                progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block' + str(elems[blockCombi[1]].attrs['Id']))
+                progWin = progressWindow(len(elems[blockCombi[1]])-1, 'Collecting coordinates of block ' + str(elems[blockCombi[1]].attrs['Id']))
                 for m, elem2 in enumerate(elems[blockCombi[1]]): 
                     for faceNo2 in range(noOfFaces2):
                         elemAndFaceIDs2.append([m, faceNo2])
@@ -546,8 +546,11 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                         progWin.setValue(faceIdx)
                         QApplication.processEvents()
                     # Identify corners of rectangle (nodes of relevant faces, which are included in one face only)
+                    print(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
+                    print(noOfTotalRelevantFaces1)
+                    print(noOfTotalRelevantFaces2)
                     relevantNodes1 = []
                     relevantNodes2 = []
                     for faceIdx in range(noOfTotalRelevantFaces1):
@@ -602,8 +605,8 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     # Nothing to be computed (in comparison to plane) as cylinder is given by user
                     ### Fixed cylinder choice for testing instead of user input ###
                     cylinderAxis = np.array([0., 0., 1.]) # must be normalised!
-                    cylinderOrigin = np.array([0., 0., 0.])
-                    surfaceRadius = 1.
+                    cylinderOrigin= np.array([0., 0., 0.])
+                    surfaceRadius = 1.3
                     ###############################################################
                     # Check if all shell block faces are within the cylinder surface
                     for faceIdx in range(noOfTotalFaces2):
@@ -636,6 +639,8 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     # Extraction of coordinates
                     noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
+                    print(noOfTotalRelevantFaces1)
+                    print(noOfTotalRelevantFaces2)
                     relevantNodes1 = []
                     relevantNodes2 = []
                     for faceIdx in range(noOfTotalRelevantFaces1):
@@ -727,6 +732,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                         myStringWrapped = myStringWrapped + ' ' + str(elems1[idx1,0])
                     # Loop over potential partners
                     myPartnerString = ''
+                    print(len(partnerFace2Idx))
                     for idx2 in partnerFace2Idx: 
                         if (wrap) and (mode=='cylinder') and ((limitsFaces2Shifted[idx2][3] - limitsFaces2Shifted[idx2][1])>np.pi): # excluding shells, which again have the wrapping problem (min/max switched)
                             continue
