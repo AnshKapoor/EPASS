@@ -543,14 +543,12 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                             # Check distance to plane
                             if abs(np.dot(planeNormal, [elem1x[0], elem1y[0], elem1z[0]]) - planeOriginDistance)<1e-9:
                                 relevantElemAndFaceIDs1.append(elemAndFaceIDs1[faceIdx])
+                                #print(elem1[0])
                         progWin.setValue(faceIdx)
                         QApplication.processEvents()
                     # Identify corners of rectangle (nodes of relevant faces, which are included in one face only)
-                    print(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
-                    print(noOfTotalRelevantFaces1)
-                    print(noOfTotalRelevantFaces2)
                     relevantNodes1 = []
                     relevantNodes2 = []
                     for faceIdx in range(noOfTotalRelevantFaces1):
@@ -576,7 +574,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     axis2Rectangle1 = axis2Rectangle1 / np.linalg.norm(axis2Rectangle1)
                     axis3Rectangle1 = np.cross(axis1Rectangle1,axis2Rectangle1)
                     axis3Rectangle1 = axis3Rectangle1 / np.linalg.norm(axis3Rectangle1) # The third axis / normal
-                    T = np.array([axis1Rectangle1, axis2Rectangle1, axis3Rectangle1]).T # Transition matrix (global to in-plane coordinate system)
+                    T = np.array([axis1Rectangle1, axis2Rectangle1, axis3Rectangle1]) # Transition matrix (global to in-plane coordinate system)
                     Tinv = np.linalg.inv(T)
                     # Compute local coordinates of all relevant nodes
                     relevantNodes1Coords = np.array([T.dot([nodes[idx]['xCoords']-originRectangle1[0],nodes[idx]['yCoords']-originRectangle1[1],nodes[idx]['zCoords']-originRectangle1[2]]) for idx in relevantNodesIdx1])
@@ -639,8 +637,6 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     # Extraction of coordinates
                     noOfTotalRelevantFaces1 = len(relevantElemAndFaceIDs1)
                     noOfTotalRelevantFaces2 = len(relevantElemAndFaceIDs2)
-                    print(noOfTotalRelevantFaces1)
-                    print(noOfTotalRelevantFaces2)
                     relevantNodes1 = []
                     relevantNodes2 = []
                     for faceIdx in range(noOfTotalRelevantFaces1):
@@ -732,7 +728,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                         myStringWrapped = myStringWrapped + ' ' + str(elems1[idx1,0])
                     # Loop over potential partners
                     myPartnerString = ''
-                    print(len(partnerFace2Idx))
+                    #print(len(partnerFace2Idx))
                     for idx2 in partnerFace2Idx: 
                         if (wrap) and (mode=='cylinder') and ((limitsFaces2Shifted[idx2][3] - limitsFaces2Shifted[idx2][1])>np.pi): # excluding shells, which again have the wrapping problem (min/max switched)
                             continue
