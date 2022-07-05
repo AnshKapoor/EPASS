@@ -111,6 +111,7 @@ class loadGUI(QMainWindow):
                 if success:
                     self.myModel.updateModel(self.vtkWindow)
                     self.myModel.interFaceElemAddButton.clicked.connect(self.interfaceElemDialogEvent)
+                    self.myModel.orthoCheckerButton.clicked.connect(self.orthoCheckerEvent)
                 self.vtkWindow.currentFrequencyStep = int(len(self.myModel.frequencies)/2.)
                 scaleFactor = max( [abs(max(self.myModel.nodes[:]['xCoords'])-min(self.myModel.nodes[:]['xCoords'])), abs(max(self.myModel.nodes[:]['yCoords'])-min(self.myModel.nodes[:]['yCoords'])), abs(max(self.myModel.nodes[:]['zCoords'])-min(self.myModel.nodes[:]['zCoords']))] )
                 self.vtkWindow.defineAxisLength(scaleFactor)
@@ -320,6 +321,9 @@ class loadGUI(QMainWindow):
     
     def interfaceElemDialogEvent(self):
         self.myModel.interfaceElemDialog(self.vtkWindow)
+    
+    def orthoCheckerEvent(self):
+        self.myModel.showShellOrientations(self.vtkWindow)
         
     def setupMenu(self):
         """

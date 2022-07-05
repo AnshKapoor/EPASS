@@ -86,6 +86,13 @@ class editButton(QPushButton):
         self.setMaximumHeight(23)
         self.id = 0
 
+# Button to load a script
+class orthoCheckerButton(QPushButton):
+    def __init__(self):
+        super(orthoCheckerButton, self).__init__('Check Orient.')
+        self.setStyleSheet("background-color:rgb(255,255,255)")
+        self.setStatusTip('Plots the local orientation of shell elements in blocks checked in the model overview.')
+
 # Button to export model
 class saveAndExitButton(QPushButton):
     def __init__(self):

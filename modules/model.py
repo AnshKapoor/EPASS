@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 import vtk
 from vtk.util import numpy_support
 import numpy as np
-from standardWidgets import progressWindow, addButton, addInterfaceWindow, messageboxOK
+from standardWidgets import progressWindow, addButton, orthoCheckerButton, addInterfaceWindow, messageboxOK
 from standardFunctionsGeneral import getVTKElem, identifyAlternativeElemTypes, searchInterfaceElems, searchNCInterfaceElemsSurface, getPossibleInterfacePartner, identifyOrientationTypes, isPlateType
 
 # Saves a model, objects created by readModels()
@@ -73,6 +73,7 @@ class model(QWidget): # Saves a model
         self.blockInfo.setFixedHeight(250)
         
         self.interFaceElemAddButton = addButton()
+        self.orthoCheckerButton = orthoCheckerButton()
         
         self.blockMaterialSelectors = []
         self.blockElementTypeSelectors = []
@@ -91,6 +92,7 @@ class model(QWidget): # Saves a model
         self.sublayout3 = QHBoxLayout()
         [self.sublayout3.addWidget(wid) for wid in [QLabel('Add interface elements'), self.interFaceElemAddButton]]
         self.sublayout3.addStretch(1)
+        self.sublayout3.addWidget(self.orthoCheckerButton)
         self.sublayout2.addLayout(self.sublayout3)
         self.sublayout2.addStretch(1)
         self.layout = QHBoxLayout()
@@ -364,7 +366,76 @@ class model(QWidget): # Saves a model
                     messageboxOK('Error', 'No interfaces found.')
             else:
                 messageboxOK('Error', 'Select more than one block and select compatible block.')
-        
+    
+    def showShellOrientations(self, vtkWindow):
+        # Prepare arrays for points and vector data
+        self.centerOrientPoints = vtk.vtkPoints()
+        self.xVectors = vtk.vtkDoubleArray()
+        self.xVectors.SetNumberOfComponents(3)
+        self.yVectors = vtk.vtkDoubleArray()
+        self.yVectors.SetNumberOfComponents(3)
+        # Loop over blocks
+        for blockIdx in range(self.blockInfo.rowCount()):
+            state = self.blockInfo.item(blockIdx,0).checkState()
+            elemType = self.blockElementTypeSelectors[blockIdx].currentText()
+            # Check for ticked checkbox and shell element type
+            if state==2 and isPlateType(elemType):
+                # Loop over elems and calc orientation (local x and y)
+                progWin = progressWindow(len(self.elems[blockIdx])-1, 'Computing local orientations')
+                progWin.setValue(0)
+                QApplication.processEvents()
+                for n, singleElem in enumerate(self.elems[blockIdx]):
+                    nodeIdx = [self.nodesInv[nodeID] for nodeID in singleElem[1:]]
+                    elemX = [self.nodes[idx]['xCoords'] for idx in nodeIdx]
+                    elemY = [self.nodes[idx]['yCoords'] for idx in nodeIdx]
+                    elemZ = [self.nodes[idx]['zCoords'] for idx in nodeIdx]                    
+                    elemMean = [np.mean(elemX), np.mean(elemY), np.mean(elemZ)]
+                    self.centerOrientPoints.InsertNextPoint(elemMean)   
+                    # Plot orientation
+                    localOrientX = [0.4*(elemX[1]+elemX[2])-0.4*(elemX[0]+elemX[3]), 0.4*(elemY[1]+elemY[2])-0.4*(elemY[0]+elemY[3]), 0.4*(elemZ[1]+elemZ[2])-0.4*(elemZ[0]+elemZ[3])]
+                    localOrientY = [0.4*(elemX[2]+elemX[3])-0.4*(elemX[0]+elemX[1]), 0.4*(elemY[2]+elemY[3])-0.4*(elemY[0]+elemY[1]), 0.4*(elemZ[2]+elemZ[3])-0.4*(elemZ[0]+elemZ[1])]
+                    self.xVectors.InsertNextTuple(localOrientX)
+                    self.yVectors.InsertNextTuple(localOrientY)
+                    progWin.setValue(n)
+                    QApplication.processEvents()
+        ### VTK data for X direction
+        xData = vtk.vtkPolyData()
+        xData.SetPoints(self.centerOrientPoints)
+        xData.GetPointData().SetVectors(self.xVectors)
+        arrowSource = vtk.vtkArrowSource()
+        # Glyphs
+        xGlyph = vtk.vtkGlyph3D()
+        xGlyph.SetScaleModeToScaleByVector()
+        xGlyph.SetSourceConnection(arrowSource.GetOutputPort())
+        xGlyph.SetInputData(xData)
+        xGlyph.Update()
+        # Mapper
+        xVectorMapper = vtk.vtkPolyDataMapper()
+        xVectorMapper.SetInputConnection(xGlyph.GetOutputPort())
+        # Actor
+        self.xVectorActor = vtk.vtkActor()
+        self.xVectorActor.GetProperty().SetColor(0.8, 0., 0.)
+        self.xVectorActor.SetMapper(xVectorMapper)
+        vtkWindow.ren.AddActor(self.xVectorActor)
+        ### VTK data for Y direction
+        yData = vtk.vtkPolyData()
+        yData.SetPoints(self.centerOrientPoints)
+        yData.GetPointData().SetVectors(self.yVectors)
+        # Glyphs
+        yGlyph = vtk.vtkGlyph3D()
+        yGlyph.SetScaleModeToScaleByVector()
+        yGlyph.SetSourceConnection(arrowSource.GetOutputPort())
+        yGlyph.SetInputData(yData)
+        yGlyph.Update()
+        # Mapper
+        yVectorMapper = vtk.vtkPolyDataMapper()
+        yVectorMapper.SetInputConnection(yGlyph.GetOutputPort())
+        # Actor
+        self.yVectorActor = vtk.vtkActor()
+        self.yVectorActor.GetProperty().SetColor(0., 0.8, 0.)
+        self.yVectorActor.SetMapper(yVectorMapper)
+        vtkWindow.ren.AddActor(self.yVectorActor)
+
     def data2hdf5(self): 
         try:
             # Sort blocks according to ID
