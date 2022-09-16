@@ -1,9 +1,14 @@
 #
-import os
+import os, sys
 #
 from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget, QScrollArea, QWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
+
+
+CMD_MODE = False
+if '--cmd' in sys.argv:
+    CMD_MODE = True
 
 # Horizontal line
 class sepLine(QFrame):
@@ -211,7 +216,8 @@ class progressWindow(QProgressDialog):
     def __init__(self, length, title='Processing...'):
         super(QProgressDialog, self).__init__(title, "Cancel", 0, length)
         self.setWindowModality(Qt.WindowModal)
-        self.show()
+        if not CMD_MODE:
+            self.show()
 
 # Basic setup window
 class addInterfaceWindow(QDialog):

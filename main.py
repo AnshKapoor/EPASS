@@ -10,6 +10,7 @@ import os
 import atexit
 import numpy as np
 import h5py
+import getopt
 #
 from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QMainWindow, QAction, QTabWidget
 from PyQt5.QtCore import Qt
@@ -33,6 +34,12 @@ from analysisTab import analysisTab
 from loadsTab import loadsTab
 from materialsTab import materialsTab
 from constraintsTab import constraintsTab
+#
+from scriptModule import scripter
+
+CMD_MODE = False
+if '--cmd' in sys.argv:
+    CMD_MODE = True
 
 # Main class called first
 class loadGUI(QMainWindow):
@@ -59,8 +66,10 @@ class loadGUI(QMainWindow):
         self.myModel.blockInfo.itemClicked.connect(self.update3D) # table containing model information (click event)
         #
         self.setupGui()
+
+    def deploy(self):
         self.show()
-        self.loadInput()
+        self.loadInputWin()
         self.statusBar().showMessage('Ready')
 
     def about(self):
@@ -83,13 +92,16 @@ class loadGUI(QMainWindow):
                 self.update2D()
                 self.update3D()
 
-    def loadInput(self):
+    def loadInputWin(self):
         """
         Open an hdf5 file (self.loadButton click event)
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5 *.cub5)", options=options)
+        self.loadInput(fileName)
+
+    def loadInput(self, fileName):
         if fileName:
             fileEnding = fileName.split('.')[-1]
             if fileEnding in ['cub5', 'hdf5']:
@@ -128,27 +140,34 @@ class loadGUI(QMainWindow):
         fileName = self.myModel.path + '/' + self.myModel.name + '.cub5'
         newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
         reply  = QMessageBox.Yes
-        if os.path.isfile(newFile):
-            reply = QMessageBox.question(self, 'File existing', 'Overwrite ' + str(newFile) + '?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        if CMD_MODE:
             self.myModel.hdf5File = h5py.File(newFile, 'w')
-            atexit.register(self.myModel.hdf5File.close)
-            # relevant cub5 data is transferred to new hdf5 file
-            try: 
-                with h5py.File(fileName,'r') as cub5File:
-                    readElements(self.myModel, self.myModel.hdf5File, cub5File)
-                    readNodes(self.myModel, self.myModel.hdf5File, cub5File)
-                    readSetup(self.myModel, self.myModel.hdf5File, cub5File)
-                messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
-                return 1
-            except:
-                self.myModel.hdf5File.close()
-                os.remove(newFile)
-                messageboxOK('Error','cub5 file not transferred')
-                return 0
+            with h5py.File(fileName,'r') as cub5File:
+                readElements(self.myModel, self.myModel.hdf5File, cub5File)
+                readNodes(self.myModel, self.myModel.hdf5File, cub5File)
+                readSetup(self.myModel, self.myModel.hdf5File, cub5File)
         else:
-            messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
-            return 0
+            if os.path.isfile(newFile):
+                reply = QMessageBox.question(self, 'File existing', 'Overwrite ' + str(newFile) + '?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.myModel.hdf5File = h5py.File(newFile, 'w')
+                atexit.register(self.myModel.hdf5File.close)
+                # relevant cub5 data is transferred to new hdf5 file
+                try: 
+                    with h5py.File(fileName,'r') as cub5File:
+                        readElements(self.myModel, self.myModel.hdf5File, cub5File)
+                        readNodes(self.myModel, self.myModel.hdf5File, cub5File)
+                        readSetup(self.myModel, self.myModel.hdf5File, cub5File)
+                    messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
+                    return 1
+                except:
+                    self.myModel.hdf5File.close()
+                    os.remove(newFile)
+                    messageboxOK('Error','cub5 file not transferred')
+                    return 0
+            else:
+                messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
+                return 0
     
     def openHdf5(self):
         fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
@@ -246,6 +265,15 @@ class loadGUI(QMainWindow):
         self.mainLayout.setStretchFactor(self.mainLayoutRight, True)
         self.centralWidget.setLayout(self.mainLayout)
     
+    def setFrequency(self, start, steps, delta):
+        self.tabAnalysis.freqStart.setText(str(start))
+        self.tabAnalysis.freqSteps.setText(str(steps))
+        self.tabAnalysis.freqDelta.setText(str(delta))
+        self.analysisTabChangeEvent()
+
+    def addLoad(self, type):
+        self.tabLoads.addLoad(self.myModel, type)
+
     def analysisTabChangeEvent(self):
         try: 
             self.myModel.freqStart = float(self.tabAnalysis.freqStart.text())
@@ -388,5 +416,25 @@ class loadGUI(QMainWindow):
 if __name__ == '__main__':
     app = QApplication([])
     gui = loadGUI()
-    app.exec_()
+
+    opts, args = getopt.getopt(sys.argv[1:],'',['cmd', 'script='])
+    gui_mode = True
+    for o,a in opts:
+        if o in ("-c", "--cmd"):
+            gui_mode = False
+
+    if gui_mode:
+        gui.deploy()
+        app.exec_()
+    else:
+        CMD_MODE = True
+        print('Tool in scripting mode...')
+
+        script_filename = 'NA'
+        for o,a in opts:
+            if o in ("-s", "--script"):
+                script_filename = a
     
+        myScripter = scripter(script_filename)
+        myScripter.executeScript(gui)
+        gui.saveAndExit()
