@@ -88,7 +88,7 @@ class pointForce(nodeLoad):
         recalculates data with new input parameters
         """
         self.varSave = [self.dirX.text(), self.dirY.text(), self.dirZ.text()]
-        var = self.setupWindow.exec_()
+        var = self.setupWindow.exec()
         if var == 0: # reset values
             self.resetValues()
         elif var == 1: # set new values

@@ -271,9 +271,19 @@ class loadGUI(QMainWindow):
         self.tabAnalysis.freqDelta.setText(str(delta))
         self.analysisTabChangeEvent()
 
-    def addLoad(self, type):
-        self.tabLoads.addLoad(self.myModel, type)
+    def addPointLoad(self, Fx, Fy, Fz, nodesetId):
+        self.tabLoads.addLoad(self.myModel, 'Point force')
+        load = self.myModel.loads[-1]
+        load.dirX.setText(str(Fx))
+        load.dirY.setText(str(Fy))
+        load.dirZ.setText(str(Fz))
 
+        for row_id, everyCheckBox in enumerate(load.nodesetChecker):
+            id = int(load.setupWindow.nodesetLayout.itemAt(row_id*2+1).widget().text().split()[1])
+            if id == nodesetId:
+                load.setupWindow.nodesetLayout.itemAt(row_id*2+0).widget().setChecked(True)
+        load.showEdit()
+        
     def analysisTabChangeEvent(self):
         try: 
             self.myModel.freqStart = float(self.tabAnalysis.freqStart.text())

@@ -42,7 +42,7 @@ class loadsTab(QWidget):
         """
         if type is None:
             type = self.loadSelector.currentText()
-            
+
         if myModel.hdf5File:
             if  type == 'Plane wave':
                 myModel.loads.append(planeWave(myModel))

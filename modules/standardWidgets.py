@@ -209,7 +209,8 @@ class messageboxOK(QMessageBox):
         self.setIcon(QMessageBox.Information)
         self.setText(text)
         self.setStandardButtons(QMessageBox.Ok)
-        self.exec_()
+        if not CMD_MODE:
+            self.exec_()
 
 # Progress window
 class progressWindow(QProgressDialog):
@@ -279,6 +280,12 @@ class setupNodeLoadWindow(QDialog):
         self.mainLayout.addWidget(self.formGroupBoxNodesets)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
+
+    def exec(self):
+        if CMD_MODE:
+            return 1
+        else:
+            return self.exec_()
 
 # Basic setup window
 class setupLoadWindow(QDialog):
