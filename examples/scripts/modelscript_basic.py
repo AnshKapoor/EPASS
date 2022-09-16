@@ -2,7 +2,7 @@
 
 tool.loadInput('./Plate_Shell4_Free_on_all_sides.cub5')
 tool.setFrequency(9, 999, 99)
-tool.addPointLoad(9., 9., 9., 1)
+tool.addLoad('Point force', [9., 9., 9., 1])
 #tool.addMaterial()
 #tool.assignMaterialToBlock()
 #tool.assignElementToBlock()
