@@ -372,6 +372,13 @@ class setupNodeConstraintWindow(QDialog):
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
 
+    def exec(self):
+        if CMD_MODE:
+            return 1
+        else:
+            return self.exec_()
+
+
 class setupTable(QDialog):
     def __init__(self, header):
         QDialog.__init__(self)

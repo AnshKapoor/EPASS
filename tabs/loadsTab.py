@@ -36,25 +36,25 @@ class loadsTab(QWidget):
         #
         [self.tabLayout.addLayout(layout) for layout in self.subLayouts]
         
-    def addLoad(self, myModel, type=None):
+    def addLoad(self, myModel, load_type=None):
         """
         Add the load selected by self.loadSelector (self.addLoadButton click event)
         """
-        if type is None:
-            type = self.loadSelector.currentText()
+        if load_type is None:
+            load_type = self.loadSelector.currentText()
 
         if myModel.hdf5File:
-            if  type == 'Plane wave':
+            if  load_type == 'Plane wave':
                 myModel.loads.append(planeWave(myModel))
-            if type == 'Point force':
+            if load_type == 'Point force':
                 myModel.loads.append(pointForce(myModel))
-            if type == 'Normal velocity':
+            if load_type == 'Normal velocity':
                 myModel.loads.append(normVelo(myModel))
-            # if type == 'Diffuse field':
+            # if load_type == 'Diffuse field':
                 # myModel.loads.append(diffuseField(myModel))
-            if type == 'Distributed frequency domain data':
+            if load_type == 'Distributed frequency domain data':
                 myModel.loads.append(freqVarDat(myModel))
-            if type == 'Turbulent Boundary Layer':
+            if load_type == 'Turbulent Boundary Layer':
                 myModel.loads.append(tbl(myModel))
             # Refresh layout
             self.loadInfo.updateLayout(myModel.loads)

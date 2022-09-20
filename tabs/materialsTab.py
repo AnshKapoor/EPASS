@@ -62,32 +62,35 @@ class materialsTab(QWidget):
         #
         [self.tabLayout.addLayout(layout) for layout in self.subLayouts]
         
-    def addMaterial(self, myModel):
+    def addMaterial(self, myModel, material_type=None):
         """
         Add the material selected by self.matSelector (self.addMaterialButton click event)
         """
+        if material_type is None:
+            material_type = self.materialSelector.currentText()
+
         if myModel.hdf5File:
-            if self.materialSelector.currentText() == 'STRUCT linear elastic iso': 
+            if material_type == 'STRUCT linear elastic iso': 
                 myModel.materials.append(STR_LIN_ELA_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STRUCT linear visco iso':
+            if material_type == 'STRUCT linear visco iso':
                 myModel.materials.append(STR_LIN_VIS_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STRUCT linear visco ort':
+            if material_type == 'STRUCT linear visco ort':
                 myModel.materials.append(STR_LIN_VIS_ORT_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STRUCT linear visco ort no prestress':
+            if material_type == 'STRUCT linear visco ort no prestress':
                 myModel.materials.append(STR_LIN_VIS_ORT_LAM_NOPRE(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STRUCT linear visco ort pre':
+            if material_type == 'STRUCT linear visco ort pre':
                 myModel.materials.append(STR_LIN_VIS_ORT_LAM(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STRUCT linear pointmass':
+            if material_type == 'STRUCT linear pointmass':
                 myModel.materials.append(STR_LIN_MAS_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'STRUCT linear spring':
+            if material_type == 'STRUCT linear spring':
                 myModel.materials.append(STR_LIN_SPR_ORT_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'ACOUS undamped fluid iso':
+            if material_type == 'ACOUS undamped fluid iso':
                 myModel.materials.append(AF_LIN_UAF_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'ACOUS damped fluid iso':
+            if material_type == 'ACOUS damped fluid iso':
                 myModel.materials.append(AF_LIN_DAF_ISO_DIR(self.getFreeId(myModel.materials)))
-            if self.materialSelector.currentText() == 'ACOUS equivalent fluid iso':
+            if material_type == 'ACOUS equivalent fluid iso':
                 myModel.materials.append(AF_LIN_EQF_ISO_DIR(self.getFreeId(myModel.materials)))
-            # if self.materialSelector.currentText() == '?':
+            # if material_type == '?':
                 # myModel.materials.append(?)
             # ...
             # Refresh layout

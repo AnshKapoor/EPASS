@@ -3,6 +3,11 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QScrollArea, QWidget, QWid
 from standardWidgets import removeButton, editButton, setupNodeConstraintWindow, messageboxOK, progressWindow
 import numpy as np
 import vtk
+import sys
+
+CMD_MODE = False
+if '--cmd' in sys.argv:
+    CMD_MODE = True
 
 # ScrollArea containing loads in bottom left part of program
 class constraintInfoBox(QScrollArea):
@@ -80,6 +85,7 @@ class nodeConstraint(QHBoxLayout):
         """
         initialisation of setup popup window for parameter/file path input
         """
+
         self.setupWindow = setupNodeConstraintWindow('Constraint setup')
         self.subCheckButtons = []
         # ADD TO LAYOUT
@@ -104,7 +110,7 @@ class nodeConstraint(QHBoxLayout):
         allows user to set parameters
         """
         self.varSave = [x.text() for x in self.parameterValues]
-        var = self.setupWindow.exec_()
+        var = self.setupWindow.exec()
         if var == 0: # reset values
             self.resetValues()
         elif var == 1: # set new values
@@ -207,4 +213,13 @@ class nodeConstraint(QHBoxLayout):
    
     def data2hdf5(self, constraintsGroup):
         pass # To be defined in child!
+
+
+    def processArguments(self, constraint_args):
+        self.parameterValues = [QLineEdit(str(x)) for x in constraint_args[0]]
+        for row_id, everyCheckBox in enumerate(self.nodesetChecker):
+            id = int(self.setupWindow.nodesetLayout.itemAt(row_id*2+1).widget().text().split()[1])
+            if id == constraint_args[1]:
+                self.setupWindow.nodesetLayout.itemAt(row_id*2+0).widget().setChecked(True)
+            self.showEdit()
             

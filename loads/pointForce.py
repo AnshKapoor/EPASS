@@ -164,12 +164,12 @@ class pointForce(nodeLoad):
         nodes = 0
     
     def processArguments(self, load_args):
-        self.dirX.setText(str(load_args[0]))
-        self.dirY.setText(str(load_args[1]))
-        self.dirZ.setText(str(load_args[2]))
+        self.dirX.setText(str(load_args[0][0]))
+        self.dirY.setText(str(load_args[0][1]))
+        self.dirZ.setText(str(load_args[0][2]))
 
         for row_id, everyCheckBox in enumerate(self.nodesetChecker):
             id = int(self.setupWindow.nodesetLayout.itemAt(row_id*2+1).widget().text().split()[1])
-            if id == load_args[3]:
+            if id == load_args[1]:
                 self.setupWindow.nodesetLayout.itemAt(row_id*2+0).widget().setChecked(True)
         self.showEdit()

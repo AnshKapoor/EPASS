@@ -1,9 +1,59 @@
-## usage: python3 .\main.py --cmd --script .\examples\scripts\modelscript_basic.py
+"""
+Created on September 20 2022
 
-tool.loadInput('./Plate_Shell4_Free_on_all_sides.cub5')
-tool.setFrequency(9, 999, 99)
-tool.addLoad('Point force', [9., 9., 9., 1])
-#tool.addMaterial()
-#tool.assignMaterialToBlock()
-#tool.assignElementToBlock()
-#tool.addConstraint()
+author: lukas outzen
+
+------ Description ------
+Script for setting up a predefined and automatic loadcreator execution.
+The purpose of this is the ability to automatically convert cub5 files into hdf5 files,
+to be able to run automated variations of geometry (and therefore mesh) variations.
+The process steps, that are usually done in the GUI, are predefined in this script
+and must be modified individually depending of the use case.
+
+-------- Manual --------
+To run the loadcreator software in the command line instead of a GUI, use the following command:
+
+python3 .\main.py --cmd --script .\examples\scripts\modelscript_basic.py
+           |        |        |            |
+           |        |        |            Path to this file (script), in which the loadcreator run is specified.
+           |        |        Flag for specifying that a script is used. Alteratively, use short form '-s'.
+           |        Flag for entering the command line mode of the loadcreator software. Alternatively, use short form '-c'.
+            Execute the loadcreator software.
+"""
+
+import os
+
+##### Open cub5 file path #####
+cub5_path = r"C:/data/beam.cub5"                        # path to cub5 file
+tool.loadInput(cub5_path)                    
+
+##### Specify frequency steps #####
+tool.setFrequency(10, 100, 10)                          # (min_freq, freq_steps, freq_delta)
+
+##### Define load #####                         
+tool.addLoad(
+    'Point force',                                      # definition of load type (other types not yet implemented)
+    ((0., 1., 0.),                                      # definition of point force magnitude (x_dir, y_dir, z_dir)
+    1,))                                                # definition of point force nodeset
+
+##### Define materials #####
+tool.addMaterial(                                       
+    'STRUCT linear elastic iso',                        # material type
+    [5.e10, 0.3, 0., 0., 0., 0., 5000., 0., 0.])        # material parameters: ['E', 'nu', 'A', 'Ix', 'Iy', 'Iz', 'rho', 't', 'Fi']
+tool.addMaterial(                                       
+    'STRUCT linear elastic iso',                        # material type
+    [7.e10, 0.3, 0., 0., 0., 0., 7000., 0., 0.])        # material parameters: ['E', 'nu', 'A', 'Ix', 'Iy', 'Iz', 'rho', 't', 'Fi']
+
+##### Assign element type and materials to each block #####
+tool.setBlockProperties({                               # For each block in geometry, define the following properties
+    'Block_1': ('Brick8', 1, 'global'),                 # (Element type, material (number as defined above), orientation)
+    'Block_2': ('Brick8', 2, 'global'),
+})
+
+##### Define constraints #####
+tool.addConstraint(                                     
+    'BC | Structure | Fieldvalue',                      # constraint type
+    ((0., 0., 0., 0., 0., 0.),                          # constraint values (translational and rotational) ['u1', 'u2', 'u3', 'w1', 'w2', 'w3']
+    2,))                                                # nodeset with constraint nodes
+
+print(f'  > Script successfully run. The hdf5 file has been saved in {cub5_path[:-5]}.hdf5.')

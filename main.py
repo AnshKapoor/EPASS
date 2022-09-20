@@ -265,16 +265,40 @@ class loadGUI(QMainWindow):
         self.mainLayout.setStretchFactor(self.mainLayoutRight, True)
         self.centralWidget.setLayout(self.mainLayout)
     
+
     def setFrequency(self, start, steps, delta):
         self.tabAnalysis.freqStart.setText(str(start))
         self.tabAnalysis.freqSteps.setText(str(steps))
         self.tabAnalysis.freqDelta.setText(str(delta))
         self.analysisTabChangeEvent()
 
-    def addLoad(self, type, load_args):
-        self.tabLoads.addLoad(self.myModel, type)
+    def addLoad(self, load_type, load_args):
+        self.tabLoads.addLoad(self.myModel, load_type)
         load = self.myModel.loads[-1]
         load.processArguments(load_args)
+
+    def addMaterial(self, material_type, material_args):
+        self.tabMaterials.addMaterial(self.myModel, material_type)
+        material = self.myModel.materials[-1]
+        material.processArguments(material_args)
+        self.updateMaterials()
+        self.myModel.updateModel(self.vtkWindow)
+
+    def addConstraint(self, contraint_type, constraint_args):
+        self.tabConstraints.addConstraint(self.myModel, contraint_type)
+        constraint = self.myModel.constraints[-1]
+        constraint.processArguments(constraint_args)
+
+    def setBlockProperties(self, block_dict):
+        n_blocks_dict = len(block_dict.keys())
+        n_blocks_model = len(self.myModel.elems)
+        assert n_blocks_dict == n_blocks_model, f'Assigned properties for {n_blocks_dict} blocks, model has {n_blocks_model} blocks.'
+
+        for block_idx, block in enumerate(block_dict.keys()):
+            self.myModel.blockElementTypeSelectors[block_idx].setCurrentText(block_dict[block][0])
+            self.myModel.blockMaterialSelectors[block_idx].setCurrentText(str(block_dict[block][1]))
+            self.myModel.blockOrientationSelectors[block_idx].setCurrentText(block_dict[block][2])
+
         
     def analysisTabChangeEvent(self):
         try: 
@@ -440,3 +464,4 @@ if __name__ == '__main__':
         myScripter = scripter(script_filename)
         myScripter.executeScript(gui)
         gui.saveAndExit()
+        
