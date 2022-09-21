@@ -216,10 +216,18 @@ class nodeConstraint(QHBoxLayout):
 
 
     def processArguments(self, constraint_args):
-        self.parameterValues = [QLineEdit(str(x)) for x in constraint_args[0]]
+        # process dof activations
+        for dof_idx, dof in enumerate(constraint_args[0]):
+            if int(dof) == 1:
+                self.subCheckButtons[dof_idx].setChecked(True)
+
+        # process dof values
+        self.parameterValues = [QLineEdit(str(x)) for x in constraint_args[1]]
+
+        # process dof nodes with specified nodeset number
         for row_id, everyCheckBox in enumerate(self.nodesetChecker):
             id = int(self.setupWindow.nodesetLayout.itemAt(row_id*2+1).widget().text().split()[1])
-            if id == constraint_args[1]:
+            if id == constraint_args[2]:
                 self.setupWindow.nodesetLayout.itemAt(row_id*2+0).widget().setChecked(True)
             self.showEdit()
             
