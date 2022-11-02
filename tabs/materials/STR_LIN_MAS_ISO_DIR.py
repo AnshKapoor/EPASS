@@ -13,7 +13,7 @@ class STR_LIN_MAS_ISO_DIR(material):
     def __init__(self, Id):
         #
         self.typeLabel = 'STRUCT linear pointmass'
-        self.type = 'STR_LIN_MAS_ISO_DIR'
+        self.type = 'pointmass'
         self.toolTip = '<b>Structural pointmass</b>'
         #
         self.parameterNames =                              ['M']

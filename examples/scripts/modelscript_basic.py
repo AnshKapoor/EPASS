@@ -24,7 +24,7 @@ python3 .\main.py --cmd --script .\examples\scripts\modelscript_basic.py
 import os
 
 ##### Open cub5 file path #####
-cub5_path = "C:/software/repositories/loadcreator/examples/scripts/beam04.cub5"                      # path to cub5 file (with forward slashes!)
+cub5_path = "R:/MS_2020_13_DFG_GRK_2075/Projektdaten/transmissibility_functions/data/simulation/simplebeam/simplebeam.cub5"                   # path to cub5 file (with forward slashes!)
 tool.loadInput(cub5_path)                    
 
 ##### Specify frequency steps #####
@@ -43,15 +43,11 @@ tool.addMaterial(
 tool.addMaterial(                                       
     'STRUCT linear visco iso',                          # material type
     [100.e9, 1, 0.01, 0.34, 0., 0., 0., 0., 2700., 0.])  # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
-tool.addMaterial(                                       
-    'STRUCT linear visco iso',                          # material type
-    [100.e9, 1, 0.01, 0.34, 0., 0., 0., 0., 2700., 0.]) # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
 
 ##### Assign element type and materials to each block #####
 tool.setBlockProperties({                               # For each block in geometry, define the following properties
     'Block_1': ('Brick8', 1, 'global'),                 # (Element type, material (number as defined above), orientation)
     'Block_2': ('Brick8', 2, 'global'),
-    'Block_3': ('Brick8', 3, 'global'),
 })
 
 ##### Define constraints #####

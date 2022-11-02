@@ -123,7 +123,7 @@ class materialsTab(QWidget):
                         newMat = STR_LIN_VIS_ORT_LAM_NOPRE(myData[1])
                     elif myData[0] == 'STR_LIN_VIS_ORT_LAM':
                         newMat = STR_LIN_VIS_ORT_LAM(myData[1])
-                    elif myData[0] == 'STR_LIN_MAS_ISO_DIR':
+                    elif myData[0] == 'pointmass':
                         newMat = STR_LIN_MAS_ISO_DIR(myData[1])
                     elif myData[0] == 'STR_LIN_SPR_ORT_DIR':
                         newMat = STR_LIN_SPR_ORT_DIR(myData[1])
