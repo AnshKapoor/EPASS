@@ -24,11 +24,11 @@ python3 .\main.py --cmd --script .\examples\scripts\modelscript_basic.py
 import os
 
 ##### Open cub5 file path #####
-cub5_path = "R:/MS_2020_13_DFG_GRK_2075/Projektdaten/transmissibility_functions/data/simulation/simplebeam/simplebeam.cub5"                   # path to cub5 file (with forward slashes!)
+cub5_path = "R:/MS_2020_13_DFG_GRK_2075/Projektdaten/transmissibility_functions/data/simulation/20230112_beam_dispersive/force1_damage2-3/beam.cub5"                   # path to cub5 file (with forward slashes!)
 tool.loadInput(cub5_path)                    
 
 ##### Specify frequency steps #####
-tool.setFrequency(10, 1000, 10)                          # (min_freq, freq_steps, freq_delta)
+tool.setFrequency(1, 1000, 1)                          # (min_freq, freq_steps, freq_delta)
 
 ##### Define load #####                         
 tool.addLoad(
@@ -36,18 +36,33 @@ tool.addLoad(
     ((0., 1., 0.),                                      # definition of point force magnitude (x_dir, y_dir, z_dir)
     1,))                                                # definition of point force nodeset
 
+# ##### Define materials #####
+# tool.addMaterial(                                       
+#     'STRUCT linear visco iso',                          # material type
+#     [100.e9, 1, 0.01, 0.3, 0.0001, 8.3333e-10, 8.3333e-10, 8.3333e-10, 1000., 0.01]) # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
+# tool.addMaterial(                                       
+#     'STRUCT linear visco iso',                          # material type
+#     [100.e9, 1, 0.01, 0.3, 0.0001, 8.3333e-10, 8.3333e-10, 8.3333e-10, 1000., 0.01])  # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
+
+
+
+
 ##### Define materials #####
 tool.addMaterial(                                       
     'STRUCT linear visco iso',                          # material type
-    [100.e9, 1, 0.01, 0.34, 0., 0., 0., 0., 2700., 0.]) # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
+    [100.e9, 1, 0.01, 0.3, 0.01, 0., 1.e-9, 0., 1000., 0.01]) # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
 tool.addMaterial(                                       
     'STRUCT linear visco iso',                          # material type
-    [100.e9, 1, 0.01, 0.34, 0., 0., 0., 0., 2700., 0.])  # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
+    [100.e9, 1, 0.01, 0.3, 0.01, 0., 1.e-9, 0., 1000., 0.01])  # material parameters: ['E' , 'type', 'eta', 'nu',  'A',  'Ix',  'Iy',  'Iz', 'rho', 't']
+
+
+
+
 
 ##### Assign element type and materials to each block #####
 tool.setBlockProperties({                               # For each block in geometry, define the following properties
-    'Block_1': ('Brick8', 1, 'global'),                 # (Element type, material (number as defined above), orientation)
-    'Block_2': ('Brick8', 2, 'global'),
+    'Block_1': ('BeamTimoshenko', 1, 'global'),         # (Element type, material (number as defined above), orientation)
+    'Block_2': ('BeamTimoshenko', 2, 'global'),
 })
 
 ##### Define constraints #####

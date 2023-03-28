@@ -112,6 +112,7 @@ class loadGUI(QMainWindow):
                     self.tabMaterials.removeAllMaterials(self.myModel)
                     self.myModel.reset()
                 self.vtkWindow.clearWindow()
+                fileName = fileName.replace("\\", "/")
                 self.myModel.name = fileName.split('/')[-1].split('.')[0]
                 self.myModel.path =  '/'.join(fileName.split('/')[:-1])
                 self.myModel.fileEnding = fileName.split('.')[-1]
@@ -139,6 +140,7 @@ class loadGUI(QMainWindow):
     def openCub5(self): 
         fileName = self.myModel.path + '/' + self.myModel.name + '.cub5'
         newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+
         reply  = QMessageBox.Yes
         if CMD_MODE:
             self.myModel.hdf5File = h5py.File(newFile, 'w')
@@ -460,7 +462,7 @@ if __name__ == '__main__':
         for o,a in opts:
             if o in ("-s", "--script"):
                 script_filename = a
-    
+
         myScripter = scripter(script_filename)
         myScripter.executeScript(gui)
         gui.saveAndExit()
