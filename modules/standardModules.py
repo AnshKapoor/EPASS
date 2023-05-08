@@ -10,7 +10,7 @@ import math
 from standardWidgets import progressWindow
 
 def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, orderIdx, startIdxPerNode, elemBlock, noOfNodesPerElem, derivative=0):
-  dofIdxOfElemNodes = np.zeros((elemBlock.attrs['N'],noOfNodesPerElem), dtype=np.int)
+  dofIdxOfElemNodes = np.zeros((elemBlock.attrs['N'],noOfNodesPerElem), dtype=int)
   for elemIdx in range(elemBlock.attrs['N']):
     #elemID = block[elemIdx,0]
     for n, node in enumerate(elemBlock[elemIdx,1:noOfNodesPerElem+1]): # Saves the idx of according first dof of patch/element
@@ -77,7 +77,7 @@ def calcSoundPower(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, ord
   normalOfElems = np.zeros((elemBlock.attrs['N'],3))
   centerOfElems = np.zeros((elemBlock.attrs['N'],3))
   areaOfElems = np.zeros((elemBlock.attrs['N']))
-  dofIdxOfPatchNodes = np.zeros((elemBlock.attrs['N'],4), dtype=np.int)
+  dofIdxOfPatchNodes = np.zeros((elemBlock.attrs['N'],4), dtype=int)
   progWin = progressWindow(elemBlock.attrs['N']-1, 'Calculating areas and normals of block ' + str(elemBlock.attrs['Id']))
   for elemIdx in range(elemBlock.attrs['N']):
     #elemID = block[elemIdx,0]
