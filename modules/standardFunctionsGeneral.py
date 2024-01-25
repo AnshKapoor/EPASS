@@ -170,7 +170,7 @@ def getElementDof(elemType):
         return ['displacement z', 'rotation x', 'rotation y']
     elif elemType in ['Disc4','Disc9']:
         return ['displacement x', 'displacement y']
-    elif elemType in ['PlShell4','PlShell9','PlShell9pre']: 
+    elif elemType in ['PlShell3','PlShell4','PlShell9','PlShell9pre']: 
         return ['displacement x', 'displacement y', 'displacement z', 'rotation x', 'rotation y', 'rotation z']
     elif elemType in ['Fluid8','Fluid27']:
         return ['sound pressure']
@@ -209,6 +209,8 @@ def identifyElemType(elemType):
         return 'NODES', 'Pointmass', 2; 
     elif elemType[0] == 4: # beam elements
         return 'EDGE_2', 'BeamBernoulli', 3;
+    elif elemType[0] == 16: # triangular elements
+        return 'TRI_3', 'PlShell3', 4;
     else:
         return 'notSupported', [], 0;
 
@@ -227,6 +229,8 @@ def identifyAlternativeElemTypes(elemType):
         return ['Pointmass','SpringBCx','SpringBCy','SpringBCz','SpringBCrx','SpringBCry','SpringBCrz']
     elif elemType in ['Beam','BeamBernoulli','BeamBernoulli10','BeamBernoulli12','BeamTimoshenko', 'BeamTimoshenko10', 'BeamTimoshenko12']:
         return ['Beam','BeamBernoulli','BeamBernoulli10','BeamBernoulli12','BeamTimoshenko', 'BeamTimoshenko10', 'BeamTimoshenko12']
+    elif elemType in ['PlShell3']: 
+        return ['PlShell3']
     else:
         return [];
 
@@ -249,7 +253,7 @@ def getPossibleInterfacePartner(elemType):
         return []
     
 def isPlateType(elemType):
-    if elemType in ['PlShell9', 'PlShell9pre','DSG9','PlShell4','DSG4']:
+    if elemType in ['PlShell3','PlShell9', 'PlShell9pre','DSG9','PlShell4','DSG4']:
         return 1
     else:
         return 0
@@ -269,6 +273,8 @@ def isStructure3DType(elemType):
 def getNodeIdxOfFaces(elemType):
     if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']:
         return np.array([[0,1,2,3,4,5,6,7,8]]) # Face 0
+    if elemType in ['PlShell3']:
+        return np.array([[0,1,2]]) # Face 0
     elif elemType in ['Fluid27','Brick27']:
         return np.array([[0,1,5,4,8,13,16,12,25],
                          [2,3,7,6,19,15,18,14,26],
@@ -291,6 +297,8 @@ def getNodeIdxOfFaces(elemType):
 def getVTKElem(elpasoElemType):
     if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9','PlShell9pre','Disc9','Fluid2d9']:
         return vtk.vtkQuad(), 9, 4
+    if elpasoElemType in ['PlShell3']:
+        return vtk.vtkTriangle(), 5, 3
     elif elpasoElemType in ['Fluid8','Fluid27','Brick8','Brick20','Brick27']:
         return vtk.vtkHexahedron(), 12, 8
     elif elpasoElemType in ['Spring','Beam','BeamBernoulli','BeamBernoulli10','BeamBernoulli12','BeamTimoshenko', 'BeamTimoshenko10', 'BeamTimoshenko12']:
