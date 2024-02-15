@@ -26,5 +26,5 @@ class STR_LIN_SPR_ORT_DIR(material):
         #
         super(STR_LIN_SPR_ORT_DIR, self).__init__(Id)
         #
-
-
+    def processArguments(self, material_args):
+        self.parameterValues = [QLineEdit(str(x)) for x in material_args]
