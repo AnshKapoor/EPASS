@@ -180,7 +180,7 @@ class elemLoad(QHBoxLayout):
             elif self.type == 'vn':
               dataSet = elemLoadsGroup.create_dataset('mtxFemElemLoad'+str(self.removeButton.id+1) + '_' + str(int(surfaceElem)), data=[])
               dataSet.attrs['Face'] = np.uint64(self.surfaceFaces[nE]) # Assign element load to element
-              dataSet.attrs['vn'] = np.float(self.amp.text()) # Assign element load to element
+              dataSet.attrs['vn'] = float(self.amp.text()) # Assign element load to element
               dataSet.attrs['FreqCount'] = np.uint64(0)
             else:
               frequencies = self.myModel.frequencies
