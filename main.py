@@ -16,13 +16,19 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 #
 dirname, filename = os.path.split(os.path.abspath(__file__))
+sys.path.append(dirname + '/parser')
 sys.path.append(dirname + '/modules')
 sys.path.append(dirname + '/loads')
 sys.path.append(dirname + '/tabs')
 sys.path.append(dirname + '/tabs/materials')
 sys.path.append(dirname + '/tabs/constraints')
+# parsers
+from cParserCub5 import cParserCub5
+from cParserElpasoHdf5 import cParserElpasoHdf5
+from cParserGmsh import cParserGmsh
+from cParserSalomeHdf5 import cParserSalomeHdf5
 #
-from standardFunctionsGeneral import readNodes, readElements, readSetup
+#from standardFunctionsGeneral import readNodes, readElements, readSetup
 from standardWidgets import ak3LoadButton, sepLine, saveAndExitButton, messageboxOK
 #
 from model import model
@@ -89,10 +95,10 @@ class loadGUI(QMainWindow):
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","hdf5 file (*.hdf5 *.cub5)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "", options=options)
         if fileName:
             fileEnding = fileName.split('.')[-1]
-            if fileEnding in ['cub5', 'hdf5']:
+            if fileEnding in ['cub5', 'hdf5','msh']:
                 # cub5 file from Trelis/coreform opened
                 if self.myModel.hdf5File: 
                     self.myModel.hdf5File.close()
@@ -103,10 +109,23 @@ class loadGUI(QMainWindow):
                 self.myModel.name = fileName.split('/')[-1].split('.')[0]
                 self.myModel.path =  '/'.join(fileName.split('/')[:-1])
                 self.myModel.fileEnding = fileName.split('.')[-1]
+                
                 if fileEnding == 'cub5':
-                    success = self.openCub5()
+                    self.myModel.input = 'cub5'
                 elif fileEnding == 'hdf5':
-                    success = self.openHdf5()
+                    # check if Elpaso input or Salome input
+                    mode = 'elPaSo'
+                    if mode == 'elPaSo':
+                        self.myModel.input = 'elPaSo'
+                    elif mode == 'Salome':
+                        self.myModel.input = 'Salome'
+                    else:
+                        print(f'Unknown >{mode}< hdf5 parser mode!')
+                        exit(-1)
+                elif fileEnding == 'msh':
+                    self.myModel.input = 'Gmsh'
+
+                success = self.openMeshData()
                 # Update 2D / 3D windows
                 if success:
                     self.myModel.updateModel(self.vtkWindow)
@@ -122,44 +141,53 @@ class loadGUI(QMainWindow):
                 self.updateTabs()
                 self.statusBar().showMessage('Model loaded')
             else:
-                self.statusBar().showMessage('Unknown file ending (cub5 and hdf5 supported) - no model loaded!')
+                self.statusBar().showMessage('Unknown file ending - no model loaded!')
     
-    def openCub5(self): 
-        fileName = self.myModel.path + '/' + self.myModel.name + '.cub5'
+    # @brief general function to open mesh data
+    def openMeshData(self): 
         newFile = self.myModel.path + '/' + self.myModel.name + '.hdf5'
         reply  = QMessageBox.Yes
         if os.path.isfile(newFile):
             reply = QMessageBox.question(self, 'File existing', 'Overwrite ' + str(newFile) + '?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            self.myModel.hdf5File = h5py.File(newFile, 'w')
+            if self.myModel.input == 'cub5':
+                fileName = self.myModel.path + '/' + self.myModel.name + '.cub5'
+                self.myModel.hdf5File = h5py.File(newFile, 'w')
+                parser = cParserCub5(fileName)
+            elif self.myModel.input == 'elPaSo':
+                fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+                self.myModel.hdf5File = h5py.File(newFile, 'r+')
+                parser = cParserElpasoHdf5(fileName)
+            elif self.myModel.input == 'Salome':
+                newFile = self.myModel.path + '/' + self.myModel.name + '_elpaso.hdf5'
+                fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+                self.myModel.hdf5File = h5py.File(newFile, 'w')
+                parser = cParserSalomeHdf5(fileName)
+            elif self.myModel.input == 'Gmsh':
+                fileName = self.myModel.path + '/' + self.myModel.name + '.msh'
+                self.myModel.hdf5File = h5py.File(newFile, 'w')
+                parser = cParserGmsh(fileName)
+            else:
+                messageboxOK('Error',f'Input mode {self.myModel.input} not recognised')
+                return 0
+
             atexit.register(self.myModel.hdf5File.close)
             # relevant cub5 data is transferred to new hdf5 file
             try: 
-                with h5py.File(fileName,'r') as cub5File:
-                    readElements(self.myModel, self.myModel.hdf5File, cub5File)
-                    readNodes(self.myModel, self.myModel.hdf5File, cub5File)
-                    readSetup(self.myModel, self.myModel.hdf5File, cub5File)
-                messageboxOK('Ready','cub5 successfully transferred to hdf5 file')
+                parser.readElements(self.myModel)
+                parser.readNodes(self.myModel)
+                parser.readSetup(self.myModel)
+                messageboxOK('Ready',f'{self.myModel.input} file successfully transferred to hdf5 file')
                 return 1
             except:
                 self.myModel.hdf5File.close()
                 os.remove(newFile)
-                messageboxOK('Error','cub5 file not transferred')
+                messageboxOK('Error',f'{self.myModel.input} file not transferred')
                 return 0
         else:
-            messageboxOK('cub5 file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
+            messageboxOK(f'{self.myModel.input} file selected','HDF5 file ' + self.myModel.name + ' cannot be created as it is already existing!\n Select hdf5 file directly or clean folder.')
             return 0
-    
-    def openHdf5(self):
-        fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
-        self.myModel.hdf5File = h5py.File(fileName, 'r+')
-        atexit.register(self.myModel.hdf5File.close)
-        readElements(self.myModel, self.myModel.hdf5File)
-        readNodes(self.myModel, self.myModel.hdf5File)
-        readSetup(self.myModel, self.myModel.hdf5File)
-        messageboxOK('Ready','hdf5 file successfully loaded')
-        return 1
-        
+            
     def setupGui(self):
         """
         Initialisation of gui (main window content)
