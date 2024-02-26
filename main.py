@@ -95,7 +95,7 @@ class loadGUI(QMainWindow):
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","preprocessor supported files (*.hdf5 *.cub5 *.msh)", options=options)
         if fileName:
             fileEnding = fileName.split('.')[-1]
             if fileEnding in ['cub5', 'hdf5','msh']:
