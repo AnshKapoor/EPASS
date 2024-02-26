@@ -27,6 +27,7 @@ from cParserCub5 import cParserCub5
 from cParserElpasoHdf5 import cParserElpasoHdf5
 from cParserGmsh import cParserGmsh
 from cParserSalomeHdf5 import cParserSalomeHdf5
+from cParserAbaqusInp import cParserAbaqusInp
 #
 #from standardFunctionsGeneral import readNodes, readElements, readSetup
 from standardWidgets import ak3LoadButton, sepLine, saveAndExitButton, messageboxOK
@@ -95,10 +96,10 @@ class loadGUI(QMainWindow):
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","preprocessor supported files (*.hdf5 *.cub5 *.msh)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","preprocessor supported files (*.hdf5 *.cub5 *.msh *.inp)", options=options)
         if fileName:
             fileEnding = fileName.split('.')[-1]
-            if fileEnding in ['cub5', 'hdf5','msh']:
+            if fileEnding in ['cub5', 'hdf5','msh','inp']:
                 # cub5 file from Trelis/coreform opened
                 if self.myModel.hdf5File: 
                     self.myModel.hdf5File.close()
@@ -124,6 +125,8 @@ class loadGUI(QMainWindow):
                         exit(-1)
                 elif fileEnding == 'msh':
                     self.myModel.input = 'Gmsh'
+                elif fileEnding == 'inp':
+                    self.myModel.input = 'Abaqus'
 
                 success = self.openMeshData()
                 # Update 2D / 3D windows
@@ -167,16 +170,23 @@ class loadGUI(QMainWindow):
                 fileName = self.myModel.path + '/' + self.myModel.name + '.msh'
                 self.myModel.hdf5File = h5py.File(newFile, 'w')
                 parser = cParserGmsh(fileName)
+            elif self.myModel.input == 'Abaqus':
+                fileName = self.myModel.path + '/' + self.myModel.name + '.inp'
+                self.myModel.hdf5File = h5py.File(newFile, 'w')
+                parser = cParserAbaqusInp(fileName)
             else:
                 messageboxOK('Error',f'Input mode {self.myModel.input} not recognised')
                 return 0
 
             atexit.register(self.myModel.hdf5File.close)
+            parser.readElements(self.myModel)
+            parser.readNodes(self.myModel)
+            parser.readSetup(self.myModel)
             # relevant cub5 data is transferred to new hdf5 file
             try: 
-                parser.readElements(self.myModel)
-                parser.readNodes(self.myModel)
-                parser.readSetup(self.myModel)
+                # parser.readElements(self.myModel)
+                # parser.readNodes(self.myModel)
+                # parser.readSetup(self.myModel)
                 messageboxOK('Ready',f'{self.myModel.input} file successfully transferred to hdf5 file')
                 return 1
             except:
