@@ -197,6 +197,8 @@ def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem
 def identifyElemType(elemType): 
     if elemType[0] == 20: #Quadrilateral with 4 nodes
         return 'QUAD_4', 'PlShell4', 5;
+    if elemType[0] == 21: #Quadrilateral with 8 nodes
+        return 'QUAD_8', 'DSG8', 9;
     elif elemType[0] == 22: # Quadrilateral with 9 nodes
         return 'QUAD_9', 'PlShell9', 10;
     elif elemType[0] == 40: # Hexahedron with 8 nodes
@@ -219,6 +221,8 @@ def identifyAlternativeElemTypes(elemType):
         return ['PlShell4','DSG4'];
     elif elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']: 
         return ['PlShell9pre','PlShell9','DSG9','Disc9','Fluid2d9'];
+    elif elemType in ['DSG8']:
+        return ['DSG8'];
     elif elemType in ['Fluid8','Brick8']:
         return ['Fluid8','Brick8'];
     elif elemType in ['Fluid27','Brick27']:
@@ -253,7 +257,7 @@ def getPossibleInterfacePartner(elemType):
         return []
     
 def isPlateType(elemType):
-    if elemType in ['PlShell3','PlShell9', 'PlShell9pre','DSG9','PlShell4','DSG4']:
+    if elemType in ['PlShell3','PlShell9', 'PlShell9pre','DSG9','PlShell4','DSG4','DSG8']:
         return 1
     else:
         return 0
@@ -273,6 +277,8 @@ def isStructure3DType(elemType):
 def getNodeIdxOfFaces(elemType):
     if elemType in ['PlShell9','PlShell9pre','DSG9','Disc9','Fluid2d9']:
         return np.array([[0,1,2,3,4,5,6,7,8]]) # Face 0
+    elif elemType in ['DSG8']:
+        return np.array([[0,1,2,3,4,5,6,7]]) # Face 0
     if elemType in ['PlShell3']:
         return np.array([[0,1,2]]) # Face 0
     elif elemType in ['Fluid27','Brick27']:
@@ -295,7 +301,7 @@ def getNodeIdxOfFaces(elemType):
         return []
 
 def getVTKElem(elpasoElemType):
-    if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9','PlShell9pre','Disc9','Fluid2d9']:
+    if elpasoElemType in ['DSG4','DSG9','PlShell4','PlShell9','PlShell9pre','Disc9','Fluid2d9','DSG8']:
         return vtk.vtkQuad(), 9, 4
     if elpasoElemType in ['PlShell3']:
         return vtk.vtkTriangle(), 5, 3

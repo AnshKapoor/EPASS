@@ -32,6 +32,18 @@ class cParserAbaqusInp:
 
         myModel.nodes = hdf5File['Nodes/mtxFemNodes']
         myModel.nodesInv = dict([[ID, n] for n, ID in enumerate(myModel.nodes[:,'Ids'])])
+        
+        # Nodesets 
+        g = hdf5File.create_group('Nodesets')
+        for id, every_key in enumerate(meshAbaqus.point_sets):
+            nodesetID = id + 1
+            nodesetValue = np.array(meshAbaqus.point_sets[every_key]).reshape(-1,1)
+            g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
+            g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
+        
+        for nodeset in hdf5File['Nodesets'].keys():
+            myModel.nodeSets.append(hdf5File['Nodesets/' + nodeset])
+
                 
     # @brief read elements directly
     def readElements(self, myModel):
@@ -44,7 +56,11 @@ class cParserAbaqusInp:
         g = hdf5File.create_group('Elements')
         N = elem.shape[0]
         M = elem.shape[1]+1
-        elemType = 'DSG4'
+
+        if elem.shape[1] == 4:
+            elemType = 'DSG4'
+        elif elem.shape[1] == 8:
+            elemType = 'DSG8'
 
         dataSet = createInitialBlockDataSet(g, elemType, 1, N, M)
         dataSet[:,0] = np.arange(elem.shape[0])+1
