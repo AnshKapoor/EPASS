@@ -37,7 +37,8 @@ class cParserGmsh:
         g = hdf5File.create_group('Nodesets')
         for id, every_key in enumerate(meshGmsh.cell_sets):
             nodesetID = id + 1
-            nodesetValue = np.array(meshGmsh.cell_sets[every_key]).reshape(-1,1)
+            nodesetValue = np.unique(meshGmsh.cells_dict[list(meshGmsh.cell_sets_dict[every_key].keys())[0]]).reshape(-1,1)
+            nodesetValue=nodesetValue+1
             g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
             g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
         
