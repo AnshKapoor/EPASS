@@ -26,7 +26,7 @@ sys.path.append(dirname + '/tabs/constraints')
 from cParserCub5 import cParserCub5
 from cParserElpasoHdf5 import cParserElpasoHdf5
 from cParserGmsh import cParserGmsh
-from cParserSalomeHdf5 import cParserSalomeHdf5
+from cParserSalomeMed import cParserSalomeMed
 from cParserAbaqusInp import cParserAbaqusInp
 #
 #from standardFunctionsGeneral import readNodes, readElements, readSetup
@@ -96,10 +96,10 @@ class loadGUI(QMainWindow):
         """
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","preprocessor supported files (*.hdf5 *.cub5 *.msh *.inp)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","preprocessor supported files (*.hdf5 *.cub5 *.msh *.inp *.med)", options=options)
         if fileName:
             fileEnding = fileName.split('.')[-1]
-            if fileEnding in ['cub5', 'hdf5','msh','inp']:
+            if fileEnding in ['cub5', 'hdf5','msh','inp','med']:
                 # cub5 file from Trelis/coreform opened
                 if self.myModel.hdf5File: 
                     self.myModel.hdf5File.close()
@@ -114,19 +114,13 @@ class loadGUI(QMainWindow):
                 if fileEnding == 'cub5':
                     self.myModel.input = 'cub5'
                 elif fileEnding == 'hdf5':
-                    # check if Elpaso input or Salome input
-                    mode = 'elPaSo'
-                    if mode == 'elPaSo':
-                        self.myModel.input = 'elPaSo'
-                    elif mode == 'Salome':
-                        self.myModel.input = 'Salome'
-                    else:
-                        print(f'Unknown >{mode}< hdf5 parser mode!')
-                        exit(-1)
+                    self.myModel.input = 'elPaSo'
                 elif fileEnding == 'msh':
                     self.myModel.input = 'Gmsh'
                 elif fileEnding == 'inp':
                     self.myModel.input = 'Abaqus'
+                elif fileEnding == 'med':
+                    self.myModel.input = 'Salome'
 
                 success = self.openMeshData()
                 # Update 2D / 3D windows
@@ -162,10 +156,9 @@ class loadGUI(QMainWindow):
                 self.myModel.hdf5File = h5py.File(newFile, 'r+')
                 parser = cParserElpasoHdf5(fileName)
             elif self.myModel.input == 'Salome':
-                newFile = self.myModel.path + '/' + self.myModel.name + '_elpaso.hdf5'
-                fileName = self.myModel.path + '/' + self.myModel.name + '.hdf5'
+                fileName = self.myModel.path + '/' + self.myModel.name + '.med'
                 self.myModel.hdf5File = h5py.File(newFile, 'w')
-                parser = cParserSalomeHdf5(fileName)
+                parser = cParserSalomeMed(fileName)
             elif self.myModel.input == 'Gmsh':
                 fileName = self.myModel.path + '/' + self.myModel.name + '.msh'
                 self.myModel.hdf5File = h5py.File(newFile, 'w')
