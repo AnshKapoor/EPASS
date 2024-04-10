@@ -89,6 +89,12 @@ class cParserSalomeMed:
         dataSet[:,1:] = elem
 
         myModel.elems.append(dataSet)
+
+        
+        g = hdf5File.create_group('Elementsets')
+        for elemset in hdf5File['Elementsets'].keys():
+            myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
+
         
     # @brief Read setup from Salome med file
     def readSetup(self, myModel):
