@@ -4,7 +4,8 @@
 
 # python modules
 import numpy as np
-import meshio
+#import meshio
+from ThirdParty import meshio
 
 # project imports
 from modules.standardFunctionsGeneral import identifyElemType, createInitialBlockDataSet
