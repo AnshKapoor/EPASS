@@ -68,7 +68,7 @@ class graphWindow(FigureCanvas):
       self.fig.savefig(fileName, dpi = 300)
       
     def saveDataAscii(self, fileName):
-      if self.currentPlotX is not 0: 
+      if self.currentPlotX != 0: 
         myArray = np.zeros((len(self.currentPlotX), 2))
         myArray[:,0] = self.currentPlotX
         myArray[:,1] = self.currentPlotY
