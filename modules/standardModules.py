@@ -20,8 +20,8 @@ def calcMeanSquared(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, or
       else:
         dofIdxOfElemNodes[elemIdx,n] = fieldIndices[np.argmax(fieldIndices>tempStartIdxOfNode)]
   noOfStateResults = len(hdf5ResultsFileStateGroup.keys())
-  x = np.zeros((noOfStateResults), dtype=np.float)
-  y = np.zeros((noOfStateResults), dtype=np.float)
+  x = np.zeros((noOfStateResults), dtype=float)
+  y = np.zeros((noOfStateResults), dtype=float)
   counter = 0
   if derivative==0:
     progWin = progressWindow(noOfStateResults-1, 'Calculating mean squared values')

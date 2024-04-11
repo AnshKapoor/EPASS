@@ -21,6 +21,12 @@ class cParserGmsh:
 
         meshGmsh = meshio.read(self.filename)
         pts = np.array(meshGmsh.points) # points
+        ########
+        LoadPt=pts[0]
+        pts= np.delete(pts,(0),axis=0)
+        myID=np.where((np.abs(pts-LoadPt)<0.01).all(axis=1))
+        myID=myID[0][0]+2 # add two because of index shift!
+        ########
         
         g = hdf5File.create_group('Nodes')
         comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
@@ -39,6 +45,10 @@ class cParserGmsh:
             nodesetID = id + 1
             nodesetValue = np.unique(meshGmsh.cells_dict[list(meshGmsh.cell_sets_dict[every_key].keys())[0]]).reshape(-1,1)
             nodesetValue=nodesetValue+1
+            ##########################
+            if every_key=='LoadPt':
+                nodesetValue=[[myID]]
+            ##########################
             g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
             g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
         
@@ -54,7 +64,7 @@ class cParserGmsh:
         hdf5File = myModel.hdf5File
         meshGmsh = meshio.read(self.filename)
         elem = np.array(meshGmsh.cells[-1].data)   # elements
-        elem = elem + 1 # zero based to one based
+        #elem = elem + 1 # zero based to one based
         
         g = hdf5File.create_group('Elements')
         N = elem.shape[0]
@@ -70,6 +80,7 @@ class cParserGmsh:
         dataSet[:,1:] = elem
 
         myModel.elems.append(dataSet)
+        g = hdf5File.create_group('Elementsets')
         
     # @brief Read setup from Gmsh file
     def readSetup(self, myModel):
