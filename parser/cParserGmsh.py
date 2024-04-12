@@ -21,10 +21,12 @@ class cParserGmsh:
 
         meshGmsh = meshio.read(self.filename)
         pts = np.array(meshGmsh.points) # points
-        ########
+        ######## only for ONE load point !!!
         LoadPt=pts[0]
         pts= np.delete(pts,(0),axis=0)
-        myID=np.where((np.abs(pts-LoadPt)<0.01).all(axis=1))
+        # myID=np.where((np.abs(pts-LoadPt)<0.01).all(axis=1))
+        norm = np.linalg.norm(np.abs(LoadPt-pts),axis=1)
+        myID = np.where(norm == norm.min())
         myID=myID[0][0]+2 # add two because of index shift!
         ########
         
@@ -59,7 +61,7 @@ class cParserGmsh:
     # @brief read elements directly from Gmsh hdf5
     def readElements(self, myModel):
 
-    ###### so far only for one elemtype and block!!!!!!!!!!!!!!!!!!
+    ###### so far only for ONE elemtype and block !!!
     #### nodesets for bc and load
         hdf5File = myModel.hdf5File
         meshGmsh = meshio.read(self.filename)
