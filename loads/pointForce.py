@@ -88,7 +88,7 @@ class pointForce(nodeLoad):
         recalculates data with new input parameters
         """
         self.varSave = [self.dirX.text(), self.dirY.text(), self.dirZ.text()]
-        var = self.setupWindow.exec_()
+        var = self.setupWindow.exec()
         if var == 0: # reset values
             self.resetValues()
         elif var == 1: # set new values
@@ -163,3 +163,13 @@ class pointForce(nodeLoad):
         self.arrowDataLoad.Modified()
         nodes = 0
     
+    def processArguments(self, load_args):
+        self.dirX.setText(str(load_args[0][0]))
+        self.dirY.setText(str(load_args[0][1]))
+        self.dirZ.setText(str(load_args[0][2]))
+
+        for row_id, everyCheckBox in enumerate(self.nodesetChecker):
+            id = int(self.setupWindow.nodesetLayout.itemAt(row_id*2+1).widget().text().split()[1])
+            if id == load_args[1]:
+                self.setupWindow.nodesetLayout.itemAt(row_id*2+0).widget().setChecked(True)
+        self.showEdit()

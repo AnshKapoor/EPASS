@@ -191,6 +191,7 @@ class model(QWidget): # Saves a model
                         item.setFlags( Qt.ItemIsSelectable |  Qt.ItemIsEnabled )
                     item.setTextAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
                     self.blockInfo.setItem(m, n, item)
+
                 self.blockInfo.setCellWidget(m, 3, self.blockElementTypeSelectors[-1])
                 self.blockInfo.setCellWidget(m, 4, self.blockMaterialSelectors[-1])
                 self.blockInfo.setCellWidget(m, 5, self.blockOrientationSelectors[-1])

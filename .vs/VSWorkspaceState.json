@@ -2,9 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\modules",
-    "\\modulesAnalysis",
-    "\\tabs"
+    "\\tabs\\materials"
   ],
-  "SelectedNode": "\\tabs\\constraints",
+  "SelectedNode": "\\modules\\scriptModule.py",
   "PreviewInSolutionExplorer": false
 }
