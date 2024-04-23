@@ -27,7 +27,7 @@ class cParserGmsh:
         # myID=np.where((np.abs(pts-LoadPt)<0.01).all(axis=1))
         norm = np.linalg.norm(np.abs(LoadPt-pts),axis=1)
         myID = np.where(norm == norm.min())
-        myID=myID[0][0]+2 # add two because of index shift!
+        myID=myID[0][0]+1 #+2 # add two because of index shift! ## add only +1 since LoadPt is already deleted from list; i.e. no offset in the list
         ########
         
         g = hdf5File.create_group('Nodes')
@@ -44,9 +44,9 @@ class cParserGmsh:
         # Nodesets 
         g = hdf5File.create_group('Nodesets')
         for id, every_key in enumerate(meshGmsh.cell_sets):
-            nodesetID = id + 1
+            nodesetID = id + 1  
             nodesetValue = np.unique(meshGmsh.cells_dict[list(meshGmsh.cell_sets_dict[every_key].keys())[0]]).reshape(-1,1)
-            nodesetValue=nodesetValue+1
+            #nodesetValue=nodesetValue+1
             ##########################
             if every_key=='LoadPt':
                 nodesetValue=[[myID]]
