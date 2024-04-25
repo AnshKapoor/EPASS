@@ -21,6 +21,7 @@ class cParserGmsh:
 
         meshGmsh = meshio.read(self.filename)
         pts = np.array(meshGmsh.points) # points
+        
         ######## only for ONE load point !!!
         LoadPt=pts[0]
         pts= np.delete(pts,(0),axis=0)
@@ -76,6 +77,8 @@ class cParserGmsh:
             elemType = 'DSG4'
         elif elem.shape[1] == 9:
             elemType = 'DSG9'
+        elif elem.shape[1] == 27:
+            elemType = 'Fluid27'
 
         dataSet = createInitialBlockDataSet(g, elemType, 1, N, M)
         dataSet[:,0] = np.arange(elem.shape[0])+1
