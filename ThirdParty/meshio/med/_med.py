@@ -24,6 +24,7 @@ meshio_to_med_type = {
     "tetra10": "T10",
     "hexahedron": "HE8",
     "hexahedron20": "H20",
+    "hexahedron27": "H27",
     "pyramid": "PY5",
     "pyramid13": "P13",
     "wedge": "PE6",

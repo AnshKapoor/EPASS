@@ -79,11 +79,13 @@ class cParserSalomeMed:
         g = hdf5File.create_group('Elements')
         N = elem.shape[0]
         M = elem.shape[1]+1
-
+        print(elem.shape[1])
         if elem.shape[1] == 4:
             elemType = 'DSG4'
         elif elem.shape[1] == 9:
             elemType = 'DSG9'
+        elif elem.shape[1] == 27:
+            elemType = 'Fluid27'
 
         dataSet = createInitialBlockDataSet(g, elemType, 1, N, M)
         dataSet[:,0] = np.arange(elem.shape[0])+1

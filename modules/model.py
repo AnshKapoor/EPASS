@@ -178,7 +178,6 @@ class model(QWidget): # Saves a model
                 cells = np.zeros((block.shape[0],nnodes+1), dtype=np.int64)
                 cells[:,0] = nnodes
                 for elemCount in range(block.shape[0]):
-                    print(elemCount)
                     cells[elemCount,1:] = [self.nodesInv[ID] for ID in block[elemCount,1:(nnodes+1)]]
                 vtkCells.SetCells(block.shape[0], numpy_support.numpy_to_vtk(cells, deep = 1, array_type = vtk.vtkIdTypeArray().GetDataType()))
                 newGrid.SetCells(newElemTypeId, vtkCells)

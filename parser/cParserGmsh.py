@@ -23,12 +23,12 @@ class cParserGmsh:
         pts = np.array(meshGmsh.points) # points
         
         ######## only for ONE load point !!!
-        LoadPt=pts[0]
-        pts= np.delete(pts,(0),axis=0)
-        # myID=np.where((np.abs(pts-LoadPt)<0.01).all(axis=1))
-        norm = np.linalg.norm(np.abs(LoadPt-pts),axis=1)
-        myID = np.where(norm == norm.min())
-        myID=myID[0][0]+1 #+2 # add two because of index shift! ## add only +1 since LoadPt is already deleted from list; i.e. no offset in the list
+        if 'LoadPt' in list(meshGmsh.cell_sets.keys()):
+            LoadPt=pts[0]
+            pts= np.delete(pts,(0),axis=0)
+            norm = np.linalg.norm(np.abs(LoadPt-pts),axis=1)
+            myID = np.where(norm == norm.min())
+            myID=myID[0][0]+1  # add only +1 since LoadPt is already deleted from list; i.e. no offset in the list
         ########
         
         g = hdf5File.create_group('Nodes')
@@ -47,10 +47,11 @@ class cParserGmsh:
         for id, every_key in enumerate(meshGmsh.cell_sets):
             nodesetID = id + 1  
             nodesetValue = np.unique(meshGmsh.cells_dict[list(meshGmsh.cell_sets_dict[every_key].keys())[0]]).reshape(-1,1)
-            #nodesetValue=nodesetValue+1
             ##########################
             if every_key=='LoadPt':
                 nodesetValue=[[myID]]
+            if 'LoadPt' not in list(meshGmsh.cell_sets.keys()):
+                nodesetValue=nodesetValue+1
             ##########################
             g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
             g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
@@ -79,6 +80,10 @@ class cParserGmsh:
             elemType = 'DSG9'
         elif elem.shape[1] == 27:
             elemType = 'Fluid27'
+            elem = elem + 1
+        elif elem.shape[1] == 8:
+            elemType = 'Fluid8'
+            elem = elem + 1
 
         dataSet = createInitialBlockDataSet(g, elemType, 1, N, M)
         dataSet[:,0] = np.arange(elem.shape[0])+1
