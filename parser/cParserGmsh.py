@@ -22,6 +22,15 @@ class cParserGmsh:
         meshGmsh = meshio.read(self.filename)
         pts = np.array(meshGmsh.points) # points
         
+        ######## only for ONE load point !!!
+        if 'LoadPt' in list(meshGmsh.cell_sets.keys()):
+            LoadPt=pts[0]
+            pts= np.delete(pts,(0),axis=0)
+            norm = np.linalg.norm(np.abs(LoadPt-pts),axis=1)
+            myID = np.where(norm == norm.min())
+            myID=myID[0][0]+1  # add only +1 since LoadPt is already deleted from list; i.e. no offset in the list
+        ########
+        
         g = hdf5File.create_group('Nodes')
         comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
         dataSet = g.create_dataset('mtxFemNodes', (pts.shape[0],), comp_type)
@@ -36,8 +45,14 @@ class cParserGmsh:
         # Nodesets 
         g = hdf5File.create_group('Nodesets')
         for id, every_key in enumerate(meshGmsh.cell_sets):
-            nodesetID = id + 1
-            nodesetValue = np.array(meshGmsh.cell_sets[every_key]).reshape(-1,1)
+            nodesetID = id + 1  
+            nodesetValue = np.unique(meshGmsh.cells_dict[list(meshGmsh.cell_sets_dict[every_key].keys())[0]]).reshape(-1,1)
+            ##########################
+            if every_key=='LoadPt':
+                nodesetValue=[[myID]]
+            if 'LoadPt' not in list(meshGmsh.cell_sets.keys()):
+                nodesetValue=nodesetValue+1
+            ##########################
             g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
             g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
         
@@ -48,12 +63,12 @@ class cParserGmsh:
     # @brief read elements directly from Gmsh hdf5
     def readElements(self, myModel):
 
-    ###### so far only for one elemtype and block!!!!!!!!!!!!!!!!!!
+    ###### so far only for ONE elemtype and block !!!
     #### nodesets for bc and load
         hdf5File = myModel.hdf5File
         meshGmsh = meshio.read(self.filename)
         elem = np.array(meshGmsh.cells[-1].data)   # elements
-        elem = elem + 1 # zero based to one based
+        #elem = elem + 1 # zero based to one based
         
         g = hdf5File.create_group('Elements')
         N = elem.shape[0]
@@ -63,12 +78,19 @@ class cParserGmsh:
             elemType = 'DSG4'
         elif elem.shape[1] == 9:
             elemType = 'DSG9'
+        elif elem.shape[1] == 27:
+            elemType = 'Fluid27'
+            elem = elem + 1
+        elif elem.shape[1] == 8:
+            elemType = 'Fluid8'
+            elem = elem + 1
 
         dataSet = createInitialBlockDataSet(g, elemType, 1, N, M)
         dataSet[:,0] = np.arange(elem.shape[0])+1
         dataSet[:,1:] = elem
 
         myModel.elems.append(dataSet)
+        g = hdf5File.create_group('Elementsets')
         
     # @brief Read setup from Gmsh file
     def readSetup(self, myModel):

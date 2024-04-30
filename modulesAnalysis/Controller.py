@@ -188,7 +188,7 @@ class Controller():
         boolIdx = np.zeros((len(dataSet)), dtype=np.bool_)
         boolIdx[dataSetEntry.fieldIndices] = 1
         #
-        myArray = np.zeros((len(dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodes)), dtype=np.complex)
+        myArray = np.zeros((len(dataSetEntry.parent().parent().groupsLev2Collector[allLev2Names.index('Nodes')].lev2TreeEntry.nodes)), dtype=complex)
         myArray.real[dataSetEntry.nodeIndices] = dataSet['real'][boolIdx]
         myArray.imag[dataSetEntry.nodeIndices] = dataSet['imag'][boolIdx]
         #
