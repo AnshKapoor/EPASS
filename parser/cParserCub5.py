@@ -66,6 +66,11 @@ class cParserCub5:
         maxElemID = 0
         for coreformKey in cub5File['Mesh/Elements'].keys():
             myModel.elemsInvTags.append(coreformKey)
+            # In the provided code snippet, `elemIDs` is being used to store the element IDs extracted
+            # from the Cub5 file. These IDs are then used for various purposes such as identifying
+            # elements, creating datasets, and processing element connectivity information. The
+            # `elemIDs` variable is used in conjunction with other data structures and functions to
+            # handle elements in the Cub5 file during the parsing process.
             elemIDs = cub5File['Mesh/Elements/' + coreformKey + '/Element IDs'][:]
             if elemIDs.max()>maxElemID:
                 maxElemID = elemIDs.max()

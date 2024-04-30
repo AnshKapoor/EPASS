@@ -215,7 +215,7 @@ def identifyElemType(elemType):
         return 'TRI_3', 'PlShell3', 4;
     else:
         return 'notSupported', [], 0;
-
+    
 def identifyAlternativeElemTypes(elemType):
     if elemType in ['PlShell4','DSG4']:
         return ['PlShell4','DSG4'];

@@ -59,8 +59,10 @@ class cParserSalomeMed:
         meshMed = meshio.read(self.filename)
 
         cells = meshMed.cells
-        elem = None
+        g = hdf5File.create_group('Elements')
+        totalElem = 0
         for id, every_key in enumerate(meshMed.cell_tags):
+            elem = None
             for id_cell, every_mesh in enumerate(meshMed.cell_data["cell_tags"]):
                 valid_elem_connectivity = None
                 if every_key in every_mesh:
@@ -76,20 +78,37 @@ class cParserSalomeMed:
                         
                         elem = np.concatenate((elem, valid_elem_connectivity), axis=0)
 
-        g = hdf5File.create_group('Elements')
-        N = elem.shape[0]
-        M = elem.shape[1]+1
+            N = elem.shape[0]
+            M = elem.shape[1]+1
 
-        if elem.shape[1] == 4:
-            elemType = 'DSG4'
-        elif elem.shape[1] == 9:
-            elemType = 'DSG9'
+            if elem.shape[1] == 4:
+                elemType = 'DSG4'
+            elif elem.shape[1] == 9:
+                elemType = 'DSG9'
+            elif elem.shape[1] == 8:
+                elemType = 'Fluid8'
+                
+                elpasoElemConnectivity = np.zeros_like(elem)
+                elpasoElemConnectivity[:,0] = elem[:,0]
+                elpasoElemConnectivity[:,1] = elem[:,3]
+                elpasoElemConnectivity[:,2] = elem[:,2]
+                elpasoElemConnectivity[:,3] = elem[:,1]
+                
+                elpasoElemConnectivity[:,4] = elem[:,4]
+                elpasoElemConnectivity[:,5] = elem[:,7]
+                elpasoElemConnectivity[:,6] = elem[:,6]
+                elpasoElemConnectivity[:,7] = elem[:,5]
+                
+                elem = elpasoElemConnectivity                
+            elif elem.shape[1] == 27:
+                elemType = 'Fluid27'
 
-        dataSet = createInitialBlockDataSet(g, elemType, 1, N, M)
-        dataSet[:,0] = np.arange(elem.shape[0])+1
-        dataSet[:,1:] = elem
+            dataSet = createInitialBlockDataSet(g, elemType, id+1, N, M)
+            dataSet[:,0] = np.arange(elem.shape[0])+1+totalElem
+            dataSet[:,1:] = elem
 
-        myModel.elems.append(dataSet)
+            myModel.elems.append(dataSet)
+            totalElem += N
 
         
         g = hdf5File.create_group('Elementsets')
