@@ -103,6 +103,39 @@ class cParserSalomeMed:
             elif elem.shape[1] == 27:
                 elemType = 'Fluid27'
 
+                elpasoElemConnectivity = np.zeros_like(elem)
+                elpasoElemConnectivity[:,0] = elem[:,3]
+                elpasoElemConnectivity[:,1] = elem[:,7]
+                elpasoElemConnectivity[:,2] = elem[:,6]
+                elpasoElemConnectivity[:,3] = elem[:,2]
+                elpasoElemConnectivity[:,4] = elem[:,0]
+                elpasoElemConnectivity[:,5] = elem[:,4]
+                elpasoElemConnectivity[:,6] = elem[:,5]
+                elpasoElemConnectivity[:,7] = elem[:,1]
+                elpasoElemConnectivity[:,8] = elem[:,19]
+
+                elpasoElemConnectivity[:,9] = elem[:,14]
+                elpasoElemConnectivity[:,10] = elem[:,18]
+                elpasoElemConnectivity[:,11] = elem[:,10]
+                elpasoElemConnectivity[:,12] = elem[:,11]
+                elpasoElemConnectivity[:,13] = elem[:,15]
+                elpasoElemConnectivity[:,14] = elem[:,13]
+                elpasoElemConnectivity[:,15] = elem[:,9]
+                elpasoElemConnectivity[:,16] = elem[:,16]
+                elpasoElemConnectivity[:,17] = elem[:,12]
+
+                elpasoElemConnectivity[:,18] = elem[:,17]
+                elpasoElemConnectivity[:,19] = elem[:,8]
+                elpasoElemConnectivity[:,20] = elem[:,26]
+                elpasoElemConnectivity[:,21] = elem[:,23]
+                elpasoElemConnectivity[:,22] = elem[:,21]
+                elpasoElemConnectivity[:,23] = elem[:,20]
+                elpasoElemConnectivity[:,24] = elem[:,25]
+                elpasoElemConnectivity[:,25] = elem[:,24]
+                elpasoElemConnectivity[:,26] = elem[:,22]
+                
+                elem = elpasoElemConnectivity      
+
             dataSet = createInitialBlockDataSet(g, elemType, id+1, N, M)
             dataSet[:,0] = np.arange(elem.shape[0])+1+totalElem
             dataSet[:,1:] = elem
