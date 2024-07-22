@@ -19,10 +19,16 @@ class cParserSalomeMed:
     def readNodes(self, myModel):
         hdf5File = myModel.hdf5File
 
-        meshMed = meshio.read(self.filename)
-        pts = np.array(meshMed.points) # points
+        meshMeds = meshio.read(self.filename)
+        pts = []
+        for meshMed in meshMeds:
+            pts.append(np.array(meshMed.points)) # points
+        pts = np.concatenate(pts,axis=0)
         
         g = hdf5File.create_group('Nodes')
+        g = hdf5File.create_group('Nodesets')
+        
+        g = hdf5File['Nodes']
         comp_type = np.dtype([('Ids', 'i8'), ('xCoords', 'f8'), ('yCoords', 'f8'), ('zCoords', 'f8')])
         dataSet = g.create_dataset('mtxFemNodes', (pts.shape[0],), comp_type)
         dataSet[:,'Ids'] = np.arange(pts.shape[0])+1
@@ -37,7 +43,7 @@ class cParserSalomeMed:
         myModel.nodesInv = dict([[ID, n] for n, ID in enumerate(myModel.nodes[:,'Ids'])])
         
         # Nodesets 
-        g = hdf5File.create_group('Nodesets')
+        g = hdf5File['Nodesets']
         for id, every_key in enumerate(meshMed.point_tags):
             nodesetID = id + 1
 
@@ -56,64 +62,73 @@ class cParserSalomeMed:
     def readElements(self, myModel):
         hdf5File = myModel.hdf5File
 
-        meshMed = meshio.read(self.filename)
-
-        cells = meshMed.cells
-        g = hdf5File.create_group('Elements')
-        totalElem = 0
-        for id, every_key in enumerate(meshMed.cell_tags):
-            elem = None
-            for id_cell, every_mesh in enumerate(meshMed.cell_data["cell_tags"]):
-                valid_elem_connectivity = None
-                if every_key in every_mesh:
-                    # contains valid elements
-                    valid_cell = cells[id_cell].data
-                    valid_elem_connectivity = np.array(valid_cell[every_mesh==every_key]) + 1
-
-                    if elem is None:
-                        elem = valid_elem_connectivity
-                    else:
-                        if elem.shape[1] != valid_elem_connectivity.shape[1]:
-                            print('Element connectivity do not match')
-                        
-                        elem = np.concatenate((elem, valid_elem_connectivity), axis=0)
-
-            N = elem.shape[0]
-            M = elem.shape[1]+1
-
-            if elem.shape[1] == 4:
-                elemType = 'DSG4'
-            elif elem.shape[1] == 9:
-                elemType = 'DSG9'
-            elif elem.shape[1] == 8:
-                elemType = 'Fluid8'
-                
-                elpasoElemConnectivity = np.zeros_like(elem)
-                elpasoElemConnectivity[:,0] = elem[:,0]
-                elpasoElemConnectivity[:,1] = elem[:,3]
-                elpasoElemConnectivity[:,2] = elem[:,2]
-                elpasoElemConnectivity[:,3] = elem[:,1]
-                
-                elpasoElemConnectivity[:,4] = elem[:,4]
-                elpasoElemConnectivity[:,5] = elem[:,7]
-                elpasoElemConnectivity[:,6] = elem[:,6]
-                elpasoElemConnectivity[:,7] = elem[:,5]
-                
-                elem = elpasoElemConnectivity                
-            elif elem.shape[1] == 27:
-                elemType = 'Fluid27'
-
-            dataSet = createInitialBlockDataSet(g, elemType, id+1, N, M)
-            dataSet[:,0] = np.arange(elem.shape[0])+1+totalElem
-            dataSet[:,1:] = elem
-
-            myModel.elems.append(dataSet)
-            totalElem += N
-
+        meshMeds = meshio.read(self.filename)
+        # the meshMed can be a list
         
         g = hdf5File.create_group('Elementsets')
-        for elemset in hdf5File['Elementsets'].keys():
-            myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
+        g = hdf5File.create_group('Elements')
+        global_block_id = 0
+        totalElem = 0
+        totalNodes = 0
+        for meshMed in meshMeds:
+            cells = meshMed.cells
+            for id, every_key in enumerate(meshMed.cell_tags): # iterate through groups
+                elem = None
+                for id_cell, every_mesh in enumerate(meshMed.cell_data["cell_tags"]): # find in mesh
+                    valid_elem_connectivity = None
+                    if every_key in every_mesh:
+                        # contains valid elements
+                        valid_cell = cells[id_cell].data
+                        valid_elem_connectivity = np.array(valid_cell[every_mesh==every_key]) + 1
+
+                        if elem is None:
+                            elem = valid_elem_connectivity
+                        else:
+                            if elem.shape[1] != valid_elem_connectivity.shape[1]:
+                                print('Element connectivity do not match')
+                            
+                            elem = np.concatenate((elem, valid_elem_connectivity), axis=0)
+
+                elem += totalNodes
+                
+                N = elem.shape[0]
+                M = elem.shape[1]+1
+
+                if elem.shape[1] == 4:
+                    elemType = 'DSG4'
+                elif elem.shape[1] == 9:
+                    elemType = 'DSG9'
+                elif elem.shape[1] == 8:
+                    elemType = 'Fluid8'
+                    
+                    elpasoElemConnectivity = np.zeros_like(elem)
+                    elpasoElemConnectivity[:,0] = elem[:,0]
+                    elpasoElemConnectivity[:,1] = elem[:,3]
+                    elpasoElemConnectivity[:,2] = elem[:,2]
+                    elpasoElemConnectivity[:,3] = elem[:,1]
+                    
+                    elpasoElemConnectivity[:,4] = elem[:,4]
+                    elpasoElemConnectivity[:,5] = elem[:,7]
+                    elpasoElemConnectivity[:,6] = elem[:,6]
+                    elpasoElemConnectivity[:,7] = elem[:,5]
+                    
+                    elem = elpasoElemConnectivity                
+                elif elem.shape[1] == 27:
+                    elemType = 'Fluid27'
+
+                dataSet = createInitialBlockDataSet(g, elemType, global_block_id+1, N, M)
+                global_block_id += 1
+                dataSet[:,0] = np.arange(elem.shape[0])+1+totalElem
+                dataSet[:,1:] = elem
+                
+                myModel.elems.append(dataSet)
+                totalElem += N
+                
+            # following total node update should be outside the single mesh loop
+            totalNodes += np.max(elem.flatten()) # increment only for multiple mesh med files because every mesh start with a form node id: 1
+
+            for elemset in hdf5File['Elementsets'].keys():
+                myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
 
         
     # @brief Read setup from Salome med file

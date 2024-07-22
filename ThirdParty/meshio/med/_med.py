@@ -33,18 +33,11 @@ meshio_to_med_type = {
 med_to_meshio_type = {v: k for k, v in meshio_to_med_type.items()}
 numpy_void_str = np.bytes_("")
 
-
-def read(filename):
-    import h5py
-
-    f = h5py.File(filename, "r")
-
+# decoupled reading
+def readMesh(f, mesh_name):
     # Mesh ensemble
     mesh_ensemble = f["ENS_MAA"]
-    meshes = mesh_ensemble.keys()
-    if len(meshes) != 1:
-        raise ReadError(f"Must only contain exactly 1 mesh, found {len(meshes)}.")
-    mesh_name = list(meshes)[0]
+    
     mesh = mesh_ensemble[mesh_name]
 
     dim = mesh.attrs["ESP"]
@@ -120,6 +113,24 @@ def read(filename):
     mesh.point_tags = point_tags
     mesh.cell_tags = cell_tags
     return mesh
+
+
+def read(filename):
+    import h5py
+
+    f = h5py.File(filename, "r")
+
+    # Mesh ensemble
+    mesh_ensemble = f["ENS_MAA"]
+    meshes = mesh_ensemble.keys()
+    
+    read_mesh = []
+    for every_mesh in meshes:
+        mesh_name = every_mesh
+        every_read_mesh = readMesh(f, mesh_name)
+        read_mesh.append(every_read_mesh)
+        
+    return read_mesh
 
 
 def _read_data(fields, profiles, cell_types, point_data, cell_data, field_data):
