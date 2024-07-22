@@ -78,7 +78,7 @@ def calcSoundPower(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, ord
   centerOfElems = np.zeros((elemBlock.attrs['N'],3))
   areaOfElems = np.zeros((elemBlock.attrs['N']))
   dofIdxOfPatchNodes = np.zeros((elemBlock.attrs['N'],4), dtype=int)
-  progWin = progressWindow(elemBlock.attrs['N']-1, 'Calculating areas and normals of block ' + str(elemBlock.attrs['Id']))
+  progWin = progressWindow(int(elemBlock.attrs['N'])-1, 'Calculating areas and normals of block ' + str(elemBlock.attrs['Id']))
   for elemIdx in range(elemBlock.attrs['N']):
     #elemID = block[elemIdx,0]
     for n, node in enumerate(elemBlock[elemIdx,1:5]): # Saves the idx of according first dof of patch/element
@@ -109,7 +109,7 @@ def calcSoundPower(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, ord
     QApplication.processEvents()
   #
   totalArea = np.sum(areaOfElems)
-  noOfPatches = elemBlock.attrs['N']
+  noOfPatches = int(elemBlock.attrs['N'])
   distMatrix = np.zeros((noOfPatches, noOfPatches))
   progWin = progressWindow(noOfPatches-1, 'Calculating distances between patches in block ' + str(elemBlock.attrs['Id']))
   for m in range(noOfPatches): # Loop for the creation of distance matrix for each calculation object
@@ -119,9 +119,9 @@ def calcSoundPower(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, ord
   Z_fac = 1j * density * areaOfElems / (2 * math.pi * distMatrix)  # Impedance matrix as factor for Rayleigh Calculation
   #
   noOfStateResults = len(hdf5ResultsFileStateGroup.keys())
-  x = np.zeros((noOfStateResults), dtype=np.float)
-  y1 = np.zeros((noOfStateResults), dtype=np.float)
-  y2 = np.zeros((noOfStateResults), dtype=np.float)
+  x = np.zeros((noOfStateResults), dtype=float)
+  y1 = np.zeros((noOfStateResults), dtype=float)
+  y2 = np.zeros((noOfStateResults), dtype=float)
   counter = 0
   progWin = progressWindow(noOfStateResults-1, 'Calculating sound power using Rayleigh integral')
   for item in hdf5ResultsFileStateGroup.attrs.items():
@@ -131,7 +131,7 @@ def calcSoundPower(hdf5ResultsFileStateGroup, fieldIndices, nodes, nodesInv, ord
     dataSet = hdf5ResultsFileStateGroup['vecFemStep' + str(int(item[0][8:]))]
     dataSetComplex = dataSet['real'][:] + 1j*dataSet['imag'][:]
     #
-    effDispOfPatches = np.empty((noOfPatches), dtype=np.complex)
+    effDispOfPatches = np.empty((noOfPatches), dtype=complex)
     effDispOfPatches = [np.mean(dataSetComplex[sorted(dofIdxOfPatchNodes[n,:])]) for n in range(noOfPatches)]
     effVelocityOfPatches = np.multiply( (1j*omega*1.4142135623730951), effDispOfPatches)
     #
