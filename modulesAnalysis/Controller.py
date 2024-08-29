@@ -157,10 +157,10 @@ class Controller():
     self.setupWindowTL.layout.addRow(QLabel('Density'), self.setupWindowTL.density)
     self.setupWindowTL.layout.addRow(QLabel('Input power (sender room)'), self.setupWindowTL.inputPower)
     allLev2Names = [lev2Entry.name for lev2Entry in self.groupsLev1Collector[-1].groupsLev2Collector]
-    self.buttonGroupTL = QButtonGroup()
+    self.buttonGroupRayleigh = QButtonGroup()
     for buttonIdx, block in enumerate(self.groupsLev1Collector[-1].groupsLev2Collector[allLev2Names.index('Elements')].lev2TreeEntry.elems):
       self.blockCheckerTL.append(QCheckBox())
-      self.buttonGroupTL.addButton(self.blockCheckerTL[-1], buttonIdx)
+      self.buttonGroupRayleigh.addButton(self.blockCheckerTL[-1], buttonIdx)
       if not isPlateType(str(block.attrs['ElementType'])):
         self.blockCheckerTL[-1].setEnabled(False)
       subLayout = QHBoxLayout()
