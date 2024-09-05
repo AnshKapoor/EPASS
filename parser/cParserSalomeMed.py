@@ -94,7 +94,20 @@ class cParserSalomeMed:
                 N = elem.shape[0]
                 M = elem.shape[1]+1
 
-                if elem.shape[1] == 4:
+                if elem.shape[1] == 2:
+                    elemType = 'Pointmass'
+                    elem = np.unique(np.ndarray.flatten(elem))
+                    elem = np.ndarray.reshape(elem,[elem.shape[0],1])
+                    N = elem.shape[0]
+                    M = elem.shape[1]+1
+                elif elem.shape[1] == 3:
+                    #### ATTENTION: Only fix for CA Lab3
+                    elemType = 'Pointmass'
+                    elem = np.unique(np.ndarray.flatten(elem))
+                    elem = np.ndarray.reshape(elem,[elem.shape[0],1])
+                    N = elem.shape[0]
+                    M = elem.shape[1]+1
+                elif elem.shape[1] == 4:
                     elemType = 'DSG4'
                 elif elem.shape[1] == 9:
                     elemType = 'DSG9'
