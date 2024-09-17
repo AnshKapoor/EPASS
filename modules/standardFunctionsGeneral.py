@@ -192,6 +192,8 @@ def createInitialBlockDataSet(group, elemType, groupID, totalElems, nodesPerElem
     dataSet.attrs['Name'] = 'Block_' + str(groupID)
     dataSet.attrs['Orientation'] = 'global'
     dataSet.attrs['OrientationFile'] = ''
+    if 'PlShell' in elemType:
+        dataSet.attrs['ScaleFactorDrilling'] = float(1.)
     return dataSet
 
 def identifyElemType(elemType): 
