@@ -133,7 +133,6 @@ class elemLoad(QHBoxLayout):
                         faceNormal = 0.5 * (np.cross(vec1, vec2) + np.cross(vec3, vec4)) # Mean value of two normal vectors
                         faceNormal = faceNormal / np.linalg.norm(faceNormal)
                         self.surfaceFacesNormals.append(faceNormal)
-        print(np.abs(nodes[sorted(nodeIdx)][plane[0]+'Coords'] - planeShift))
         relevantBlocks = []
         nodes = 0
 
