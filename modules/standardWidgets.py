@@ -111,7 +111,7 @@ class analysisTypeSelector(QComboBox):
         super(analysisTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select an anylsis type')
-        self.availableTypes = ['frequency']#['static', 'eigen', 'frequency', 'time']
+        self.availableTypes = ['frequency','eigen']#['static', 'eigen', 'frequency', 'time']
         self.setFixedWidth(200)
         [self.addItem(type) for type in self.availableTypes]
     
@@ -159,7 +159,7 @@ class loadTypeSelector(QComboBox):
         super(loadTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a load')
-        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity', 'Turbulent Boundary Layer', 'Distributed frequency domain data']#, 'Diffuse field', 'Turbulent Boundary Layer']
+        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity', 'Turbulent Boundary Layer', 'Distributed frequency domain data','Distributed frequency domain data TBL']#, 'Diffuse field', 'Turbulent Boundary Layer']
         self.setFixedWidth(200)
         [self.addItem(load) for load in self.availableTypes]
     

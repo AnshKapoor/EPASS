@@ -141,7 +141,7 @@ class elemLoad(QHBoxLayout):
         finds next elements to given data points, writes into a proximity list, which can then be applied to the elements list
         """
         self.euclNearest = []
-        idxToKeep = np.ones((len(self.surfacePoints), 1), dtype=np.bool)
+        idxToKeep = np.ones((len(self.surfacePoints), 1), dtype=bool)
         progWin = progressWindow(len(self.surfacePoints)-1, 'Searching nearest neighbors in dataset')
         for m, surfPoint in enumerate(np.array(self.surfacePoints)):
             # Calculates dist to each loaded dataPoint and saves the index of the  nearest dataPoint
@@ -189,7 +189,10 @@ class elemLoad(QHBoxLayout):
               dataSet.attrs['FreqCount'] = np.uint64(len(frequencies))
             dataSet.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(surfaceElem))
             dataSet.attrs['ElementId'] = np.uint64(surfaceElem) # Assign element load to element
-            dataSet.attrs['LoadType'] = self.type
+            if self.type=='freqVarDat':
+                dataSet.attrs['LoadType'] = 'Turbulent_Boundary_Layer'
+            else:
+                dataSet.attrs['LoadType'] = self.type
             dataSet.attrs['MethodType'] = 'FEM'
             # Update progress window
             progWin.setValue(nE)
@@ -242,7 +245,10 @@ class nodeLoad(QHBoxLayout):
             #set.attrs['FreqCount'] = np.uint64(len(frequencies))
             dataSet.attrs['Id'] = np.uint64(str(self.removeButton.id+1) + str(nodeId))
             dataSet.attrs['NodeId'] = np.uint64(nodeId) # Assign element load to element
-            dataSet.attrs['LoadType'] = self.type
+            if self.type=='freqVarDat':
+                dataSet.attrs['LoadType'] = 'Turbulent_Boundary_Layer'
+            else:
+                dataSet.attrs['LoadType'] = self.type
             dataSet.attrs['MethodType'] = 'FEM'
             #
             dataSet.attrs['Fx'] = float(self.dirX.text())

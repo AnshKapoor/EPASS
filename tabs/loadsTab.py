@@ -8,6 +8,7 @@ from normVelo import normVelo
 #from diffuseField import diffuseField
 #from timeVarDat import timeVarDat
 from freqVarDat import freqVarDat
+from freqVarDatTBL import freqVarDatTBL
 from tbl import tbl
 from pointForce import pointForce
 
@@ -54,7 +55,9 @@ class loadsTab(QWidget):
                 # myModel.loads.append(diffuseField(myModel))
             if load_type == 'Distributed frequency domain data':
                 myModel.loads.append(freqVarDat(myModel))
-            if load_type == 'Turbulent Boundary Layer':
+            if self.loadSelector.currentText() == 'Distributed frequency domain data TBL':
+                myModel.loads.append(freqVarDatTBL(myModel))
+            if self.loadSelector.currentText() == 'Turbulent Boundary Layer':
                 myModel.loads.append(tbl(myModel))
             # Refresh layout
             self.loadInfo.updateLayout(myModel.loads)

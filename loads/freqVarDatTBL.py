@@ -10,7 +10,7 @@ from standardFunctionsGeneral import isPlateType
 from loads import elemLoad
 
 # distributed time domain load
-class freqVarDat(elemLoad):
+class freqVarDatTBL(elemLoad):
     """
     class for distributed time domain loads. Provides methods for loading, saving and processing data.
     """
@@ -18,7 +18,7 @@ class freqVarDat(elemLoad):
         """
         initialise basic load dependent GUI objects
         """
-        super(freqVarDat, self).__init__()
+        super(freqVarDatTBL, self).__init__()
         self.myModel = myModel
         self.removeButton = removeButton()
         self.editButton = editButton()
@@ -32,7 +32,7 @@ class freqVarDat(elemLoad):
         self.loadButton.clicked.connect(self.getFilename)
         self.dataPoints = []
         #
-        self.label = QLabel('Distr. freq domain data')
+        self.label = QLabel('Distr. freq domain data TBL')
         self.drawCheck = QCheckBox('Draw')
         self.drawCheck.setStatusTip('Show load in 2D Graph and 3D Window')
         self.drawCheck.clicked.connect(self.switch)
@@ -81,19 +81,26 @@ class freqVarDat(elemLoad):
         frequencies = self.myModel.frequencies
         print('Relevant points')
         self.findRelevantPoints()
+        vec=[0,0,0]
+        vec[0]=np.max(self.interpfield['X'])
+        vec[1]=np.max(self.interpfield['Y'])
+        vec[2]=np.max(self.interpfield['Z'])
+        print(vec)
+        plotIndexes=[2,1,0]
         if self.surfacePoints is not []:
-            if self.dataPoints == []:
-                messageboxOK('Error', 'No parameter input file loaded.\nNo calculation possible!\n')
-            else:
-                self.nearestNeighbor(dropTol = 0.05)
                 self.surfaceAmps = np.zeros((len(frequencies),len(self.surfacePoints)))
                 self.surfacePhases = np.zeros((len(frequencies),len(self.surfacePoints)))
-                for nsp, idx in enumerate(self.euclNearest):
-                    amps = np.abs(self.dataValues[idx,:])
-                    phases = np.angle(self.dataValues[idx,:])
+                for nsp, idx in enumerate(self.surfacePoints):
                     for nf, freq in enumerate(frequencies):
-                        self.surfaceAmps[nf,nsp] = np.interp(freq, self.dataFreqs, amps)
-                        phase = np.interp(freq, self.dataFreqs, phases)
+                        #myindx=np.where(self.interpfield['Frequency']==freq)
+                        #myindx=myindx[0][0]
+                        #self.surfaceAmps[nf,nsp] = np.abs(self.interpfield['PressuresInterpolations'][myindx](idx[plotIndexes[0]]+8.5,idx[plotIndexes[1]],idx[plotIndexes[2]]))
+                        #phase = np.angle(self.interpfield['PressuresInterpolations'][myindx](idx[plotIndexes[0]]+8.5,idx[plotIndexes[1]],idx[plotIndexes[2]]))
+                        #print(freq,idx[plotIndexes[0]]+8.5,idx[plotIndexes[1]],idx[plotIndexes[2]])
+                        #input()
+                        Pressures=self.interpfield['PressuresInterpolations'](idx[plotIndexes[0]]+8.5,idx[plotIndexes[1]],idx[plotIndexes[2]],freq)
+                        self.surfaceAmps[nf,nsp]=np.abs(Pressures)
+                        phase = np.angle(Pressures)
                         # Set range from 0 to 2pi
                         if phase<0.:
                             self.surfacePhases[nf,nsp] = 2*np.pi + phase
@@ -194,7 +201,7 @@ class freqVarDat(elemLoad):
         self.arrowMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
         # Actor for load
         self.arrowActorLoad = vtk.vtkActor()
-        self.arrowActorLoad.GetProperty().SetColor(1., 0.6, 0.)
+        self.arrowActorLoad.GetProperty().SetColor(1., 0.4, 0.)
         self.arrowActorLoad.SetMapper(self.arrowMapperLoad)
 
         #List of Actors for iteration in vtkWindow
@@ -244,10 +251,8 @@ class freqVarDat(elemLoad):
         """
         Method to load time domain data from hdf5
         """
-        f = h5py.File(filename,'r')
-        self.dataPoints = f['/pointCoords']
-        self.dataFreqs = np.real(f['/pointDataReal'][0,:])
-        self.dataValues = f['/pointDataReal'][1:,:]+f['/pointDataIm'][:,:]*1j
+        self.interpfield = np.load(filename, allow_pickle=True).item()
+        
 
     def resetValues(self):
         """
