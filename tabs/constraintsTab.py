@@ -31,14 +31,17 @@ class constraintsTab(QWidget):
         #
         [self.tabLayout.addLayout(layout) for layout in self.subLayouts]
         
-    def addConstraint(self, myModel):
+    def addConstraint(self, myModel, constraint_type=None):
         """
         Add the constraint selected by self.constraintSelector (self.addConstraintButton click event)
         """
+        if constraint_type is None:
+            constraint_type = self.constraintSelector.currentText()
+
         if myModel.hdf5File:
-            if self.constraintSelector.currentText() == 'BC | Structure | Fieldvalue':
+            if constraint_type == 'BC | Structure | Fieldvalue':
                 myModel.constraints.append(BC_STR_FIELD(self.getFreeId(myModel.constraints), myModel))
-            elif self.constraintSelector.currentText() == 'BC | Acoustic | Fieldvalue':
+            elif constraint_type == 'BC | Acoustic | Fieldvalue':
                 myModel.constraints.append(BC_AF_FIELD(self.getFreeId(myModel.constraints), myModel))
             # Refresh layout
             self.constraintInfo.updateLayout(myModel.constraints)

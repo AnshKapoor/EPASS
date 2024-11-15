@@ -1,8 +1,10 @@
 #
+import vtkplotlib as vtkplt
 import json
 from PyQt5.QtWidgets import QApplication, QLabel, QWidgetItem, QCheckBox, QLineEdit, QFileDialog, QComboBox, QHBoxLayout
 import vtk
 import numpy as np
+from vtk.util.numpy_support import numpy_to_vtk
 import math
 from standardWidgets import ak3LoadButton, removeButton, editButton, setupLoadWindow, messageboxOK, progressWindow
 from standardFunctionsGeneral import isPlateType
@@ -12,6 +14,7 @@ np.random.seed(int(time.time()))
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 16})
 from matplotlib.colors import LogNorm
+import scipy as sp
 
 # tbl load
 class tbl(elemLoad):
@@ -30,6 +33,8 @@ class tbl(elemLoad):
         self.flowDirZ = QLineEdit('0.')
         self.randomSelector = QComboBox()
         [self.randomSelector.addItem(x) for x in ['no', 'per data point', 'per element', 'coherence grid']]
+        self.shapeCraft = QComboBox()
+        [self.shapeCraft.addItem(x) for x in ['Cylindrical', 'Cubic', 'Arbitrary']]
         self.loadButton = ak3LoadButton()
         self.loadButton.clicked.connect(self.getFilename)
         self.dataPoints = []
@@ -120,6 +125,8 @@ class tbl(elemLoad):
                 progWin = progressWindow(len(self.surfacePoints)-1, "Calculating TBL load")
                 x0 = 0.
                 y0 = 0.
+                surfacePointPrior=[0,0,0]
+                totalDistance=0
                 for nsp, surfacePoint in enumerate(self.surfacePoints):
                     # Calculate: AMPS according to Klabes 2017 ; PHASES using Efimtsov model
                     idx = self.euclNearestDataPoint[nsp] # index of dataPoint (loaded before via json file) which is nearest to current surfacePoint
@@ -149,10 +156,11 @@ class tbl(elemLoad):
                             # currentGrid contains a midpoint in 2D (2 cylindrical coordinates - x for lengthwise position on aircraft skin and y for phi (radius does not matter)) and a random origin (coords 3-4)
                             currentGrid = self.myModel.allGrids[nf] 
                             # find nearest midpoint in grid to current surface point
-                            surfacePointCylindrical = (np.arcsin(surfacePoint[1]/self.R) * surfacePoint[2]/abs(surfacePoint[2]) * self.R)
-                            midpointIdx = np.argmin(np.abs(currentGrid[:,0] - surfacePoint[0]) + np.abs(currentGrid[:,1] - surfacePointCylindrical) )
-                            x0 = currentGrid[midpointIdx,2]
-                            y0 = currentGrid[midpointIdx,3]
+                            #surfacePointCylindrical = (np.arcsin(surfacePoint[1]/self.R) * surfacePoint[2]/abs(surfacePoint[2]) * self.R)
+                            #midpointIdx = np.argmin(np.abs(currentGrid[:,0] - surfacePoint[0]) + np.abs(currentGrid[:,1] - surfacePointCylindrical) )
+                            midpointIdx = np.argmin(np.abs(currentGrid[:,0] - surfacePoint[0]) + np.abs(currentGrid[:,1] - surfacePoint[1]) + np.abs(currentGrid[:,2] - surfacePoint[2]) )
+                            x0 = currentGrid[midpointIdx,3]
+                            y0 = currentGrid[midpointIdx,4]
                         omega = 2.*math.pi*freq
                         ### Klabes 2017
                         #gammaM = 2661.7*MA**2 - 3504.2*MA + 3622.4 + 3.6e-2*FL**2 - 22.5*FL
@@ -202,12 +210,16 @@ class tbl(elemLoad):
                         kRange = np.linspace(-5*kC,5*kC,steps)[:-1] + dK/2. # Midpoint in discrete intervals
                         #
                         eX = np.tile(np.exp(1j*kRange*(surfacePoint[0]-x0)), (len(kRange), 1))
+                        distanceBetween=np.sqrt((surfacePoint[1]-surfacePointPrior[1])**2+(surfacePoint[2]-surfacePointPrior[2])**2)
+                        totalDistance=totalDistance+distanceBetween
                         if self.randomSelector.currentText()=='coherence grid': 
-                            eY = np.tile(np.exp(1j*kRange*(surfacePointCylindrical-y0))[:,None], (1, len(kRange)))
+                            #eY = np.tile(np.exp(1j*kRange*(surfacePointCylindrical-y0))[:,None], (1, len(kRange)))
+                            eY = np.tile(np.exp(1j*kRange*(totalDistance-y0))[:,None], (1, len(kRange)))
                         else:
-                            eY = np.tile(np.exp(1j*kRange*(surfacePoint[1]-y0))[:,None], (1, len(kRange)))
+                            eY = np.tile(np.exp(1j*kRange*(totalDistance-y0))[:,None], (1, len(kRange)))
                         phaseMatrix = eX+eY
                         #
+                        surfacePointPrior=surfacePoint
                         densMatrix = self.calcEfimtsovIntensity(kRange, kRange, omega, uC, Lx, Ly)
 #                        globMin = np.amin(np.amin(densMatrix))
 #                        print(globMin)
@@ -348,6 +360,7 @@ class tbl(elemLoad):
         self.setupWindow.layout.addRow(QLabel('Flow-direction Y'), self.flowDirY)
         self.setupWindow.layout.addRow(QLabel('Flow-direction Z'), self.flowDirZ)
         self.setupWindow.layout.addRow(QLabel('Use Random'),       self.randomSelector)
+        self.setupWindow.layout.addRow(QLabel('Shape'),            self.shapeCraft)
         self.setupWindow.layout.addRow(QLabel('Load xyz input file'), self.loadButton)
         #
         self.blockChecker = []
@@ -412,45 +425,166 @@ class tbl(elemLoad):
         # Create coherence grid according to Efimtsov coherence lengths with random origin per grid point (later used if user selects a random origin in that grid)
         frequencies = self.myModel.frequencies
         progWin = progressWindow(len(frequencies)-1, "Creating coherence grid")
-        self.R = 1.78 # Radius
-        startX = min([x[0] for x in self.dataPoints])
-        endX = max([x[0] for x in self.dataPoints])
-        startPhi = -2*self.R*math.pi/4.
-        endPhi = 2*self.R*math.pi/4.
-        totalPhi  = endPhi-startPhi
-        self.myModel.allGrids = []
-        for nf, freq in enumerate(frequencies):
-            currentGrid = np.empty((0,4))
-            currentX = startX
-            omega = 2*math.pi*freq
+        if self.shapeCraft.currentText()=='Cylindrical':
+            #self.R = 1.78 # Radius
+            #Hard coded coordinates for Radius, depends on how it is turned!
+            self.R=np.sqrt(self.myModel.nodes[0]['yCoords']**2+self.myModel.nodes[0]['zCoords']**2)
+
+            startX = min([x[0] for x in self.dataPoints])
+            endX = max([x[0] for x in self.dataPoints])
+            startPhi = -2*self.R*math.pi/4.
+            endPhi = 2*self.R*math.pi/4.
+            totalPhi  = endPhi-startPhi
+            self.myModel.allGrids = []
+            for nf, freq in enumerate(frequencies):
+                currentGrid = np.empty((0,4))
+                currentX = startX
+                omega = 2*math.pi*freq
+                #
+                while 1:
+                    # Calc coherence lengths according to Efimtsov at current position for current frequency
+                    idx = np.argmin([abs(dataPoint[0] - currentX) for dataPoint in np.array(self.dataPoints)])
+                    delta = self.par_delta[idx]
+                    MA = self.par_MA[idx]
+                    c0 = self.par_c0[idx]
+                    tauW = self.par_tauW[idx]
+                    rho = self.par_rho[idx]
+                    uTau = (tauW/rho)**0.5
+                    uC = self.calc_uC(freq, c0*MA)
+                    Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
+                    if currentX+Lx > endX:
+                        phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                        yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                        xMidpoints = np.array(len(yMidpoints) * [0.5*(currentX+endX)])
+                        currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
+                        break
+                    else:
+                        phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                        yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                        xMidpoints = np.array(len(yMidpoints) * [currentX + 0.5*Lx])
+                        currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
+                        currentX = currentX + Lx
             #
-            while 1:
-                # Calc coherence lengths according to Efimtsov at current position for current frequency
-                idx = np.argmin([abs(dataPoint[0] - currentX) for dataPoint in np.array(self.dataPoints)])
-                delta = self.par_delta[idx]
-                MA = self.par_MA[idx]
-                c0 = self.par_c0[idx]
-                tauW = self.par_tauW[idx]
-                rho = self.par_rho[idx]
-                uTau = (tauW/rho)**0.5
-                uC = self.calc_uC(freq, c0*MA)
-                Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
-                if currentX+Lx > endX:
-                    phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
-                    yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
-                    xMidpoints = np.array(len(yMidpoints) * [0.5*(currentX+endX)])
-                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
-                    break
-                else:
-                    phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
-                    yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
-                    xMidpoints = np.array(len(yMidpoints) * [currentX + 0.5*Lx])
-                    currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, yMidpoints, np.random.rand(len(yMidpoints))*1000., np.random.rand(len(yMidpoints))*1000.))))
-                    currentX = currentX + Lx
+                self.myModel.allGrids.append(currentGrid)
+                progWin.setValue(nf)
+                QApplication.processEvents()
+            
+        elif self.shapeCraft.currentText()=='Arbitrary':
+            #self.R = 1.78 # Radius
+            #Hard coded coordinates for Radius, depends on how it is turned!
+            self.R=np.sqrt(self.myModel.nodes[0]['yCoords']**2+self.myModel.nodes[0]['zCoords']**2)
+
+            startX = min([x[0] for x in self.dataPoints])
+            endX = max([x[0] for x in self.dataPoints])
+            startPhi = -2*self.R*math.pi/4.
+            endPhi = 2*self.R*math.pi/4.
+            totalPhi  = endPhi-startPhi
+            self.myModel.allGrids = []
+            self.myModel.currLyMid=[]
+
+            #depends on how the model is situated (z-Axis a.so.)
+            self.findRelevantPoints()
+            indexCurve=[]
+            tol=0.05
+            lengthAxis='z'
+            if lengthAxis=='x':
+                plotIndexes=[0,2,1]
+            elif lengthAxis=='z':
+                plotIndexes=[2,0,1]
+
+            # if z axis is long axis -> use [:,0],[:,1] in indexing
+            #indexCurve.append([idx for idx,n in enumerate(self.surfacePoints) if np.abs(n[2]-self.surfacePoints[0][2])<=tol])
+            # for x axis as long axis -> use [:,1],[:,2] in indexing
+            indexCurve.append([idx for idx,n in enumerate(self.surfacePoints) if np.abs(n[plotIndexes[0]]-self.surfacePoints[0][plotIndexes[0]])<=tol])
             #
-            self.myModel.allGrids.append(currentGrid)
-            progWin.setValue(nf)
-            QApplication.processEvents()    
+            indexCurve = np.array(indexCurve).flatten().astype(int)
+            surfacePoints = np.array(self.surfacePoints)
+            curveNodes=surfacePoints[indexCurve,:]
+            curveNodes=curveNodes[np.argsort(curveNodes[:,plotIndexes[1]])]
+            if lengthAxis=='z':
+                curveNodes=curveNodes[12:,:]
+            dist1=curveNodes[1:,plotIndexes[1]]-curveNodes[:-1,plotIndexes[1]]
+            dist2=curveNodes[1:,plotIndexes[2]]-curveNodes[:-1,plotIndexes[2]]
+            dist1[0]=2*dist1[0]
+            dist2[0]=2*dist2[0]
+            dist=np.sum(np.sqrt(dist1**2+dist2**2))
+            distvec=np.column_stack((dist1,dist2))
+            distbetween=np.sqrt(dist1**2+dist2**2)
+            distvec[:,0]=distvec[:,0]/distbetween
+            distvec[:,1]=distvec[:,1]/distbetween
+            distvec=distvec/100
+            plt.plot(curveNodes[:,plotIndexes[1]],curveNodes[:,plotIndexes[2]])
+            #plt.show()
+            for nf, freq in enumerate(frequencies):
+                currentGrid = np.empty((0,5))
+                currentX = startX
+                omega = 2*math.pi*freq
+                currLyMid1=[]
+                currLyMid2=[]
+                currLyMid1.append(-1.61)
+                currLyMid2.append(0.1)
+                currLyMid1.append(curveNodes[0,plotIndexes[1]])
+                currLyMid2.append(curveNodes[0,plotIndexes[2]])
+
+                #
+                while 1:
+                    # Calc coherence lengths according to Efimtsov at current position for current frequency
+                    idx = np.argmin([abs(dataPoint[0] - currentX) for dataPoint in np.array(self.dataPoints)])
+                    delta = self.par_delta[idx]
+                    MA = self.par_MA[idx]
+                    c0 = self.par_c0[idx]
+                    tauW = self.par_tauW[idx]
+                    rho = self.par_rho[idx]
+                    uTau = (tauW/rho)**0.5
+                    uC = self.calc_uC(freq, c0*MA)
+                    Lx, Ly = self.calcEfimtsovCoherenceLengths(omega, delta, uTau, uC)
+                    i=1
+                    jdx=0
+                    while currLyMid1[-1]<curveNodes[-1,plotIndexes[1]] :
+                        if distvec[jdx,0]==0:
+                            distvec[jdx,0]=1e-10
+                        if distvec[jdx,1]==0:
+                            distvec[jdx,1]=0.00000001
+                        if currLyMid1[-1]+Ly*distvec[jdx,0]<=curveNodes[jdx+1,plotIndexes[1]]:
+                            if i==1:
+                                currLyMid1.append(currLyMid1[-1]+Ly/2*distvec[jdx,0])
+                                currLyMid2.append(currLyMid2[-1]+Ly/2*distvec[jdx,1])
+                                i=i+1
+                            else:
+                                currLyMid1.append(currLyMid1[-1]+Ly*distvec[jdx,0])
+                                currLyMid2.append(currLyMid2[-1]+Ly*distvec[jdx,1])
+                                i=i+1
+                        else:
+                            if i==1:
+                                currLyMid1.append(currLyMid1[-1]+Ly/2*distvec[jdx+1,0])
+                                currLyMid2.append(currLyMid2[-1]+Ly/2*distvec[jdx+1,1])
+                                i=i+1
+                            else:
+                                currLyMid1.append(currLyMid1[-1]+Ly*distvec[jdx,0])
+                                currLyMid2.append(currLyMid2[-1]+Ly*distvec[jdx,1])
+                                i=i+1
+                            jdx=jdx+1   
+                    if currentX+Lx > endX:
+                        phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                        yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                        xMidpoints = np.array(len(currLyMid1) * [0.5*(currentX+endX)])
+                        currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, currLyMid1,currLyMid2, np.random.rand(len(currLyMid1))*1000., np.random.rand(len(currLyMid1))*1000.))))
+                        break
+                    else:
+                        phiGrid = np.linspace(startPhi, endPhi, round(totalPhi / Ly))
+                        yMidpoints = np.array(0.5*(phiGrid[1:] + phiGrid[:-1]))
+                        xMidpoints = np.array(len(currLyMid1) * [currentX + 0.5*Lx])
+                        currentGrid = np.concatenate((currentGrid, np.column_stack((xMidpoints, currLyMid1,currLyMid2, np.random.rand(len(currLyMid1))*1000., np.random.rand(len(currLyMid1))*1000.))))
+                        currentX = currentX + Lx
+            #   
+                currLyMid1=currLyMid1[::100]
+                currLyMid2=currLyMid2[::100]
+                currLyMid=np.column_stack((currLyMid1,currLyMid2))   
+                self.myModel.currLyMid.append(currLyMid)
+                self.myModel.allGrids.append(currentGrid)
+                progWin.setValue(nf)
+                QApplication.processEvents()
+                
     #
     def nearestNeighbor(self):
         """
@@ -477,12 +611,14 @@ class tbl(elemLoad):
                 if float(self.flowDirX.text()) == 0. and float(self.flowDirY.text()) == 0. and float(self.flowDirZ.text()) == 0.:
                     raise Exception
                 self.dirLabel.setText('x ' + self.flowDirX.text() + ' y ' + self.flowDirY.text() + ' z ' + self.flowDirZ.text())
-                self.generatePressure()
-                self.update3DActor()
+                #self.generatePressure()
+                #self.update3DActor()
                 self.switch()
             except: # if input is wrong, show message and reset values
                 messageboxOK('Error', 'Wrong input (maybe text instead of numbers or a zero vector?)!')
                 self.resetValues()
+            self.generatePressure()
+            self.update3DActor()
         else:
             self.resetValues()
         return var
@@ -531,3 +667,82 @@ class tbl(elemLoad):
         [arrowVectorsLoad.InsertNextTuple([-0.1*scaleFactor*vec[0], -0.1*scaleFactor*vec[1], -0.1*scaleFactor*vec[2]]) for vec in self.surfaceElementNormals]
         self.arrowDataLoad.GetPointData().SetVectors(arrowVectorsLoad)
         self.arrowDataLoad.Modified()
+        # Draw Scatterplot of Coherence Grid Midpoints for the first frequency in order to check shape only cylinder
+         #change x an z coordinates for aircraft model -> How can we generalize that righ coordinates are taken?? -> change in Jason!!
+        myModel=np.zeros((len(nodes),3))
+        myModel[:,0]=nodes[:]['zCoords']
+        myModel[:,1]=nodes[:]['xCoords']
+        myModel[:,2]=nodes[:]['yCoords']
+        currentGrid = self.myModel.allGrids[0]
+        currentGrid = currentGrid[:,0:3]
+        currentGrid=np.array(currentGrid)
+        #anglephi=currentGrid[:,1]/self.R
+        #currentGrid[:,1]=self.R*np.cos(anglephi)
+        #currentGrid[:,2]=self.R*np.sin(anglephi)
+        #plotGrid1=currentGrid[:,0]
+        #plotGrid2=currentGrid[:,1]
+        #plotGrid3=currentGrid[:,2]
+        #currentGrid[:,0]=plotGrid1
+        #currentGrid[:,1]=plotGrid2
+        #currentGrid[:,2]=plotGrid3
+        currLyMid=self.myModel.currLyMid[0]
+        plt.scatter(currLyMid[:,0],currLyMid[:,1])
+        plt.show()
+        # Sphere source
+        self.sphereSource = vtk.vtkSphereSource()
+        self.sphereSource.SetRadius(0.02)
+        vtkPoints = vtk.vtkPoints()
+        vtkPoints.SetData(numpy_to_vtk(currentGrid))
+        sphereDataLoad = vtk.vtkPolyData()
+        sphereDataLoad.SetPoints(vtkPoints)
+        glyphLoad = vtk.vtkGlyph3D()
+        glyphLoad.SetScaleModeToScaleByVector()
+        glyphLoad.SetSourceConnection(self.sphereSource.GetOutputPort())
+        glyphLoad.SetInputData(sphereDataLoad)
+        glyphLoad.Update()
+        sphereMapperLoad = vtk.vtkPolyDataMapper()
+        sphereMapperLoad.SetInputConnection(glyphLoad.GetOutputPort())
+        sphereActorLoads = vtk.vtkActor()
+        sphereActorLoads.GetProperty().SetColor(1.0, 0., 0.)
+        sphereActorLoads.SetMapper(sphereMapperLoad)
+
+        # Sphere source
+        self.sphereSource1 = vtk.vtkSphereSource()
+        self.sphereSource1.SetRadius(0.02)
+        vtkPoints1 = vtk.vtkPoints()
+        vtkPoints1.SetData(numpy_to_vtk(myModel))
+        #self.defineAxisLength(scaleFactor)
+        sphereDataLoad1 = vtk.vtkPolyData()
+        sphereDataLoad1.SetPoints(vtkPoints1)
+        glyphLoad1 = vtk.vtkGlyph3D()
+        glyphLoad1.SetScaleModeToScaleByVector()
+        glyphLoad1.SetSourceConnection(self.sphereSource1.GetOutputPort())
+        glyphLoad1.SetInputData(sphereDataLoad1)
+        glyphLoad1.Update()
+        sphereMapperLoad1 = vtk.vtkPolyDataMapper()
+        sphereMapperLoad1.SetInputConnection(glyphLoad1.GetOutputPort())
+        sphereActorLoads1 = vtk.vtkActor()
+        sphereActorLoads1.GetProperty().SetColor(0.7, 0.7, 0.7)
+        sphereActorLoads1.SetMapper(sphereMapperLoad1)
+        window = vtk.vtkRenderWindow()
+        # Sets the pixel width, length of the window.
+        window.SetSize(500, 500)
+
+        interactor = vtk.vtkRenderWindowInteractor()
+        interactor.SetRenderWindow(window)
+
+        renderer = vtk.vtkRenderer()
+        window.AddRenderer(renderer)
+
+        renderer.AddActor(sphereActorLoads)
+        renderer.AddActor(sphereActorLoads1)
+        # Setting the background to blue.
+        renderer.SetBackground(0.1, 0.1, 0.4)
+
+        window.Render()
+        interactor.Start()
+
+
+
+        
+

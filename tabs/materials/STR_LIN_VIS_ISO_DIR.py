@@ -26,5 +26,7 @@ class STR_LIN_VIS_ISO_DIR(material):
         #
         super(STR_LIN_VIS_ISO_DIR, self).__init__(Id)
         #
-
+        
+    def processArguments(self, material_args):
+        self.parameterValues = [QLineEdit(str(x)) for x in material_args]
 

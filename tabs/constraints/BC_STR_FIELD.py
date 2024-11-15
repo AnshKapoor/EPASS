@@ -25,6 +25,8 @@ class BC_STR_FIELD(nodeConstraint):
         #
         super(BC_STR_FIELD, self).__init__(Id, myModel)
         #
+
+
         
     def data2hdf5(self, constraintsGroup):
         # Exporting the constraint per node

@@ -620,7 +620,8 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                     ### Fixed cylinder choice for testing instead of user input ###
                     cylinderAxis = np.array([0., 0., 1.]) # must be normalised!
                     cylinderOrigin= np.array([0., 0., 0.])
-                    surfaceRadius = 1.3
+                    #surfaceRadius = 1.3
+                    surfaceRadius=0.7531
                     ###############################################################
                     # Check if all shell block faces are within the cylinder surface
                     for faceIdx in range(noOfTotalFaces2):
@@ -629,6 +630,7 @@ def searchNCInterfaceElemsSurface(nodes, nodesInv, elems, blockCombinations, int
                         elem2x = [nodes[idx]['xCoords'] for idx in nodeIdx2]
                         elem2y = [nodes[idx]['yCoords'] for idx in nodeIdx2]
                         elem2z = [nodes[idx]['zCoords'] for idx in nodeIdx2]
+                        print(np.abs((np.linalg.norm(np.cross(np.array([elem2x, elem2y, elem2z]).T - cylinderOrigin, cylinderAxis), axis=1)-surfaceRadius)))
                         # Distance calculation to cylinderAxis and check if equal to user-given radius
                         if False in (np.abs((np.linalg.norm(np.cross(np.array([elem2x, elem2y, elem2z]).T - cylinderOrigin, cylinderAxis), axis=1)-surfaceRadius)) < tolerance):
                             messageboxOK('Error', 'The nodes of block ' + str(elems[blockCombi[1]].attrs['Id']) + ' are not within the given cylinder!.')

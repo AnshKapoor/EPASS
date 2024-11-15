@@ -1,9 +1,14 @@
 #
-import os
+import os, sys
 #
 from PyQt5.QtWidgets import QFrame, QPushButton, QSizePolicy, QComboBox, QMessageBox, QFormLayout, QVBoxLayout, QDialog, QDialogButtonBox, QGroupBox, QProgressDialog, QTableWidget, QScrollArea, QWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize, Qt
+
+
+CMD_MODE = False
+if '--cmd' in sys.argv:
+    CMD_MODE = True
 
 # Horizontal line
 class sepLine(QFrame):
@@ -106,7 +111,7 @@ class analysisTypeSelector(QComboBox):
         super(analysisTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select an anylsis type')
-        self.availableTypes = ['frequency']#['static', 'eigen', 'frequency', 'time']
+        self.availableTypes = ['frequency','eigen']#['static', 'eigen', 'frequency', 'time']
         self.setFixedWidth(200)
         [self.addItem(type) for type in self.availableTypes]
     
@@ -154,7 +159,7 @@ class loadTypeSelector(QComboBox):
         super(loadTypeSelector, self).__init__()
         self.setStyleSheet("background-color:rgb(255,255,255)")
         self.setStatusTip('Select a load')
-        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity', 'Turbulent Boundary Layer', 'Distributed frequency domain data']#, 'Diffuse field', 'Turbulent Boundary Layer']
+        self.availableTypes = ['Point force', 'Plane wave', 'Normal velocity', 'Turbulent Boundary Layer', 'Distributed frequency domain data','Distributed frequency domain data TBL']#, 'Diffuse field', 'Turbulent Boundary Layer']
         self.setFixedWidth(200)
         [self.addItem(load) for load in self.availableTypes]
     
@@ -204,14 +209,16 @@ class messageboxOK(QMessageBox):
         self.setIcon(QMessageBox.Information)
         self.setText(text)
         self.setStandardButtons(QMessageBox.Ok)
-        self.exec_()
+        if not CMD_MODE:
+            self.exec_()
 
 # Progress window
 class progressWindow(QProgressDialog):
     def __init__(self, length, title='Processing...'):
         super(QProgressDialog, self).__init__(title, "Cancel", 0, length)
         self.setWindowModality(Qt.WindowModal)
-        self.show()
+        if not CMD_MODE:
+            self.show()
 
 # Basic setup window
 class addInterfaceWindow(QDialog):
@@ -273,6 +280,12 @@ class setupNodeLoadWindow(QDialog):
         self.mainLayout.addWidget(self.formGroupBoxNodesets)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
+
+    def exec(self):
+        if CMD_MODE:
+            return 1
+        else:
+            return self.exec_()
 
 # Basic setup window
 class setupLoadWindow(QDialog):
@@ -358,6 +371,13 @@ class setupNodeConstraintWindow(QDialog):
         self.mainLayout.addWidget(self.formGroupBoxNodesets)
         self.mainLayout.addWidget(self.buttonBox)
         self.setLayout(self.mainLayout)
+
+    def exec(self):
+        if CMD_MODE:
+            return 1
+        else:
+            return self.exec_()
+
 
 class setupTable(QDialog):
     def __init__(self, header):
