@@ -216,7 +216,7 @@ class loadGUI(QMainWindow):
         self.label1 = QLabel('Model')
         self.label1.setFont(self.myFont)
         self.loadButton = ak3LoadButton()
-        self.loadButton.clicked.connect(self.loadInput)
+        self.loadButton.clicked.connect(self.loadInputWin)
         self.sepLine1 = sepLine()
         # ADD TO LAYOUT
         self.modelLayout = QHBoxLayout()
@@ -419,7 +419,7 @@ class loadGUI(QMainWindow):
         loadAct = QAction('&Load model', self)
         loadAct.setShortcut('Ctrl+L')
         loadAct.setStatusTip('Load model from ak3 file')
-        loadAct.triggered.connect(self.loadInput)
+        loadAct.triggered.connect(self.loadInputWin)
         self.modelMenu.addAction(loadAct)
         #
         self.modelMenu = self.menubar.addMenu('&Help')

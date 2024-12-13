@@ -88,7 +88,7 @@ class cParserSalomeMed:
                                 print('Element connectivity do not match')
                             
                             elem = np.concatenate((elem, valid_elem_connectivity), axis=0)
-
+                totalNodesperBlock=np.max(elem.flatten())
                 elem += totalNodes
                 
                 N = elem.shape[0]
@@ -170,7 +170,7 @@ class cParserSalomeMed:
                 totalElem += N
                 
             # following total node update should be outside the single mesh loop
-            totalNodes += np.max(elem.flatten()) # increment only for multiple mesh med files because every mesh start with a form node id: 1
+            totalNodes += totalNodesperBlock # increment only for multiple mesh med files because every mesh start with a form node id: 1
 
             for elemset in hdf5File['Elementsets'].keys():
                 myModel.elementSets.append(hdf5File['Elementsets/' + elemset])
