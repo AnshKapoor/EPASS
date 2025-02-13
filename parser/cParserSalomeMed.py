@@ -44,15 +44,19 @@ class cParserSalomeMed:
         
         # Nodesets 
         g = hdf5File['Nodesets']
-        for id, every_key in enumerate(meshMed.point_tags):
-            nodesetID = id + 1
+        totalNodes = 0
+        for meshMed in meshMeds:
+            for id, every_key in enumerate(meshMed.point_tags):
+                nodesetID = id + 1
 
-            if every_key in meshMed.point_data["point_tags"]:
-                found_node_ids = np.argwhere(meshMed.point_data["point_tags"]==every_key) +1
+                if every_key in meshMed.point_data["point_tags"]:
+                    found_node_ids = np.argwhere(meshMed.point_data["point_tags"]==every_key) + 1 + totalNodes
 
-            nodesetValue = found_node_ids.reshape(-1,1)
-            g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
-            g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
+                nodesetValue = found_node_ids.reshape(-1,1)
+                g.create_dataset('vecNodeset' + str(nodesetID), data=nodesetValue)
+                g['vecNodeset' + str(nodesetID)].attrs['Id'] = np.uint64(nodesetID)
+
+            totalNodes += (np.size(meshMed.points,0))
         
         for nodeset in hdf5File['Nodesets'].keys():
             myModel.nodeSets.append(hdf5File['Nodesets/' + nodeset])
